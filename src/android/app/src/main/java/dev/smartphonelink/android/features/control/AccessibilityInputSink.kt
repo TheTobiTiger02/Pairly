@@ -17,7 +17,7 @@ import dev.smartphonelink.streamcore.InputSink
 
 /**
  * Applies mirror input without ADB: pointers through the accessibility service's gesture API,
- * text and keys through Smartphone Link's own keyboard.
+ * text and keys through Pairly's own keyboard.
  *
  * Drags use continued strokes. A continuation may only be dispatched once the previous segment
  * has completed, so moves that arrive while a segment is in flight are coalesced into the next one
@@ -193,7 +193,7 @@ class AccessibilityInputSink(private val context: Context) : InputSink {
     }
 
     override fun key(action: Int, keyCode: Int, repeatCount: Int, metaState: Int) {
-        // Smartphone Link's keyboard, when it is the active one, sends real key events - the most
+        // Pairly's keyboard, when it is the active one, sends real key events - the most
         // faithful option. Otherwise the focused field is edited directly.
         val keyboard = PhoneLinkInputMethodService.instance
         if (keyboard != null) {
@@ -237,7 +237,7 @@ class AccessibilityInputSink(private val context: Context) : InputSink {
 
     override fun setClipboard(value: String, paste: Boolean) {
         val clipboard = context.getSystemService(ClipboardManager::class.java) ?: return
-        clipboard.setPrimaryClip(ClipData.newPlainText("Smartphone Link", value))
+        clipboard.setPrimaryClip(ClipData.newPlainText("Pairly", value))
 
         if (paste) {
             // Committing the text is the paste: it lands at the cursor in whatever field has
@@ -290,7 +290,7 @@ class AccessibilityInputSink(private val context: Context) : InputSink {
         val now = SystemClock.uptimeMillis()
         if (now - lastUnavailableLogAt > 5_000) {
             lastUnavailableLogAt = now
-            Log.w(TAG, "Dropped $what: enable the Smartphone Link accessibility service and keyboard.")
+            Log.w(TAG, "Dropped $what: enable the Pairly accessibility service and keyboard.")
         }
     }
 

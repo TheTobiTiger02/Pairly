@@ -78,7 +78,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         WindowBackdrop.Attach(this);
-        AppVersionText.Text = $"Smartphone Link {typeof(MainWindow).Assembly.GetName().Version?.ToString(3)}";
+        AppVersionText.Text = $"Pairly {typeof(MainWindow).Assembly.GetName().Version?.ToString(3)}";
 
         foreach (var packageName in _preferences.MutedNotificationPackages)
         {
@@ -91,7 +91,7 @@ public partial class MainWindow : Window
         _initializingStartupSetting = true;
         StartWithWindowsCheck.IsChecked = StartupRegistration.IsEnabled;
         StartupRegistrationStatusText.Text = StartupRegistration.IsEnabled
-            ? "Smartphone Link will reconnect after you sign in."
+            ? "Pairly will reconnect after you sign in."
             : "Startup will be enabled automatically after the first successful pairing.";
         _initializingStartupSetting = false;
 
@@ -261,7 +261,7 @@ public partial class MainWindow : Window
             _notifyIcon = new System.Windows.Forms.NotifyIcon();
             var icon = System.Drawing.Icon.ExtractAssociatedIcon(System.Reflection.Assembly.GetExecutingAssembly().Location);
             _notifyIcon.Icon = icon;
-            _notifyIcon.Text = "Smartphone Link";
+            _notifyIcon.Text = "Pairly";
             _notifyIcon.Visible = true;
 
             var contextMenu = new System.Windows.Forms.ContextMenuStrip();
@@ -326,7 +326,7 @@ public partial class MainWindow : Window
         var succeeded = StartupRegistration.SetEnabled(enabled);
         StartupRegistrationStatusText.Text = succeeded
             ? enabled
-                ? "Smartphone Link will reconnect after you sign in."
+                ? "Pairly will reconnect after you sign in."
                 : "Automatic startup is off. Your trusted pairing is unchanged."
             : "Windows startup registration could not be updated for this user.";
     }
@@ -799,7 +799,7 @@ public partial class MainWindow : Window
             StatusText.Text = ex is HostStartupException
                 ? ex.Message
                 : UserFacingError(
-                    "Smartphone Link could not start all required services. Close another running host and try again.",
+                    "Pairly could not start all required services. Close another running host and try again.",
                     ex);
             return false;
         }
@@ -1571,7 +1571,7 @@ public partial class MainWindow : Window
             }
 
             var pictures = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
-            var directory = Path.Combine(pictures, "Smartphone Link");
+            var directory = Path.Combine(pictures, "Pairly");
             Directory.CreateDirectory(directory);
 
             var safeFileName = SanitizeFileName(photo.FileName);
@@ -1632,7 +1632,7 @@ public partial class MainWindow : Window
 
         using var folderDialog = new System.Windows.Forms.FolderBrowserDialog
         {
-            Description = "Save selected Smartphone Link photos",
+            Description = "Save selected Pairly photos",
             UseDescriptionForTitle = true,
             ShowNewFolderButton = true
         };
@@ -1775,7 +1775,7 @@ public partial class MainWindow : Window
                 _initializingStartupSetting = false;
                 if (startupEnabled)
                 {
-                    StartupRegistrationStatusText.Text = "Smartphone Link will reconnect after you sign in.";
+                    StartupRegistrationStatusText.Text = "Pairly will reconnect after you sign in.";
                 }
             }
 
@@ -1883,14 +1883,14 @@ public partial class MainWindow : Window
             var reconnectingCount = devicesData.Count(device => !device.Connected
                 && DateTimeOffset.UtcNow - device.LastSeenAt < TimeSpan.FromMinutes(2));
             StatusText.Text = devicesData.Length == 0
-                ? "Smartphone Link is ready. Add a phone to get started."
+                ? "Pairly is ready. Add a phone to get started."
                 : $"{onlineCount} online | {reconnectingCount} reconnecting | {devicesData.Length - onlineCount - reconnectingCount} offline";
         }
         catch (Exception ex)
         {
             if (showErrors)
             {
-                StatusText.Text = UserFacingError("Smartphone Link is reconnecting to its local service.", ex);
+                StatusText.Text = UserFacingError("Pairly is reconnecting to its local service.", ex);
             }
         }
         finally

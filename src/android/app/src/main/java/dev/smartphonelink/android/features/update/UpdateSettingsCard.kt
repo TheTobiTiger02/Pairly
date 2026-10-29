@@ -27,7 +27,7 @@ fun UpdateSettingsCard() {
     var message by remember { mutableStateOf("Updates install automatically from GitHub Releases.") }
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
-            Text("Smartphone Link ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.titleMedium)
+            Text("Pairly ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.titleMedium)
             Text(message, style = MaterialTheme.typography.bodyMedium)
             OutlinedButton(
                 enabled = !checking,

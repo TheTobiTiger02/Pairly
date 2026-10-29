@@ -27,11 +27,11 @@ class ClipboardRelay(context: Context) {
     }
 
     fun copyTextFromPc(text: String, itemId: String = "", hash: String = "") {
-        clipboard.setPrimaryClip(mark(ClipData.newPlainText("Smartphone Link", text), itemId, hash))
+        clipboard.setPrimaryClip(mark(ClipData.newPlainText("Pairly", text), itemId, hash))
     }
 
     fun copyImageFromPc(uri: Uri, itemId: String = "", hash: String = "") {
-        clipboard.setPrimaryClip(mark(ClipData.newUri(appContext.contentResolver, "Smartphone Link image", uri), itemId, hash))
+        clipboard.setPrimaryClip(mark(ClipData.newUri(appContext.contentResolver, "Pairly image", uri), itemId, hash))
     }
 
     private fun mark(clip: ClipData, itemId: String, hash: String): ClipData = clip.apply {

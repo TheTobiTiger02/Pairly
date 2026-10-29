@@ -111,7 +111,7 @@ public partial class MainWindow
             {
                 var problem = await response.Content.ReadAsStringAsync();
                 AppsStatusText.Text = problem.Contains("allow", StringComparison.OrdinalIgnoreCase)
-                    ? $"Android blocked opening {app.Label}. Turn on remote control (the Smartphone Link accessibility service) on the phone, then try again."
+                    ? $"Android blocked opening {app.Label}. Turn on remote control (the Pairly accessibility service) on the phone, then try again."
                     : $"{app.Label} could not be opened.";
                 return;
             }

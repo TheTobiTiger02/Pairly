@@ -1380,11 +1380,11 @@ class PhoneLinkConnectionService : Service() {
                 "Screen capture permission requested"
             }
             MirrorConsentGate.Route.NOTIFICATION -> {
-                sendMirrorStatus(sessionId, pcSessionId, "Tap the Smartphone Link notification to allow screen capture.")
+                sendMirrorStatus(sessionId, pcSessionId, "Tap the Pairly notification to allow screen capture.")
                 "Screen capture requested via notification"
             }
             MirrorConsentGate.Route.WAITING_FOR_APP -> {
-                sendMirrorStatus(sessionId, pcSessionId, "Open Smartphone Link on the phone to allow screen capture.")
+                sendMirrorStatus(sessionId, pcSessionId, "Open Pairly on the phone to allow screen capture.")
                 "Screen capture waiting for the app to be opened"
             }
         }

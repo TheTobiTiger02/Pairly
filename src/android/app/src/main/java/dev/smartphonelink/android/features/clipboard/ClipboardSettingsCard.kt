@@ -45,7 +45,7 @@ fun ClipboardSettingsCard() {
                 state == ClipboardHelperLifecycle.State.Ready -> "Text and images sync to your PC and paired devices in the background."
                 state == ClipboardHelperLifecycle.State.NotInstalled -> "Install Shizuku to sync while this app is closed."
                 state == ClipboardHelperLifecycle.State.NotRunning -> "Start Shizuku to resume background sync."
-                state == ClipboardHelperLifecycle.State.NotAllowed -> "Allow Smartphone Link in Shizuku to enable background sync."
+                state == ClipboardHelperLifecycle.State.NotAllowed -> "Allow Pairly in Shizuku to enable background sync."
                 state == ClipboardHelperLifecycle.State.Connecting -> "Starting background clipboard sync…"
                 state == ClipboardHelperLifecycle.State.Error -> "The clipboard helper could not start. Check Shizuku, then reconnect."
                 else -> "Reconnect to your paired PC to resume automatic sync."

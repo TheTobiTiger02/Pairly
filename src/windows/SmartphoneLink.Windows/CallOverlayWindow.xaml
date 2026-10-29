@@ -36,7 +36,7 @@
             </Grid.RowDefinitions>
             <StackPanel Orientation="Horizontal">
                 <controls:BrandMark Width="14" Height="14" Margin="0,0,8,0" />
-                <TextBlock Text="Smartphone Link · " Style="{StaticResource CaptionText}" />
+                <TextBlock Text="Pairly · " Style="{StaticResource CaptionText}" />
                 <TextBlock x:Name="StateText" Text="Incoming call" Style="{StaticResource CaptionText}" />
             </StackPanel>
             <Grid Grid.Row="1" Margin="0,12,0,0">

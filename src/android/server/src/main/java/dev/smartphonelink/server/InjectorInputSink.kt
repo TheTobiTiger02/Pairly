@@ -156,7 +156,7 @@ class InjectorInputSink(
 
     override fun setClipboard(value: String, paste: Boolean) {
         val clipboard = Platform.clipboard ?: return
-        runCatching { clipboard.setPrimaryClip(ClipData.newPlainText("Smartphone Link", value)) }
+        runCatching { clipboard.setPrimaryClip(ClipData.newPlainText("Pairly", value)) }
             .onFailure { Log.w("Setting the clipboard failed", it); return }
         if (paste) {
             val now = SystemClock.uptimeMillis()

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Smartphone Link</string>
-    <string name="accessibility_desc">Lets your paired PC tap, scroll and type on this phone while you mirror its screen. To type, Smartphone Link reads and edits only the text field that currently has focus. Nothing on screen is stored or sent anywhere; video goes only to your paired PC.</string>
+    <string name="app_name">Pairly</string>
+    <string name="accessibility_desc">Lets your paired PC tap, scroll and type on this phone while you mirror its screen. To type, Pairly reads and edits only the text field that currently has focus. Nothing on screen is stored or sent anywhere; video goes only to your paired PC.</string>
     <string name="logo_content_description">Phone connected to a computer</string>
 
     <string name="nav_home">Home</string>
@@ -12,10 +12,10 @@
     <string name="onboarding_title">Keep your phone and PC in step.</string>
     <string name="onboarding_body">Connect once to share notifications, photos, messages, clipboard items, and your phone screen over your local network.</string>
     <string name="onboarding_choose_pc">Choose your PC</string>
-    <string name="onboarding_choose_pc_detail">Open Smartphone Link on Windows and keep both devices on the same network.</string>
+    <string name="onboarding_choose_pc_detail">Open Pairly on Windows and keep both devices on the same network.</string>
     <string name="onboarding_pair_code">Confirm the pairing code</string>
     <string name="onboarding_pair_code_detail">Enter the code shown by the Windows app. You should only need to do this once.</string>
-    <string name="onboarding_privacy_note">Your pairing secret is encrypted with Android Keystore. Smartphone Link reconnects to the same verified PC after reboots, updates, and address changes.</string>
+    <string name="onboarding_privacy_note">Your pairing secret is encrypted with Android Keystore. Pairly reconnects to the same verified PC after reboots, updates, and address changes.</string>
     <string name="manual_address_title">Can’t see your PC?</string>
     <string name="manual_address_detail">Enter its local address for legacy hosts. Automatic address recovery becomes available after the PC supplies a stable identity.</string>
     <string name="pc_address_label">PC address</string>
@@ -38,7 +38,7 @@
     <string name="clipboard_unavailable">Clipboard is empty or Android has not made it available.</string>
     <string name="clipboard_queued_all_devices">Clipboard item queued for all connected devices.</string>
     <string name="clipboard_not_sent">Nothing was sent. Check the text and connection.</string>
-    <string name="clipboard_android_note">Android only exposes clipboard contents while the app is visible. From other apps, use Share or the Smartphone Link Quick Settings tile.</string>
+    <string name="clipboard_android_note">Android only exposes clipboard contents while the app is visible. From other apps, use Share or the Pairly Quick Settings tile.</string>
 
     <string name="features_title">Features</string>
     <string name="features_subtitle">Turn on only the experiences you want to use.</string>
@@ -58,7 +58,7 @@
     <string name="feature_mirror_detail">Let the app surface Android’s required screen-capture confirmation.</string>
     <string name="feature_background">Background connection</string>
     <string name="feature_background_detail">Keep the trusted local connection alive when the screen is off.</string>
-    <string name="feature_app_notifications">Smartphone Link alerts</string>
+    <string name="feature_app_notifications">Pairly alerts</string>
     <string name="feature_app_notifications_detail">Show connection and screen-mirroring actions.</string>
 
     <string name="settings_title">Settings</string>
@@ -108,19 +108,19 @@
     <string name="connection_rejected">Needs attention</string>
     <string name="status_ready">Ready</string>
     <string name="status_waiting">Waiting</string>
-    <string name="status_finding_pcs">Looking for Smartphone Link PCs on your network…</string>
+    <string name="status_finding_pcs">Looking for Pairly PCs on your network…</string>
     <string name="status_no_pcs">No PC found yet. Keep the Windows app open and search again.</string>
     <string name="permission_on">Ready</string>
     <string name="permission_needs_attention">Needs permission</string>
-    <string name="share_pair_first">Open Smartphone Link and pair this phone first.</string>
+    <string name="share_pair_first">Open Pairly and pair this phone first.</string>
     <string name="share_text_queued">Shared text queued for all connected devices.</string>
     <string name="share_image_queued">Shared image queued for all connected devices.</string>
     <string name="share_not_relayed">The shared item could not be relayed.</string>
     <string name="share_unsupported">Only text and images can be sent through clipboard sync.</string>
     <string name="tile_clipboard_label">Send clipboard</string>
     <string name="tile_clipboard_ready">Tap to send text or image</string>
-    <string name="tile_clipboard_pair_first">Pair Smartphone Link first</string>
-    <string name="notification_listener_label">Smartphone Link notifications</string>
+    <string name="tile_clipboard_pair_first">Pair Pairly first</string>
+    <string name="notification_listener_label">Pairly notifications</string>
     <string name="connection_channel_name">PC connection</string>
     <string name="notification_action_send_clipboard">Send phone clipboard</string>
     <string name="notification_action_disconnect">Disconnect</string>
@@ -129,6 +129,6 @@
     <string name="mirror_request_notification_title">Screen mirror requested</string>
     <string name="mirror_request_notification_text">Tap to allow the paired PC to mirror your screen.</string>
     <string name="mirror_active_channel_name">Screen mirroring</string>
-    <string name="mirror_active_notification_title">Smartphone Link mirror</string>
+    <string name="mirror_active_notification_title">Pairly mirror</string>
     <string name="mirror_active_notification_text">Your screen is being mirrored to the paired PC.</string>
 </resources>

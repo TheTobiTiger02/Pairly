@@ -7,8 +7,8 @@ public sealed class HostStartupException : InvalidOperationException
 {
     public HostStartupException(int port, string transport, Exception innerException)
         : base(
-            $"Another Smartphone Link host or application is already using {transport} port {port}. " +
-            "Close every other Smartphone Link window, including old Debug builds, and try again.",
+            $"Another Pairly host or application is already using {transport} port {port}. " +
+            "Close every other Pairly window, including old Debug builds, and try again.",
             innerException)
     {
         Port = port;

@@ -46,7 +46,7 @@ class UpdateInstallReceiver : BroadcastReceiver() {
         )
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("Smartphone Link update ready")
+            .setContentTitle("Pairly update ready")
             .setContentText(if (version.isBlank()) "Tap to install." else "Tap to install $version.")
             .setContentIntent(open)
             .setAutoCancel(true)

@@ -26,7 +26,7 @@ import org.json.JSONObject
  * play / pause / skip / seek commands back.
  *
  * `getActiveSessions` requires the caller to be an enabled notification listener, which
- * Smartphone Link already is for notification sync - so this needs no new permission. Everything
+ * Pairly already is for notification sync - so this needs no new permission. Everything
  * runs on the main looper: MediaController callbacks arrive there, and the work per update is small.
  */
 object MediaSessionRelay {

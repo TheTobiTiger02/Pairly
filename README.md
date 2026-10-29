@@ -1,6 +1,6 @@
-# Smartphone Link
+# Pairly
 
-Smartphone Link is a Windows + Android companion app for connecting multiple trusted Android phones to one PC on the same network. The desktop app uses WPF and an embedded ASP.NET Core host; the Android app uses Jetpack Compose. Screen mirroring remains WebRTC + MediaProjection + WebView2.
+Pairly (formerly Smartphone Link; the code still uses the `SmartphoneLink` name) is a Windows + Android companion app for connecting multiple trusted Android phones to one PC on the same network. The desktop app uses WPF and an embedded ASP.NET Core host; the Android app uses Jetpack Compose. Screen mirroring remains WebRTC + MediaProjection + WebView2.
 
 ## Current product
 

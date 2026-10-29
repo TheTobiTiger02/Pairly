@@ -9,7 +9,7 @@ import android.view.accessibility.AccessibilityNodeInfo
 /**
  * Types into the focused text field through the accessibility service, with no keyboard switch.
  *
- * This is the fallback when Smartphone Link's own keyboard is not the active one. It edits the
+ * This is the fallback when Pairly's own keyboard is not the active one. It edits the
  * field the way a keyboard would - insert at the cursor, delete around it, move it - using the
  * accessibility actions every standard text field supports. Custom editors that draw their own text
  * (some games, some web editors) do not expose these actions; for them the keyboard is the answer.

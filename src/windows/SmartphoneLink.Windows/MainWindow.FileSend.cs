@@ -8,7 +8,7 @@ namespace SmartphoneLink.Windows;
 
 /// <summary>
 /// PC-to-phone file sending: the "Send files..." button and drag and drop onto the main window or
-/// a mirror window. Files land in the phone's Downloads/Smartphone Link folder.
+/// a mirror window. Files land in the phone's Downloads/Pairly folder.
 /// </summary>
 public partial class MainWindow
 {

@@ -19,8 +19,8 @@ class FileReceiverNameTest {
 
     @Test
     fun neverReturnsEmpty() {
-        assertEquals("Smartphone Link file", FileReceiver.sanitize(""))
-        assertEquals("Smartphone Link file", FileReceiver.sanitize("/"))
+        assertEquals("Pairly file", FileReceiver.sanitize(""))
+        assertEquals("Pairly file", FileReceiver.sanitize("/"))
     }
 
     @Test

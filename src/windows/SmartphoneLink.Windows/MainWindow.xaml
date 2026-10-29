@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:controls="clr-namespace:SmartphoneLink.Windows.Controls"
         mc:Ignorable="d"
-        Title="Smartphone Link" Icon="Assets/SmartphoneLink.ico" Width="1320" Height="860" MinWidth="980" MinHeight="640"
+        Title="Pairly" Icon="Assets/SmartphoneLink.ico" Width="1320" Height="860" MinWidth="980" MinHeight="640"
         Style="{StaticResource {x:Type Window}}"
         SizeChanged="MainWindow_SizeChanged" AllowDrop="True" DragOver="MainWindow_DragOver" Drop="MainWindow_Drop">
     <WindowChrome.WindowChrome>
@@ -113,7 +113,7 @@
         <Grid Grid.ColumnSpan="2">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0" HorizontalAlignment="Left">
                 <controls:BrandMark Width="18" Height="18" />
-                <TextBlock x:Name="BrandTitleText" Text="Smartphone Link" FontSize="12" Margin="12,0,0,1" VerticalAlignment="Center" />
+                <TextBlock x:Name="BrandTitleText" Text="Pairly" FontSize="12" Margin="12,0,0,1" VerticalAlignment="Center" />
             </StackPanel>
 
             <StackPanel x:Name="TopTabsPanel" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -150,7 +150,7 @@
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
                 <Border Style="{StaticResource StatusPill}" VerticalAlignment="Center" Margin="0,8,8,0"
-                        ToolTip="Connection between this window and the Smartphone Link host">
+                        ToolTip="Connection between this window and the Pairly host">
                     <StackPanel Orientation="Horizontal">
                         <Ellipse x:Name="RealtimeStatusDot" Width="6" Height="6" Fill="{DynamicResource CautionBrush}"
                                  VerticalAlignment="Center" Margin="0,0,6,0" />
@@ -531,7 +531,7 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="&#xE946;" Style="{StaticResource IconGlyph}" FontSize="12" VerticalAlignment="Top" Margin="0,2,8,0"
                            Foreground="{DynamicResource TextTertiaryBrush}" />
-                <TextBlock x:Name="StatusText" Grid.Column="1" Text="Starting Smartphone Link..." Style="{StaticResource CaptionText}"
+                <TextBlock x:Name="StatusText" Grid.Column="1" Text="Starting Pairly..." Style="{StaticResource CaptionText}"
                            TextWrapping="Wrap" MaxHeight="34" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" />
             </Grid>
         </Grid>
@@ -1057,7 +1057,7 @@
                                                           AutomationProperties.Name="Start when I sign in to Windows"
                                                           Checked="StartWithWindowsCheck_Changed" Unchecked="StartWithWindowsCheck_Changed" />
                                                 <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="Start Smartphone Link when I sign in to Windows" Style="{StaticResource SettingsCardTitle}" />
+                                                    <TextBlock Text="Start Pairly when I sign in to Windows" Style="{StaticResource SettingsCardTitle}" />
                                                     <TextBlock x:Name="StartupRegistrationStatusText"
                                                                Text="Startup will be enabled automatically after the first successful pairing."
                                                                Style="{StaticResource SettingsCardDescription}" />
@@ -1069,7 +1069,7 @@
                                             <DockPanel>
                                                 <TextBlock Text="&#xE895;" Style="{StaticResource SettingsCardGlyph}" />
                                                 <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock x:Name="AppVersionText" Text="Smartphone Link" Style="{StaticResource SettingsCardTitle}" />
+                                                    <TextBlock x:Name="AppVersionText" Text="Pairly" Style="{StaticResource SettingsCardTitle}" />
                                                     <TextBlock Text="Updates are installed by the Microsoft Store."
                                                                Style="{StaticResource SettingsCardDescription}" />
                                                 </StackPanel>
@@ -1358,7 +1358,7 @@
                                     Margin="0,-6,-10,0" VerticalAlignment="Top" Click="ClosePairingPanel_Click" AutomationProperties.Name="Close add device dialog" />
                             <TextBlock Text="Add a device" Style="{StaticResource SubtitleText}" />
                         </DockPanel>
-                        <TextBlock Text="Open Smartphone Link on your Android phone and enter the code below. You only need to pair once."
+                        <TextBlock Text="Open Pairly on your Android phone and enter the code below. You only need to pair once."
                                    Style="{StaticResource BodyText}" Margin="0,8,0,0" />
                         <Border Style="{StaticResource PageCard}" Margin="0,20,0,0" Padding="16,20">
                             <StackPanel>

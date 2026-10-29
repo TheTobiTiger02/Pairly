@@ -15,12 +15,12 @@
     <ApplicationIcon>Assets\SmartphoneLink.ico</ApplicationIcon>
     <AssemblyName>SmartphoneLink.Windows</AssemblyName>
     <RootNamespace>SmartphoneLink.Windows</RootNamespace>
-    <Product>Smartphone Link</Product>
-    <Title>Smartphone Link</Title>
+    <Product>Pairly</Product>
+    <Title>Pairly</Title>
     <Description>A private Windows companion for trusted Android devices.</Description>
-    <Company>Smartphone Link</Company>
-    <Authors>Smartphone Link</Authors>
-    <Copyright>Copyright (c) 2026 Smartphone Link</Copyright>
+    <Company>Pairly</Company>
+    <Authors>Pairly</Authors>
+    <Copyright>Copyright (c) 2026 Pairly</Copyright>
     <VersionPrefix>1.0.1.1</VersionPrefix>
     <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>

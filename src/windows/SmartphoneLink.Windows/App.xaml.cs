@@ -32,8 +32,8 @@ public partial class App : System.Windows.Application
             if (!StartHidden)
             {
                 System.Windows.MessageBox.Show(
-                    "Smartphone Link is already running for this Windows user. Close the existing window or its tray icon before starting another copy.",
-                    "Smartphone Link is already running",
+                    "Pairly is already running for this Windows user. Close the existing window or its tray icon before starting another copy.",
+                    "Pairly is already running",
                     MessageBoxButton.OK,
                     MessageBoxImage.Information);
             }

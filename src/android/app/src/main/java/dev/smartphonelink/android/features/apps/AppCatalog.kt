@@ -65,7 +65,7 @@ class AppCatalog(private val context: Context) {
             ?: return result(
                 requestId,
                 "failed",
-                "Android does not allow opening apps from the background. Turn on the Smartphone Link " +
+                "Android does not allow opening apps from the background. Turn on the Pairly " +
                     "accessibility service (remote control) or \"Display over other apps\" on the phone."
             )
         return try {

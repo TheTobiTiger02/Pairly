@@ -19,7 +19,7 @@ import org.json.JSONObject
 
 /**
  * Receives files the PC sends: dials the stream port with the offer's ticket, reads exactly the
- * announced byte count, and saves the file to Downloads/Smartphone Link.
+ * announced byte count, and saves the file to Downloads/Pairly.
  *
  * MediaStore.Downloads (API 29+) needs no storage permission and makes the file show up in the
  * Files app straight away. The entry stays pending until the last byte lands, so a transfer that
@@ -184,7 +184,7 @@ class FileReceiver(
 
     companion object {
         private const val TAG = "FileReceiver"
-        private const val FOLDER = "Smartphone Link"
+        private const val FOLDER = "Pairly"
         private const val COPY_BUFFER_BYTES = 256 * 1024
         private const val FREE_SPACE_RESERVE_BYTES = 200L * 1024 * 1024
         private const val MAX_NAME_CHARS = 120
@@ -200,7 +200,7 @@ class FileReceiver(
                 val stem = plain.take(MAX_NAME_CHARS - extension.length - 1)
                 if (extension.isEmpty()) stem else "$stem.$extension"
             }
-            return bounded.ifBlank { "Smartphone Link file" }
+            return bounded.ifBlank { "Pairly file" }
         }
     }
 }
