@@ -8,7 +8,7 @@ param(
     [int] $AndroidVersionCode = 10002,
     [string] $SigningDirectory = [System.IO.Path]::Combine(
         [Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData),
-        'SmartphoneLink',
+        'Pairly',
         'Signing'),
     # Sideload: self-signed MSIX for local test installs. Store: unsigned MSIX with the Partner
     # Center identity from STORE_* environment variables; the Store signs it. None: Android only.
@@ -87,15 +87,15 @@ try {
     }
 
     # Android first: the Windows package bundles the ADB-mode server built here.
-    $env:SMARTPHONE_LINK_ANDROID_KEYSTORE = [string] $metadata.androidKeyStore
-    $env:SMARTPHONE_LINK_ANDROID_STORE_PASSWORD = $plainPassword
-    $env:SMARTPHONE_LINK_ANDROID_KEY_ALIAS = [string] $metadata.androidAlias
-    $env:SMARTPHONE_LINK_ANDROID_KEY_PASSWORD = $plainPassword
+    $env:PAIRLY_ANDROID_KEYSTORE = [string] $metadata.androidKeyStore
+    $env:PAIRLY_ANDROID_STORE_PASSWORD = $plainPassword
+    $env:PAIRLY_ANDROID_KEY_ALIAS = [string] $metadata.androidAlias
+    $env:PAIRLY_ANDROID_KEY_PASSWORD = $plainPassword
 
     $androidRoot = [System.IO.Path]::Combine($repositoryRoot, 'src', 'android')
     Push-Location $androidRoot
     try {
-        & .\gradlew.bat :server:assembleRelease :app:assembleRelease "-PSmartphoneLinkVersionName=$AndroidVersionName" "-PSmartphoneLinkVersionCode=$AndroidVersionCode"
+        & .\gradlew.bat :server:assembleRelease :app:assembleRelease "-PPairlyVersionName=$AndroidVersionName" "-PPairlyVersionCode=$AndroidVersionCode"
         if ($LASTEXITCODE -ne 0) {
             throw "Android release build failed with exit code $LASTEXITCODE."
         }
@@ -121,14 +121,14 @@ try {
         }
         else {
             $identity = @{
-                Name = 'SmartphoneLink.Private'
+                Name = 'Pairly.Private'
                 Publisher = [string] $metadata.windowsPublisher
-                PublisherDisplayName = 'Smartphone Link'
-                DisplayName = 'Smartphone Link'
+                PublisherDisplayName = 'Pairly'
+                DisplayName = 'Pairly'
             }
         }
 
-        $windowsProject = [System.IO.Path]::Combine($repositoryRoot, 'src', 'windows', 'SmartphoneLink.Windows', 'SmartphoneLink.Windows.csproj')
+        $windowsProject = [System.IO.Path]::Combine($repositoryRoot, 'src', 'windows', 'Pairly.Windows', 'Pairly.Windows.csproj')
         & dotnet publish $windowsProject `
             --configuration Release `
             --runtime win-x64 `
@@ -166,7 +166,7 @@ try {
             throw 'Windows SDK makeappx.exe is required.'
         }
 
-        $msixPath = [System.IO.Path]::Combine($windowsOutput, 'SmartphoneLink.msix')
+        $msixPath = [System.IO.Path]::Combine($windowsOutput, 'Pairly.msix')
         & $makeAppx.FullName pack /d $windowsStaging /p $msixPath /o
         if ($LASTEXITCODE -ne 0) {
             throw "makeappx failed with exit code $LASTEXITCODE."
@@ -188,7 +188,7 @@ try {
             if ($LASTEXITCODE -ne 0) {
                 throw "signtool verification failed with exit code $LASTEXITCODE. In an elevated PowerShell window, import the public CER into Cert:\LocalMachine\TrustedPeople, then retry."
             }
-            Copy-Item -LiteralPath $metadata.windowsCertificate -Destination ([System.IO.Path]::Combine($windowsOutput, 'SmartphoneLink-private-release.cer')) -Force
+            Copy-Item -LiteralPath $metadata.windowsCertificate -Destination ([System.IO.Path]::Combine($windowsOutput, 'Pairly-private-release.cer')) -Force
         }
     }
 
@@ -198,7 +198,7 @@ try {
     if (-not $builtApk) {
         throw 'The Android release build completed without producing an APK.'
     }
-    $releaseApk = [System.IO.Path]::Combine($androidOutput, 'SmartphoneLink.apk')
+    $releaseApk = [System.IO.Path]::Combine($androidOutput, 'Pairly.apk')
     Copy-Item -LiteralPath $builtApk.FullName -Destination $releaseApk -Force
 
     $androidSdk = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } else {
@@ -228,6 +228,6 @@ finally {
         [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($passwordPointer)
     }
     $plainPassword = $null
-    $env:SMARTPHONE_LINK_ANDROID_STORE_PASSWORD = $null
-    $env:SMARTPHONE_LINK_ANDROID_KEY_PASSWORD = $null
+    $env:PAIRLY_ANDROID_STORE_PASSWORD = $null
+    $env:PAIRLY_ANDROID_KEY_PASSWORD = $null
 }

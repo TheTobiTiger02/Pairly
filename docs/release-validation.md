@@ -1,6 +1,6 @@
 # Release validation
 
-This checklist is the release gate for the private Smartphone Link packages. Automated checks are necessary but do not replace the Android hardware matrix.
+This checklist is the release gate for the private Pairly packages. Automated checks are necessary but do not replace the Android hardware matrix.
 
 ## Automated preflight
 
@@ -8,8 +8,8 @@ Run from the repository root:
 
 ```powershell
 $env:DOTNET_CLI_HOME = (Get-Location).Path
-dotnet build SmartphoneLink.sln --configuration Release
-dotnet run --project tests/SmartphoneLink.Tests/SmartphoneLink.Tests.csproj --configuration Release
+dotnet build Pairly.sln --configuration Release
+dotnet run --project tests/Pairly.Tests/Pairly.Tests.csproj --configuration Release
 
 Push-Location src\android
 .\gradlew.bat :app:testDebugUnitTest :app:assembleDebug
@@ -26,7 +26,7 @@ Do not publish the output unless the script completes both platform signature ch
 
 ## Milestone 1 stability gate
 
-Close `SmartphoneLink.Windows.exe` before running the automated preflight. The port-conflict test
+Close `Pairly.Windows.exe` before running the automated preflight. The port-conflict test
 binds 7816, 7817 and 7818 exclusively, so it fails while the app itself holds them.
 
 Evidence for this gate is the **Diagnostics** page, not recollection. It shows host uptime, the

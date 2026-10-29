@@ -9,8 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\windows\SmartphoneLink.Server\SmartphoneLink.Server.csproj" />
-    <ProjectReference Include="..\..\src\windows\SmartphoneLink.Media\SmartphoneLink.Media.csproj" />
+    <ProjectReference Include="..\..\src\windows\Pairly.Server\Pairly.Server.csproj" />
+    <ProjectReference Include="..\..\src\windows\Pairly.Media\Pairly.Media.csproj" />
   </ItemGroup>
 
 </Project>

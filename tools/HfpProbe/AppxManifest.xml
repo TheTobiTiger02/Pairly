@@ -4,10 +4,10 @@
          xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
          xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
          IgnorableNamespaces="uap uap5 rescap">
-  <Identity Name="SmartphoneLink.HfpProbe" Publisher="CN=SmartphoneLinkDev" Version="1.0.0.0" ProcessorArchitecture="x64" />
+  <Identity Name="Pairly.HfpProbe" Publisher="CN=PairlyDev" Version="1.0.0.0" ProcessorArchitecture="x64" />
   <Properties>
-    <DisplayName>Smartphone Link HFP probe</DisplayName>
-    <PublisherDisplayName>Smartphone Link (development)</PublisherDisplayName>
+    <DisplayName>Pairly HFP probe</DisplayName>
+    <PublisherDisplayName>Pairly (development)</PublisherDisplayName>
     <Logo>StoreLogo.png</Logo>
   </Properties>
   <Dependencies>
@@ -16,7 +16,7 @@
   <Resources><Resource Language="en-us" /></Resources>
   <Applications>
     <Application Id="HfpProbe" Executable="hfpprobe.exe" EntryPoint="Windows.FullTrustApplication">
-      <uap:VisualElements DisplayName="Smartphone Link HFP probe" Description="Bluetooth call audio spike"
+      <uap:VisualElements DisplayName="Pairly HFP probe" Description="Bluetooth call audio spike"
                           BackgroundColor="transparent" Square150x150Logo="Square150x150Logo.png" Square44x44Logo="Square44x44Logo.png"
                           AppListEntry="none" />
       <Extensions>

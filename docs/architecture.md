@@ -1,6 +1,6 @@
 # Architecture
 
-Smartphone Link retains the existing WPF, Compose, embedded-host, and WebRTC architecture. The release-readiness pass hardens boundaries and separates UI state from transport state without introducing a framework rewrite.
+Pairly retains the existing WPF, Compose, embedded-host, and WebRTC architecture. The release-readiness pass hardens boundaries and separates UI state from transport state without introducing a framework rewrite.
 
 ## Identity, trust, and pairing
 
@@ -26,7 +26,7 @@ The PC host is the authoritative relay. It assigns a relay sequence while preser
 
 `ClipboardRelay` owns publication and fan-out for every capture path. Retrying an immutable copy receives its original sequence and expiry without another fan-out. Bounded receipts outlive the 50-item history window. Reconnecting recipients receive new publications; clipboard history is never replayed.
 
-`App` owns `WindowsClipboardSync`, a message-only HWND listening to `WM_CLIPBOARDUPDATE` on the STA dispatcher. Realtime clipboard events apply directly; UI refresh is independent. Android's `PhoneLinkConnectionService` owns capture and the newest pending copy across network reconnects. Explicit disconnect, unpairing, or disabling automatic sync stops capture and clears pending content.
+`App` owns `WindowsClipboardSync`, a message-only HWND listening to `WM_CLIPBOARDUPDATE` on the STA dispatcher. Realtime clipboard events apply directly; UI refresh is independent. Android's `PairlyConnectionService` owns capture and the newest pending copy across network reconnects. Explicit disconnect, unpairing, or disabling automatic sync stops capture and clears pending content.
 
 A versioned, non-daemon Shizuku UserService reads clipboard descriptions once per second off the app's main thread. It reads payloads only after a change, establishes a startup baseline, skips sensitive clips, prefers images, and opens image URIs as shell. Its narrow AIDL API exposes metadata and bounded read-only `ParcelFileDescriptor` streams. Binding generations reject late callbacks; permission loss, binder death, and bind timeout trigger actionable states and recovery. Wireless debugging turns off by default after a healthy call. Foreground and explicit send paths remain usable without Shizuku.
 

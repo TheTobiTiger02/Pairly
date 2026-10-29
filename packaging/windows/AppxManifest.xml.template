@@ -32,7 +32,7 @@
   <Applications>
     <Application
       Id="App"
-      Executable="SmartphoneLink.Windows.exe"
+      Executable="Pairly.Windows.exe"
       EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
         AppListEntry="default"
@@ -52,18 +52,18 @@
       <Extensions>
         <uap5:Extension
           Category="windows.appExecutionAlias"
-          Executable="SmartphoneLink.Windows.exe"
+          Executable="Pairly.Windows.exe"
           EntryPoint="Windows.FullTrustApplication">
           <uap5:AppExecutionAlias>
-            <uap5:ExecutionAlias Alias="SmartphoneLink.exe" />
+            <uap5:ExecutionAlias Alias="Pairly.exe" />
           </uap5:AppExecutionAlias>
         </uap5:Extension>
         <!-- Sign-in startup the user controls in Settings > Apps > Startup; the app enables it after pairing. -->
         <uap5:Extension
           Category="windows.startupTask"
-          Executable="SmartphoneLink.Windows.exe"
+          Executable="Pairly.Windows.exe"
           EntryPoint="Windows.FullTrustApplication">
-          <uap5:StartupTask TaskId="SmartphoneLinkStartup" Enabled="false" DisplayName="__DISPLAY_NAME__" />
+          <uap5:StartupTask TaskId="PairlyStartup" Enabled="false" DisplayName="__DISPLAY_NAME__" />
         </uap5:Extension>
       </Extensions>
     </Application>

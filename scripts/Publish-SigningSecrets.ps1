@@ -1,9 +1,9 @@
 [CmdletBinding()]
 param(
-    [string] $Repository = 'TheTobiTiger02/Smartphone-Link',
+    [string] $Repository = 'TheTobiTiger02/Pairly',
     [string] $SigningDirectory = [System.IO.Path]::Combine(
         [Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData),
-        'SmartphoneLink',
+        'Pairly',
         'Signing')
 )
 

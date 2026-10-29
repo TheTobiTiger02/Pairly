@@ -1,6 +1,6 @@
 # Privacy policy
 
-Smartphone Link connects your own Android phones to your own Windows PC over your local network. It has no accounts, no cloud service, no analytics, and no advertising.
+Pairly connects your own Android phones to your own Windows PC over your local network. It has no accounts, no cloud service, no analytics, and no advertising.
 
 ## What the apps access
 
@@ -28,4 +28,4 @@ Uninstalling the apps removes their stored data. On the phone, **Settings → Fo
 
 ## Contact
 
-Questions: open an issue at https://github.com/TheTobiTiger02/Smartphone-Link/issues.
+Questions: open an issue at https://github.com/TheTobiTiger02/Pairly/issues.

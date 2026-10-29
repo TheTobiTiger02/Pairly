@@ -52,8 +52,8 @@ Productivity (subcategory: none)
 
 ## Privacy policy URL
 
-https://github.com/TheTobiTiger02/Smartphone-Link/blob/main/PRIVACY.md
+https://github.com/TheTobiTiger02/Pairly/blob/main/PRIVACY.md
 
 ## Website / support contact
 
-https://github.com/TheTobiTiger02/Smartphone-Link/issues
+https://github.com/TheTobiTiger02/Pairly/issues

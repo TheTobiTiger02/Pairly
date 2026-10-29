@@ -133,8 +133,8 @@ foreach ($asset in $assets) {
         -OpaqueBackground:$asset.Opaque
 }
 
-$iconPng = [System.IO.Path]::Combine($resolvedOutput, '.SmartphoneLink.icon.png')
-$iconPath = [System.IO.Path]::Combine($resolvedOutput, 'SmartphoneLink.ico')
+$iconPng = [System.IO.Path]::Combine($resolvedOutput, '.Pairly.icon.png')
+$iconPath = [System.IO.Path]::Combine($resolvedOutput, 'Pairly.ico')
 New-LinkedScreenAsset -Path $iconPng -Width 256 -Height 256
 $iconBytes = [System.IO.File]::ReadAllBytes($iconPng)
 $iconStream = [System.IO.File]::Create($iconPath)

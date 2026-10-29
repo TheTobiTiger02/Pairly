@@ -6,8 +6,8 @@ Run from the repository root:
 
 ```powershell
 $env:DOTNET_CLI_HOME = (Get-Location).Path
-dotnet build SmartphoneLink.sln --configuration Release
-dotnet run --project tests/SmartphoneLink.Tests/SmartphoneLink.Tests.csproj --configuration Release
+dotnet build Pairly.sln --configuration Release
+dotnet run --project tests/Pairly.Tests/Pairly.Tests.csproj --configuration Release
 
 Push-Location src\android
 .\gradlew.bat :app:testDebugUnitTest :app:assembleDebug :app:assembleRelease
@@ -20,7 +20,7 @@ Android unit tests cover pinned discovery identity, endpoint formatting, v1 trus
 
 ## Background clipboard matrix
 
-Use one Windows PC and two physical Android devices with Smartphone Link backgrounded, Samsung or another normal keyboard selected, Wireless debugging off, and no mirror session. Record actual evidence and unrun cases in `docs/clipboard-validation.md`.
+Use one Windows PC and two physical Android devices with Pairly backgrounded, Samsung or another normal keyboard selected, Wireless debugging off, and no mirror session. Record actual evidence and unrun cases in `docs/clipboard-validation.md`.
 
 - Copy text and an image from each phone, and from Windows. Verify the other two native clipboards and exactly one relay publication per copy.
 - Keep a received Android image on the clipboard for more than ten minutes, then paste it into another app.

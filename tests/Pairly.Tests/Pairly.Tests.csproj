@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\shared\Pairly.Protocol\Pairly.Protocol.csproj" />
+    <ProjectReference Include="..\..\src\shared\Pairly.Core\Pairly.Core.csproj" />
+    <ProjectReference Include="..\..\src\windows\Pairly.Server\Pairly.Server.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\src\windows\Pairly.Windows\WindowsClipboardSync.cs" Link="WindowsClipboardSync.cs" />
+    <ProjectReference Include="..\..\src\windows\Pairly.Media\Pairly.Media.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "dev.smartphonelink.streamcore"
+    namespace = "dev.pairly.streamcore"
     compileSdk = 36
 
     defaultConfig {

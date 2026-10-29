@@ -1,10 +1,10 @@
 using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text.Json;
-using SmartphoneLink.Core;
-using SmartphoneLink.Media;
-using SmartphoneLink.Server;
-using SmartphoneLink.Server.Streaming;
+using Pairly.Core;
+using Pairly.Media;
+using Pairly.Server;
+using Pairly.Server.Streaming;
 
 namespace MirrorStreamProbe;
 
@@ -35,7 +35,7 @@ internal static class Program
             ArgString(args, "--exclude", string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries),
             StringComparer.Ordinal);
 
-        var server = new SmartphoneLinkServer();
+        var server = new PairlyServer();
         try
         {
             await server.StartAsync();
@@ -46,7 +46,7 @@ internal static class Program
             return 1;
         }
 
-        using var http = new HttpClient { BaseAddress = new Uri(SmartphoneLinkServer.DefaultHttpUrl) };
+        using var http = new HttpClient { BaseAddress = new Uri(PairlyServer.DefaultHttpUrl) };
 
         var identity = await http.GetFromJsonAsync<JsonElement>("/");
         Console.WriteLine($"hostId       {identity.GetProperty("hostId").GetString()}");

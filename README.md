@@ -1,6 +1,6 @@
 # Pairly
 
-Pairly (formerly Smartphone Link; the code still uses the `SmartphoneLink` name) is a Windows + Android companion app for connecting multiple trusted Android phones to one PC on the same network. The desktop app uses WPF and an embedded ASP.NET Core host; the Android app uses Jetpack Compose. Screen mirroring remains WebRTC + MediaProjection + WebView2.
+Pairly (formerly Smartphone Link) is a Windows + Android companion app for connecting multiple trusted Android phones to one PC on the same network. The desktop app uses WPF and an embedded ASP.NET Core host; the Android app uses Jetpack Compose. Screen mirroring remains WebRTC + MediaProjection + WebView2.
 
 ## Current product
 
@@ -11,37 +11,37 @@ Pairly (formerly Smartphone Link; the code still uses the `SmartphoneLink` name)
 - Selected-phone photo and notification views with snapshot reconciliation, richer grouping metadata, cursor paging, and bounded caches.
 - One responsive mirror at a time with typed configuration, telemetry, leases, retry/ICE recovery, aspect/rotation preservation, H.264 preference, VP8 fallback, and adaptive quality.
 
-Android background clipboard sync requires Shizuku to be installed, running, and allowed for Smartphone Link. Start it once through Wireless debugging; the clipboard helper turns Wireless debugging off by default after a healthy call. Keep Developer options and USB debugging enabled, and follow Shizuku's restart guidance. Normal keyboards and a closed phone activity are supported. Without Shizuku, foreground capture and Share/notification/Quick Settings sending remain available. Sensitive Android clips are skipped.
+Android background clipboard sync requires Shizuku to be installed, running, and allowed for Pairly. Start it once through Wireless debugging; the clipboard helper turns Wireless debugging off by default after a healthy call. Keep Developer options and USB debugging enabled, and follow Shizuku's restart guidance. Normal keyboards and a closed phone activity are supported. Without Shizuku, foreground capture and Share/notification/Quick Settings sending remain available. Sensitive Android clips are skipped.
 
 ## Repository layout
 
-- `src/shared/SmartphoneLink.Protocol` — versioned JSON envelopes and payload contracts.
-- `src/shared/SmartphoneLink.Core` — trust, clipboard, media, notification, SMS, transfer, and permission services.
-- `src/windows/SmartphoneLink.Server` — embedded loopback management API plus pinned LAN WSS device transport.
-- `src/windows/SmartphoneLink.Host` — optional server-only developer wrapper.
-- `src/windows/SmartphoneLink.Windows` — WPF desktop app; this is the normal Windows entry point.
+- `src/shared/Pairly.Protocol` — versioned JSON envelopes and payload contracts.
+- `src/shared/Pairly.Core` — trust, clipboard, media, notification, SMS, transfer, and permission services.
+- `src/windows/Pairly.Server` — embedded loopback management API plus pinned LAN WSS device transport.
+- `src/windows/Pairly.Host` — optional server-only developer wrapper.
+- `src/windows/Pairly.Windows` — WPF desktop app; this is the normal Windows entry point.
 - `src/android` — Kotlin + Jetpack Compose companion app.
-- `tests/SmartphoneLink.Tests` — dependency-free .NET protocol/core/server test harness.
+- `tests/Pairly.Tests` — dependency-free .NET protocol/core/server test harness.
 - `packaging/windows` and `scripts` — private MSIX/APK signing and packaging workflow.
 
 ## Build and test
 
 ```powershell
 $env:DOTNET_CLI_HOME = (Get-Location).Path
-dotnet build SmartphoneLink.sln --configuration Release
-dotnet run --project tests/SmartphoneLink.Tests/SmartphoneLink.Tests.csproj --configuration Release
+dotnet build Pairly.sln --configuration Release
+dotnet run --project tests/Pairly.Tests/Pairly.Tests.csproj --configuration Release
 
 Push-Location src\android
 .\gradlew.bat :app:testDebugUnitTest :app:assembleDebug :app:assembleRelease
 Pop-Location
 ```
 
-The unsigned local outputs are under each project’s `bin` or `build/outputs` directory. Launch only `SmartphoneLink.Windows.exe` for the normal app; it owns the embedded host lifecycle.
+The unsigned local outputs are under each project’s `bin` or `build/outputs` directory. Launch only `Pairly.Windows.exe` for the normal app; it owns the embedded host lifecycle.
 
 ## Install
 
 - **Windows:** install from the Microsoft Store. The Store keeps the app updated.
-- **Android:** install `SmartphoneLink.apk` from the [latest release](https://github.com/TheTobiTiger02/Smartphone-Link/releases/latest). The app checks for new releases every 12 hours and from **Settings → Check for updates**. The first update asks for one confirmation; later updates install without prompting on Android 12+.
+- **Android:** install `Pairly.apk` from the [latest release](https://github.com/TheTobiTiger02/Pairly/releases/latest). The app checks for new releases every 12 hours and from **Settings → Check for updates**. The first update asks for one confirmation; later updates install without prompting on Android 12+.
 
 See the [privacy policy](PRIVACY.md).
 

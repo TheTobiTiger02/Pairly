@@ -7,7 +7,7 @@ small server started with shell rights instead of the installed app. Compared wi
 |---|---|---|
 | Screen capture | No prompt, no cast icon, works with the screen off | MediaProjection prompt each session |
 | Touch | Real injected events, multi-touch, exact paths | Accessibility strokes |
-| Keyboard | Real key events; non-ASCII text via clipboard + paste | Accessibility text editing or the Smartphone Link keyboard |
+| Keyboard | Real key events; non-ASCII text via clipboard + paste | Accessibility text editing or the Pairly keyboard |
 | App windows | Each app on its own virtual display, one PC window per app | Not available |
 | Phone sound | Not yet (app mode only) | Playback capture |
 
@@ -20,10 +20,10 @@ and says so. App windows ("Open in window" on the Apps page) need ADB mode.
 1. `adb devices -l` finds the phone by model (as reported at pairing). The mDNS serial is preferred
    over ip:port, because Samsung changes the port whenever wireless debugging is toggled.
 2. The server (`src/android/server`, an APK used only as a dex container) is pushed to
-   `/data/local/tmp/smartphonelink-server-<sha256 prefix>.jar`, once per build.
+   `/data/local/tmp/pairly-server-<sha256 prefix>.jar`, once per build.
 3. `adb reverse tcp:7819 tcp:7819` points the phone's loopback at the PC's stream listener.
 4. The PC issues single-use video and control tickets and starts
-   `SLK_ARGS='...' CLASSPATH=<jar> app_process / dev.smartphonelink.server.Server`.
+   `SLK_ARGS='...' CLASSPATH=<jar> app_process / dev.pairly.server.Server`.
 5. The server dials back with the tickets, streams H.264 records, and prints
    `SLK_FORMAT codec width height rotation displayId` on stdout, which the PC turns into the same
    format announcement app mode sends over the control socket. stderr lines go to Diagnostics.

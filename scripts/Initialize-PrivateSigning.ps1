@@ -2,7 +2,7 @@
 param(
     [string] $SigningDirectory = [System.IO.Path]::Combine(
         [Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData),
-        'SmartphoneLink',
+        'Pairly',
         'Signing'),
     [switch] $Force
 )
@@ -14,13 +14,13 @@ if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) {
 }
 
 $resolvedSigningDirectory = [System.IO.Path]::GetFullPath($SigningDirectory)
-$androidKeyStore = [System.IO.Path]::Combine($resolvedSigningDirectory, 'smartphone-link-release.p12')
-$windowsPfx = [System.IO.Path]::Combine($resolvedSigningDirectory, 'SmartphoneLink.PrivateRelease.pfx')
-$windowsCer = [System.IO.Path]::Combine($resolvedSigningDirectory, 'SmartphoneLink.PrivateRelease.cer')
+$androidKeyStore = [System.IO.Path]::Combine($resolvedSigningDirectory, 'pairly-release.p12')
+$windowsPfx = [System.IO.Path]::Combine($resolvedSigningDirectory, 'Pairly.PrivateRelease.pfx')
+$windowsCer = [System.IO.Path]::Combine($resolvedSigningDirectory, 'Pairly.PrivateRelease.cer')
 $secretFile = [System.IO.Path]::Combine($resolvedSigningDirectory, 'release-password.dpapi')
 $metadataFile = [System.IO.Path]::Combine($resolvedSigningDirectory, 'signing-metadata.json')
-$androidAlias = 'smartphone-link-release'
-$publisher = 'CN=Smartphone Link Private Release'
+$androidAlias = 'pairly-release'
+$publisher = 'CN=Pairly Private Release'
 
 $existingFiles = @($androidKeyStore, $windowsPfx, $windowsCer, $secretFile, $metadataFile) |
     Where-Object { Test-Path -LiteralPath $_ }
@@ -70,7 +70,7 @@ try {
         -keyalg RSA `
         -keysize 4096 `
         -validity 10000 `
-        -dname 'CN=Smartphone Link Private Release, OU=Private Distribution, O=Smartphone Link, C=DE'
+        -dname 'CN=Pairly Private Release, OU=Private Distribution, O=Pairly, C=DE'
     if ($LASTEXITCODE -ne 0) {
         throw "keytool failed with exit code $LASTEXITCODE."
     }
@@ -85,7 +85,7 @@ try {
         -KeyExportPolicy Exportable `
         -TextExtension @('2.5.29.37={text}1.3.6.1.5.5.7.3.3') `
         -CertStoreLocation 'Cert:\CurrentUser\My' `
-        -FriendlyName 'Smartphone Link private MSIX signing' `
+        -FriendlyName 'Pairly private MSIX signing' `
         -NotAfter ((Get-Date).AddYears(10))
 
     Export-PfxCertificate -Cert $certificate -FilePath $windowsPfx -Password $securePassword -Force | Out-Null

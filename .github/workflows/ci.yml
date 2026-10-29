@@ -14,9 +14,9 @@ jobs:
         with:
           dotnet-version: 9.0.x
       - name: Build
-        run: dotnet build SmartphoneLink.sln --configuration Release
+        run: dotnet build Pairly.sln --configuration Release
       - name: Test harness
-        run: dotnet run --project tests/SmartphoneLink.Tests/SmartphoneLink.Tests.csproj --configuration Release --no-build
+        run: dotnet run --project tests/Pairly.Tests/Pairly.Tests.csproj --configuration Release --no-build
 
   android:
     runs-on: ubuntu-latest

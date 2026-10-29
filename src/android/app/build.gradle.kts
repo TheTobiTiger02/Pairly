@@ -16,21 +16,21 @@ fun signingInput(propertyName: String, fileKey: String): String? =
         ?: System.getenv(propertyName)
         ?: signingProperties.getProperty(fileKey)
 
-val releaseStorePath = signingInput("SMARTPHONE_LINK_ANDROID_KEYSTORE", "storeFile")
-val releaseStorePassword = signingInput("SMARTPHONE_LINK_ANDROID_STORE_PASSWORD", "storePassword")
-val releaseKeyAlias = signingInput("SMARTPHONE_LINK_ANDROID_KEY_ALIAS", "keyAlias")
-val releaseKeyPassword = signingInput("SMARTPHONE_LINK_ANDROID_KEY_PASSWORD", "keyPassword")
+val releaseStorePath = signingInput("PAIRLY_ANDROID_KEYSTORE", "storeFile")
+val releaseStorePassword = signingInput("PAIRLY_ANDROID_STORE_PASSWORD", "storePassword")
+val releaseKeyAlias = signingInput("PAIRLY_ANDROID_KEY_ALIAS", "keyAlias")
+val releaseKeyPassword = signingInput("PAIRLY_ANDROID_KEY_PASSWORD", "keyPassword")
 
 android {
-    namespace = "dev.smartphonelink.android"
+    namespace = "dev.pairly.android"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "dev.smartphonelink.android"
+        applicationId = "dev.pairly.android"
         minSdk = 26
         targetSdk = 36
-        versionCode = providers.gradleProperty("SmartphoneLinkVersionCode").orNull?.toIntOrNull() ?: 10002
-        versionName = providers.gradleProperty("SmartphoneLinkVersionName").orNull ?: "1.0.1.1"
+        versionCode = providers.gradleProperty("PairlyVersionCode").orNull?.toIntOrNull() ?: 10002
+        versionName = providers.gradleProperty("PairlyVersionName").orNull ?: "1.0.1.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

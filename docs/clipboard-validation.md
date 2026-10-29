@@ -1,6 +1,6 @@
 # Background clipboard validation
 
-Status: implementation, automated checks, and physical clipboard acceptance passed. Text and still images pasted in WhatsApp between Windows, the S25, and the S21 with Smartphone Link backgrounded, normal keyboards selected, Wireless debugging off, and no mirror running. The final isolated copies each produced one relay publication and successful application on both recipients, without recipient republication or new capture errors.
+Status: implementation, automated checks, and physical clipboard acceptance passed. Text and still images pasted in WhatsApp between Windows, the S25, and the S21 with Pairly backgrounded, normal keyboards selected, Wireless debugging off, and no mirror running. The final isolated copies each produced one relay publication and successful application on both recipients, without recipient republication or new capture errors.
 
 ## Environment
 
@@ -31,8 +31,8 @@ Coverage includes helper lifecycle and stale callbacks, startup baselines, sensi
 Commands:
 
 ```powershell
-dotnet build SmartphoneLink.sln --configuration Release --nologo
-dotnet tests/SmartphoneLink.Tests/bin/Release/net9.0-windows/SmartphoneLink.Tests.dll
+dotnet build Pairly.sln --configuration Release --nologo
+dotnet tests/Pairly.Tests/bin/Release/net9.0-windows/Pairly.Tests.dll
 # From src/android, with Android Studio JBR and the Android SDK configured:
 ./gradlew.bat :app:testDebugUnitTest :app:assembleDebug :app:assembleRelease --console=plain
 ```
@@ -69,13 +69,13 @@ The S25 clock was ahead of the host, causing an image transfer to be rejected as
 
 Intermittent image-read failures were traced to revoked shell URI access when the clipboard changed during reading. On the S21, a controlled native probe read a 226-byte PNG successfully, replaced the clipboard, and then obtained zero bytes plus a FileProvider permission denial when reopening the old URI. Earlier helper errors had matching native permission-denial logs. Capture now checks both the native clipboard signature and content version before accepting either a result or a failure. A superseded read is discarded; a failure for the current clip remains visible. This guard covers both Shizuku and focused capture. The new regression exercises native replacement, remote application during a read, helper replacement, and current-item failures. Existing tests still verify that edited content carrying stale origin extras is captured.
 
-Earlier Samsung sharing runs independently published identical image pixels on the other phone before our relay delivery arrived, obscuring peer-path validation. The controlled 01:09 S25 Gallery test established the S21's native clipboard source as Smartphone Link, with both recipients applying the same item. The final debugging-off matrix then confirmed all four phone-origin copies with one publication each.
+Earlier Samsung sharing runs independently published identical image pixels on the other phone before our relay delivery arrived, obscuring peer-path validation. The controlled 01:09 S25 Gallery test established the S21's native clipboard source as Pairly, with both recipients applying the same item. The final debugging-off matrix then confirmed all four phone-origin copies with one publication each.
 
 Earlier Windows image activity included pairs of identical publications without a controlled native-copy count. A controlled single Windows copy produced one native sequence and one publication. A separate six-image copy sequence produced six image publications followed by the expected text publication, with no continuing loop. These controlled checks did not reproduce duplicate capture for one Windows copy.
 
 ## State preservation
 
-Compared again after Windows restarted with `C:/Temp/smartphone-link-clipboard-before-20261012/runtime-state`:
+Compared again after Windows restarted with `C:/Temp/pairly-clipboard-before-20261012/runtime-state`:
 
 - Host identity JSON is byte-identical.
 - The underlying host certificate is unchanged and retains its private key. PFX container bytes can differ because the existing startup path exports it again with new encryption randomness.

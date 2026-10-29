@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- The Windows SDK projection provides StartupTask for the packaged (Store) app. -->
+    <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <!-- WinForms uses the SDK setting; WPF/down-level Windows use the explicit manifest fallback. -->
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\Pairly.ico</ApplicationIcon>
+    <AssemblyName>Pairly.Windows</AssemblyName>
+    <RootNamespace>Pairly.Windows</RootNamespace>
+    <Product>Pairly</Product>
+    <Title>Pairly</Title>
+    <Description>A private Windows companion for trusted Android devices.</Description>
+    <Company>Pairly</Company>
+    <Authors>Pairly</Authors>
+    <Copyright>Copyright (c) 2026 Pairly</Copyright>
+    <VersionPrefix>1.0.1.1</VersionPrefix>
+    <NeutralLanguage>en</NeutralLanguage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Pairly.Protocol\Pairly.Protocol.csproj" />
+    <ProjectReference Include="..\..\shared\Pairly.Core\Pairly.Core.csproj" />
+    <ProjectReference Include="..\Pairly.Server\Pairly.Server.csproj" />
+    <ProjectReference Include="..\Pairly.Media\Pairly.Media.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Assets\PairlyMark.svg" CopyToOutputDirectory="PreserveNewest" />
+    <None Remove="Assets\Pairly.ico" />
+    <Resource Include="Assets\Pairly.ico" />
+  </ItemGroup>
+
+  <!-- ADB mode's phone-side server, built by `gradlew :server:assembleRelease`. Optional: without
+       it the app still works, in app mode only. -->
+  <ItemGroup Condition="Exists('..\..\android\server\build\outputs\apk\release\server-release.apk')">
+    <None Include="..\..\android\server\build\outputs\apk\release\server-release.apk" Link="adb\pairly-server.jar" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

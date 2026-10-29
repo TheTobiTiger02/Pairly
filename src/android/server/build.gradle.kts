@@ -5,13 +5,13 @@ plugins {
 
 // The ADB-side server. Built as an APK because an APK is a zip with classes.dex inside, which is
 // exactly what app_process needs on its CLASSPATH; it is never installed. The PC pushes it to
-// /data/local/tmp and runs `app_process / dev.smartphonelink.server.Server` with shell rights.
+// /data/local/tmp and runs `app_process / dev.pairly.server.Server` with shell rights.
 android {
-    namespace = "dev.smartphonelink.server"
+    namespace = "dev.pairly.server"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "dev.smartphonelink.server"
+        applicationId = "dev.pairly.server"
         minSdk = 26
         targetSdk = 36
         versionCode = 1

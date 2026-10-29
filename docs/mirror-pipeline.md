@@ -68,10 +68,10 @@ follow a picture are attributed to the access unit they precede. Both rules are 
 
 | File | Responsibility |
 | --- | --- |
-| `src/windows/SmartphoneLink.Media/AnnexBReader.cs` | Splits an elementary stream into access units; extracts SPS/PPS for the input media type. |
-| `src/windows/SmartphoneLink.Media/D3D11Context.cs` | The one D3D11 device shared by decoder and presenter, with multithread protection and an `IMFDXGIDeviceManager`. |
-| `src/windows/SmartphoneLink.Media/VideoDecoder.cs` | MFT selection, D3D11 binding, type negotiation, and both the synchronous and asynchronous calling contracts. |
-| `src/windows/SmartphoneLink.Media/NV12Presenter.cs` | Two shader resource views over one NV12 texture, BT.709 conversion in the pixel shader, flip-model present. |
+| `src/windows/Pairly.Media/AnnexBReader.cs` | Splits an elementary stream into access units; extracts SPS/PPS for the input media type. |
+| `src/windows/Pairly.Media/D3D11Context.cs` | The one D3D11 device shared by decoder and presenter, with multithread protection and an `IMFDXGIDeviceManager`. |
+| `src/windows/Pairly.Media/VideoDecoder.cs` | MFT selection, D3D11 binding, type negotiation, and both the synchronous and asynchronous calling contracts. |
+| `src/windows/Pairly.Media/NV12Presenter.cs` | Two shader resource views over one NV12 texture, BT.709 conversion in the pixel shader, flip-model present. |
 | `tools/MirrorDecodeSpike/` | The harness above. Not shipped. |
 
 ## Shared encoder module

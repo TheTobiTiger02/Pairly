@@ -4,7 +4,7 @@ Windows ships through the Microsoft Store, which signs, hosts, and updates the p
 
 ## Android signing key
 
-The Android key is durable: replacing it prevents installed apps from receiving in-place updates. It lives outside the repository under `%LOCALAPPDATA%\SmartphoneLink\Signing`, created once by:
+The Android key is durable: replacing it prevents installed apps from receiving in-place updates. It lives outside the repository under `%LOCALAPPDATA%\Pairly\Signing`, created once by:
 
 ```powershell
 .\scripts\Initialize-PrivateSigning.ps1
@@ -33,7 +33,7 @@ This sets `SIGNING_PASSWORD`, `ANDROID_KEYSTORE_B64`, and `ANDROID_KEY_ALIAS`. V
    ```
 
 3. Push a tag (see below). The workflow builds the Store package and attaches it to the run as the `...-store-msix` artifact.
-4. Create the first submission by hand: pricing, markets, age rating, privacy policy URL (`https://github.com/TheTobiTiger02/Smartphone-Link/blob/main/PRIVACY.md`), listing and screenshots, and the `runFullTrust` justification ("Desktop companion app that hosts a LAN server for paired phones"). Upload the MSIX from the artifact.
+4. Create the first submission by hand: pricing, markets, age rating, privacy policy URL (`https://github.com/TheTobiTiger02/Pairly/blob/main/PRIVACY.md`), listing and screenshots, and the `runFullTrust` justification ("Desktop companion app that hosts a LAN server for paired phones"). Upload the MSIX from the artifact.
 5. For automated submissions, go to **Account settings → User management → Microsoft Entra applications**, add an application with the **Manager** role, and create a client key. Then:
 
    ```powershell
@@ -55,12 +55,12 @@ git push origin v1.2.0
 
 The tag is the single version source: the MSIX becomes `1.2.0.0` (the Store requires the last part to be 0), Android `versionName` `1.2.0` and `versionCode` `10200` (`major*10000 + minor*100 + patch`). Minor and patch must stay below 100, and every tag must be higher than the previous one.
 
-The workflow submits the MSIX to the Store, where it appears after certification (usually 1–3 business days), and creates a GitHub release with `SmartphoneLink.apk`.
+The workflow submits the MSIX to the Store, where it appears after certification (usually 1–3 business days), and creates a GitHub release with `Pairly.apk`.
 
 ## Automatic updates
 
 - **Windows:** the Microsoft Store updates installed copies.
-- **Android:** the app queries the GitHub latest-release API every 12 hours from the connection service and from **Settings → Check for updates**, then installs `SmartphoneLink.apk` through `PackageInstaller`. Android asks for confirmation until the app is its own installer of record; after the first self-update, Android 12+ installs later updates without prompting. Debug builds never self-update.
+- **Android:** the app queries the GitHub latest-release API every 12 hours from the connection service and from **Settings → Check for updates**, then installs `Pairly.apk` through `PackageInstaller`. Android asks for confirmation until the app is its own installer of record; after the first self-update, Android 12+ installs later updates without prompting. Debug builds never self-update.
 
 ## Local builds
 

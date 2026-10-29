@@ -1,8 +1,8 @@
 -keepattributes Signature,InnerClasses,EnclosingMethod
 
 # Shizuku constructs the user service in a separate shell process by class name.
--keep class dev.smartphonelink.android.features.clipboard.ClipboardShizukuService { *; }
--keep class dev.smartphonelink.android.features.clipboard.IClipboardShizuku$Stub { *; }
+-keep class dev.pairly.android.features.clipboard.ClipboardShizukuService { *; }
+-keep class dev.pairly.android.features.clipboard.IClipboardShizuku$Stub { *; }
 
 # WebRTC exposes Java classes and callbacks to native code by name.
 -keep class org.webrtc.** { *; }

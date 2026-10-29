@@ -73,8 +73,8 @@ jobs:
         if: env.STORE_IDENTITY_NAME != ''
         uses: actions/upload-artifact@v4
         with:
-          name: SmartphoneLink-${{ steps.version.outputs.name }}-store-msix
-          path: artifacts/release/windows/SmartphoneLink.msix
+          name: Pairly-${{ steps.version.outputs.name }}-store-msix
+          path: artifacts/release/windows/Pairly.msix
 
       - name: Set up Microsoft Store CLI
         if: env.STORE_PRODUCT_ID != '' && env.STORE_IDENTITY_NAME != ''
@@ -91,7 +91,7 @@ jobs:
         run: |
           msstore reconfigure --tenantId $env:STORE_TENANT_ID --sellerId $env:STORE_SELLER_ID --clientId $env:STORE_CLIENT_ID --clientSecret $env:STORE_CLIENT_SECRET
           if ($LASTEXITCODE -ne 0) { throw "msstore reconfigure failed with exit code $LASTEXITCODE." }
-          msstore publish artifacts/release/windows/SmartphoneLink.msix -id $env:STORE_PRODUCT_ID
+          msstore publish artifacts/release/windows/Pairly.msix -id $env:STORE_PRODUCT_ID
           if ($LASTEXITCODE -ne 0) { throw "msstore publish failed with exit code $LASTEXITCODE." }
 
       - name: Publish GitHub release
@@ -100,13 +100,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           $notes = if ($env:STORE_PRODUCT_ID) {
-            "Windows: [Microsoft Store](https://apps.microsoft.com/detail/$env:STORE_PRODUCT_ID). The Store update follows once certification passes.`n`nAndroid: install SmartphoneLink.apk; installed apps update themselves."
+            "Windows: [Microsoft Store](https://apps.microsoft.com/detail/$env:STORE_PRODUCT_ID). The Store update follows once certification passes.`n`nAndroid: install Pairly.apk; installed apps update themselves."
           } else {
-            "Android: install SmartphoneLink.apk; installed apps update themselves."
+            "Android: install Pairly.apk; installed apps update themselves."
           }
           gh release create '${{ github.ref_name }}' `
-            artifacts/release/android/SmartphoneLink.apk `
-            --title 'Smartphone Link ${{ steps.version.outputs.name }}' `
+            artifacts/release/android/Pairly.apk `
+            --title 'Pairly ${{ steps.version.outputs.name }}' `
             --notes $notes `
             --generate-notes
 

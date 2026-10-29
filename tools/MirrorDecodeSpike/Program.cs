@@ -5,7 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using SmartphoneLink.Media;
+using Pairly.Media;
 using Vortice.MediaFoundation;
 
 namespace MirrorDecodeSpike;

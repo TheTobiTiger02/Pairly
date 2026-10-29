@@ -1,7 +1,7 @@
 using Windows.ApplicationModel.Calls;
 using Windows.Devices.Enumeration;
 
-// Spike: can Smartphone Link be the PC's Bluetooth hands-free for a phone?
+// Spike: can Pairly be the PC's Bluetooth hands-free for a phone?
 //   hfpprobe            read-only: list phones, ask for access
 //   hfpprobe connect X  register as the phone-line app for phone X and connect its HFP link
 Console.Out.Flush();

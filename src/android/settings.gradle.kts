@@ -14,7 +14,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "SmartphoneLinkAndroid"
+rootProject.name = "PairlyAndroid"
 include(":app")
 include(":streamcore")
 
