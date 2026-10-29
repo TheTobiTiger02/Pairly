@@ -1,70 +1,75 @@
-# Private release signing
+# Releases and signing
 
-Smartphone Link uses one durable private signing identity per platform. The keys are deliberately stored outside the repository because replacing the Android signer prevents an installed app from receiving in-place updates.
+Windows ships through the Microsoft Store, which signs, hosts, and updates the package. Android ships as a signed APK on GitHub Releases and updates itself. Both are built by `.github/workflows/release.yml` when a version tag is pushed.
 
-## One-time setup
+## Android signing key
 
-Run this from the repository root in PowerShell:
+The Android key is durable: replacing it prevents installed apps from receiving in-place updates. It lives outside the repository under `%LOCALAPPDATA%\SmartphoneLink\Signing`, created once by:
 
 ```powershell
 .\scripts\Initialize-PrivateSigning.ps1
 ```
 
-The script creates the Android PKCS#12 keystore, a Windows code-signing certificate, and a DPAPI-protected password under `%LOCALAPPDATA%\SmartphoneLink\Signing`. It does not modify Windows certificate trust. Back up the signing directory securely; it is not sufficient to back up the repository.
+Back up that directory securely, together with the signing password; the `.dpapi` password file only decrypts for the Windows account that created it. Do not distribute the `.p12`, `.pfx`, DPAPI password file, or signing metadata.
 
-The public Windows certificate is safe to distribute. Before the first build, use an elevated PowerShell window to import that `.cer` into **Local Computer → Trusted People** so Windows can validate the private package signature. Do not import it into Trusted Root Certification Authorities. Do not distribute the `.pfx`, Android `.p12`, DPAPI password file, or signing metadata.
-
-## Build and verify both installers
+Copy the key into the repository secrets once (requires `gh auth login`):
 
 ```powershell
-.\scripts\Build-PrivateRelease.ps1
+.\scripts\Publish-SigningSecrets.ps1
 ```
 
-The build is self-contained for Windows, signs both packages, verifies both signatures, and writes:
+This sets `SIGNING_PASSWORD`, `ANDROID_KEYSTORE_B64`, and `ANDROID_KEY_ALIAS`. Values are never printed. GitHub secrets cannot be read back, so the local backup is the only recoverable copy.
 
-- `artifacts/release/windows/SmartphoneLink.msix`
-- `artifacts/release/windows/SmartphoneLink-private-release.cer`
-- `artifacts/release/android/SmartphoneLink.apk`
+## Microsoft Store setup (once)
 
-For the first install on another Windows PC, an administrator must import the public `.cer` into **Local Computer → Trusted People**, then install the MSIX. Do not import the private `.pfx` on another machine.
+1. Register an individual developer account at https://storedeveloper.microsoft.com (free).
+2. In Partner Center, reserve the app name. From **Product management → Product identity**, store the public identity as repository variables:
 
-Version overrides are explicit and do not require source edits:
+   ```powershell
+   gh variable set STORE_IDENTITY_NAME --body '<Package/Identity/Name>'
+   gh variable set STORE_PUBLISHER --body '<Package/Identity/Publisher, CN=...>'
+   gh variable set STORE_PUBLISHER_DISPLAY_NAME --body '<Package/Properties/PublisherDisplayName>'
+   gh variable set STORE_DISPLAY_NAME --body '<reserved app name>'
+   ```
+
+3. Push a tag (see below). The workflow builds the Store package and attaches it to the run as the `...-store-msix` artifact.
+4. Create the first submission by hand: pricing, markets, age rating, privacy policy URL (`https://github.com/TheTobiTiger02/Smartphone-Link/blob/main/PRIVACY.md`), listing and screenshots, and the `runFullTrust` justification ("Desktop companion app that hosts a LAN server for paired phones"). Upload the MSIX from the artifact.
+5. For automated submissions, go to **Account settings → User management → Microsoft Entra applications**, add an application with the **Manager** role, and create a client key. Then:
+
+   ```powershell
+   gh variable set STORE_PRODUCT_ID --body '<Store ID, e.g. 9NXXXXXXXXXX>'
+   gh secret set STORE_TENANT_ID
+   gh secret set STORE_SELLER_ID
+   gh secret set STORE_CLIENT_ID
+   gh secret set STORE_CLIENT_SECRET
+   ```
+
+Until `STORE_IDENTITY_NAME` is set, releases contain Android only. Until `STORE_PRODUCT_ID` is set, the Store package is built but not submitted.
+
+## Releasing
 
 ```powershell
-.\scripts\Build-PrivateRelease.ps1 `
-  -PackageVersion 1.1.0.0 `
-  -AndroidVersionName 1.1.0 `
-  -AndroidVersionCode 10100
+git tag v1.2.0
+git push origin v1.2.0
 ```
 
-Only rotate the signing directory after deciding to require a clean reinstall on every paired phone.
+The tag is the single version source: the MSIX becomes `1.2.0.0` (the Store requires the last part to be 0), Android `versionName` `1.2.0` and `versionCode` `10200` (`major*10000 + minor*100 + patch`). Minor and patch must stay below 100, and every tag must be higher than the previous one.
 
-## Publishing through GitHub Actions
-
-Releases are normally built by `.github/workflows/release.yml` instead of locally.
-
-1. Once, copy the signing identity into the repository secrets (requires `gh auth login`):
-
-   ```powershell
-   .\scripts\Publish-SigningSecrets.ps1
-   ```
-
-   This sets `SIGNING_PASSWORD`, `ANDROID_KEYSTORE_B64`, `ANDROID_KEY_ALIAS`, `WINDOWS_PFX_B64`, `WINDOWS_CER_B64`, and `WINDOWS_PUBLISHER`. Values are never printed.
-
-2. For each release, push a tag:
-
-   ```powershell
-   git tag v1.2.0
-   git push origin v1.2.0
-   ```
-
-   The tag is the single version source: the MSIX becomes `1.2.0.0`, Android `versionName` `1.2.0` and `versionCode` `10200` (`major*10000 + minor*100 + patch`). Minor and patch must stay below 100.
-
-The release contains `SmartphoneLink.msix`, `SmartphoneLink.appinstaller`, `SmartphoneLink-private-release.cer`, and `SmartphoneLink.apk`.
+The workflow submits the MSIX to the Store, where it appears after certification (usually 1–3 business days), and creates a GitHub release with `SmartphoneLink.apk`.
 
 ## Automatic updates
 
-- **Windows** installs from `SmartphoneLink.appinstaller`, which points at `releases/latest/download/SmartphoneLink.appinstaller`. Windows checks it on every launch and in the background and installs newer packages silently. A PC that installed the raw `.msix` must open the `.appinstaller` once to opt in.
-- **Android** queries the GitHub latest-release API every 12 hours from the connection service and from **Settings → Check for updates**, then installs `SmartphoneLink.apk` through `PackageInstaller`. Android requires confirmation until the app is its own installer of record; after the first self-update, Android 12+ installs later updates without prompting. Debug builds never self-update.
+- **Windows:** the Microsoft Store updates installed copies.
+- **Android:** the app queries the GitHub latest-release API every 12 hours from the connection service and from **Settings → Check for updates**, then installs `SmartphoneLink.apk` through `PackageInstaller`. Android asks for confirmation until the app is its own installer of record; after the first self-update, Android 12+ installs later updates without prompting. Debug builds never self-update.
 
-To build a release locally with update metadata, pass `-ReleaseBaseUrl` and `-LatestBaseUrl` to `Build-PrivateRelease.ps1`.
+## Local builds
+
+```powershell
+.\scripts\Build-PrivateRelease.ps1 -PackageVersion 1.2.0.0 -AndroidVersionName 1.2.0 -AndroidVersionCode 10200
+```
+
+`-WindowsPackage` selects the Windows output:
+
+- `Sideload` (default): MSIX signed with the self-signed certificate from the signing directory, plus its `.cer`, for test installs. The certificate must be in **Local Computer → Trusted People** on the test PC.
+- `Store`: unsigned MSIX with the identity from the `STORE_*` environment variables, for manual upload to Partner Center.
+- `None`: Android only.

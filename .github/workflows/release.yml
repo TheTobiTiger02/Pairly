@@ -1,7 +1,11 @@
 name: Release
 
-# Push a tag like v1.2.3 to build, sign and publish both apps. Installed apps update from the
-# latest release: Windows through the .appinstaller file, Android through its in-app updater.
+# Push a tag like v1.2.3 to build and publish both apps. Windows goes to the Microsoft Store, which
+# signs and updates it; Android is attached to the GitHub release and updates through its in-app updater.
+#
+# Repository variables (public Partner Center identity): STORE_IDENTITY_NAME, STORE_PUBLISHER,
+# STORE_PUBLISHER_DISPLAY_NAME, STORE_DISPLAY_NAME, STORE_PRODUCT_ID.
+# Secrets: Android signing, plus STORE_TENANT_ID, STORE_SELLER_ID, STORE_CLIENT_ID, STORE_CLIENT_SECRET.
 on:
   push:
     tags: ['v*.*.*']
@@ -12,6 +16,12 @@ permissions:
 jobs:
   release:
     runs-on: windows-latest
+    env:
+      STORE_IDENTITY_NAME: ${{ vars.STORE_IDENTITY_NAME }}
+      STORE_PUBLISHER: ${{ vars.STORE_PUBLISHER }}
+      STORE_PUBLISHER_DISPLAY_NAME: ${{ vars.STORE_PUBLISHER_DISPLAY_NAME }}
+      STORE_DISPLAY_NAME: ${{ vars.STORE_DISPLAY_NAME }}
+      STORE_PRODUCT_ID: ${{ vars.STORE_PRODUCT_ID }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -35,50 +45,69 @@ jobs:
           "package=$major.$minor.$patch.0" >> $env:GITHUB_OUTPUT
           "code=$($major * 10000 + $minor * 100 + $patch)" >> $env:GITHUB_OUTPUT
 
-      - name: Restore signing material
+      - name: Restore Android signing key
         shell: pwsh
         env:
           ANDROID_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
-          WINDOWS_PFX_B64: ${{ secrets.WINDOWS_PFX_B64 }}
-          WINDOWS_CER_B64: ${{ secrets.WINDOWS_CER_B64 }}
         run: |
           $dir = Join-Path $env:RUNNER_TEMP 'signing'
           New-Item -ItemType Directory -Force -Path $dir | Out-Null
           [IO.File]::WriteAllBytes("$dir\release.p12", [Convert]::FromBase64String($env:ANDROID_KEYSTORE_B64))
-          [IO.File]::WriteAllBytes("$dir\release.pfx", [Convert]::FromBase64String($env:WINDOWS_PFX_B64))
-          [IO.File]::WriteAllBytes("$dir\release.cer", [Convert]::FromBase64String($env:WINDOWS_CER_B64))
-          # Lets signtool verify the self-signed package on this runner.
-          Import-Certificate -FilePath "$dir\release.cer" -CertStoreLocation Cert:\LocalMachine\TrustedPeople | Out-Null
           "SL_ANDROID_KEYSTORE=$dir\release.p12" >> $env:GITHUB_ENV
-          "SL_WINDOWS_PFX=$dir\release.pfx" >> $env:GITHUB_ENV
-          "SL_WINDOWS_CER=$dir\release.cer" >> $env:GITHUB_ENV
 
-      - name: Build and sign
+      - name: Build
         shell: pwsh
         env:
           SL_SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
           SL_ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          SL_WINDOWS_PUBLISHER: ${{ secrets.WINDOWS_PUBLISHER }}
         run: |
-          $repo = 'https://github.com/${{ github.repository }}/releases'
+          # Until the Partner Center identity is configured, release Android only.
+          $windows = if ($env:STORE_IDENTITY_NAME) { 'Store' } else { 'None' }
           .\scripts\Build-PrivateRelease.ps1 `
             -PackageVersion '${{ steps.version.outputs.package }}' `
             -AndroidVersionName '${{ steps.version.outputs.name }}' `
             -AndroidVersionCode ${{ steps.version.outputs.code }} `
-            -ReleaseBaseUrl "$repo/download/${{ github.ref_name }}" `
-            -LatestBaseUrl "$repo/latest/download"
+            -WindowsPackage $windows
 
-      - name: Publish release
+      - name: Keep Store package
+        if: env.STORE_IDENTITY_NAME != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmartphoneLink-${{ steps.version.outputs.name }}-store-msix
+          path: artifacts/release/windows/SmartphoneLink.msix
+
+      - name: Set up Microsoft Store CLI
+        if: env.STORE_PRODUCT_ID != '' && env.STORE_IDENTITY_NAME != ''
+        uses: microsoft/setup-msstore-cli@v1
+
+      - name: Submit to Microsoft Store
+        if: env.STORE_PRODUCT_ID != '' && env.STORE_IDENTITY_NAME != ''
+        shell: pwsh
+        env:
+          STORE_TENANT_ID: ${{ secrets.STORE_TENANT_ID }}
+          STORE_SELLER_ID: ${{ secrets.STORE_SELLER_ID }}
+          STORE_CLIENT_ID: ${{ secrets.STORE_CLIENT_ID }}
+          STORE_CLIENT_SECRET: ${{ secrets.STORE_CLIENT_SECRET }}
+        run: |
+          msstore reconfigure --tenantId $env:STORE_TENANT_ID --sellerId $env:STORE_SELLER_ID --clientId $env:STORE_CLIENT_ID --clientSecret $env:STORE_CLIENT_SECRET
+          if ($LASTEXITCODE -ne 0) { throw "msstore reconfigure failed with exit code $LASTEXITCODE." }
+          msstore publish artifacts/release/windows/SmartphoneLink.msix -id $env:STORE_PRODUCT_ID
+          if ($LASTEXITCODE -ne 0) { throw "msstore publish failed with exit code $LASTEXITCODE." }
+
+      - name: Publish GitHub release
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          $notes = if ($env:STORE_PRODUCT_ID) {
+            "Windows: [Microsoft Store](https://apps.microsoft.com/detail/$env:STORE_PRODUCT_ID). The Store update follows once certification passes.`n`nAndroid: install SmartphoneLink.apk; installed apps update themselves."
+          } else {
+            "Android: install SmartphoneLink.apk; installed apps update themselves."
+          }
           gh release create '${{ github.ref_name }}' `
-            artifacts/release/windows/SmartphoneLink.msix `
-            artifacts/release/windows/SmartphoneLink.appinstaller `
-            artifacts/release/windows/SmartphoneLink-private-release.cer `
             artifacts/release/android/SmartphoneLink.apk `
             --title 'Smartphone Link ${{ steps.version.outputs.name }}' `
+            --notes $notes `
             --generate-notes
 
       - name: Remove signing material

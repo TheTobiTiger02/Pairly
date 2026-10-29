@@ -1,6 +1,7 @@
 using Microsoft.Win32;
 using System.Runtime.InteropServices;
 using System.Text;
+using Windows.ApplicationModel;
 
 namespace SmartphoneLink.Windows;
 
@@ -11,6 +12,8 @@ internal static class StartupRegistration
     private const string RunValueName = "Smartphone Link";
     private const string OptOutValueName = "StartupOptOut";
     private const int AppModelErrorNoPackage = 15700;
+    // Declared in packaging/windows/AppxManifest.xml.template; the user controls it in Settings > Apps > Startup.
+    private const string StartupTaskId = "SmartphoneLinkStartup";
 
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = false)]
     private static extern int GetCurrentPackageFullName(ref int packageFullNameLength, StringBuilder? packageFullName);
@@ -21,6 +24,11 @@ internal static class StartupRegistration
         {
             try
             {
+                if (IsPackaged())
+                {
+                    return GetStartupTask().State is StartupTaskState.Enabled or StartupTaskState.EnabledByPolicy;
+                }
+
                 using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath);
                 return key?.GetValue(RunValueName) is string command
                     && string.Equals(command, ExpectedCommand(), StringComparison.OrdinalIgnoreCase);
@@ -46,6 +54,11 @@ internal static class StartupRegistration
     {
         try
         {
+            if (IsPackaged())
+            {
+                return SetStartupTaskEnabled(enabled, rememberUserChoice);
+            }
+
             using var runKey = Registry.CurrentUser.CreateSubKey(RunKeyPath, writable: true);
             if (enabled)
             {
@@ -92,14 +105,50 @@ internal static class StartupRegistration
         }
     }
 
-    private static string? ExpectedCommand()
+    private static bool SetStartupTaskEnabled(bool enabled, bool rememberUserChoice)
     {
-        if (IsPackaged())
+        var task = GetStartupTask();
+        if (!enabled)
         {
-            // Stable app-execution alias declared by the MSIX package; unlike WindowsApps paths it survives updates.
-            return "SmartphoneLink.exe --background";
+            task.Disable();
+        }
+        else if (task.State is StartupTaskState.Disabled)
+        {
+            // DisabledByUser is left alone: only Windows Settings may turn it back on.
+            task.RequestEnableAsync().AsTask().GetAwaiter().GetResult();
         }
 
+        if (rememberUserChoice)
+        {
+            using var settingsKey = Registry.CurrentUser.CreateSubKey(SettingsKeyPath, writable: true);
+            settingsKey.SetValue(OptOutValueName, enabled ? 0 : 1, RegistryValueKind.DWord);
+        }
+
+        var state = task.State;
+        return enabled
+            ? state is StartupTaskState.Enabled or StartupTaskState.EnabledByPolicy
+            : state is not StartupTaskState.Enabled;
+    }
+
+    /// <summary>A packaged startup task passes no command line, so sign-in launches are detected by activation kind.</summary>
+    public static bool LaunchedByStartupTask()
+    {
+        try
+        {
+            return IsPackaged()
+                && AppInstance.GetActivatedEventArgs()?.Kind == global::Windows.ApplicationModel.Activation.ActivationKind.StartupTask;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static StartupTask GetStartupTask() =>
+        StartupTask.GetAsync(StartupTaskId).AsTask().GetAwaiter().GetResult();
+
+    private static string? ExpectedCommand()
+    {
         var executable = Environment.ProcessPath;
         return string.IsNullOrWhiteSpace(executable) ? null : $"\"{executable}\" --background";
     }

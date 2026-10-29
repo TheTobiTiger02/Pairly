@@ -14,7 +14,8 @@ public partial class App : System.Windows.Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
-        StartHidden = e.Args.Any(argument => string.Equals(argument, "--background", StringComparison.OrdinalIgnoreCase));
+        StartHidden = e.Args.Any(argument => string.Equals(argument, "--background", StringComparison.OrdinalIgnoreCase))
+            || StartupRegistration.LaunchedByStartupTask();
         var userIdentity = WindowsIdentity.GetCurrent().User?.Value ?? Environment.UserName;
         _instanceMutex = new Mutex(false, $@"Local\SmartphoneLink.Host.{userIdentity}");
         try

@@ -7,8 +7,9 @@ param(
         'Signing')
 )
 
-# Copies the local release signing identity into the repository's GitHub Actions secrets so the
-# Release workflow signs with the same keys. Values are piped to `gh` and never printed.
+# Copies the local Android release signing key into the repository's GitHub Actions secrets so the
+# Release workflow signs with the same key. Windows packages are signed by the Microsoft Store.
+# Values are piped to `gh` and never printed.
 
 $ErrorActionPreference = 'Stop'
 
@@ -46,9 +47,6 @@ try {
     Set-RepositorySecret 'SIGNING_PASSWORD' ([Runtime.InteropServices.Marshal]::PtrToStringBSTR($passwordPointer))
     Set-RepositorySecret 'ANDROID_KEYSTORE_B64' (ConvertTo-Base64File $metadata.androidKeyStore)
     Set-RepositorySecret 'ANDROID_KEY_ALIAS' ([string] $metadata.androidAlias)
-    Set-RepositorySecret 'WINDOWS_PFX_B64' (ConvertTo-Base64File $metadata.windowsPfx)
-    Set-RepositorySecret 'WINDOWS_CER_B64' (ConvertTo-Base64File $metadata.windowsCertificate)
-    Set-RepositorySecret 'WINDOWS_PUBLISHER' ([string] $metadata.windowsPublisher)
     Write-Host "Signing secrets stored in $Repository."
 }
 finally {

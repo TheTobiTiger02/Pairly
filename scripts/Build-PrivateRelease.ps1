@@ -10,9 +10,10 @@ param(
         [Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData),
         'SmartphoneLink',
         'Signing'),
-    # When set, also writes SmartphoneLink.appinstaller so installed PCs update from this location.
-    [string] $ReleaseBaseUrl,
-    [string] $LatestBaseUrl
+    # Sideload: self-signed MSIX for local test installs. Store: unsigned MSIX with the Partner
+    # Center identity from STORE_* environment variables; the Store signs it. None: Android only.
+    [ValidateSet('Sideload', 'Store', 'None')]
+    [string] $WindowsPackage = 'Sideload'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -75,7 +76,11 @@ $plainPassword = $null
 try {
     $plainPassword = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($passwordPointer)
 
-    foreach ($requiredPath in @($metadata.androidKeyStore, $metadata.windowsPfx, $metadata.windowsCertificate)) {
+    $requiredPaths = @($metadata.androidKeyStore)
+    if ($WindowsPackage -eq 'Sideload') {
+        $requiredPaths += @($metadata.windowsPfx, $metadata.windowsCertificate)
+    }
+    foreach ($requiredPath in $requiredPaths) {
         if (-not (Test-Path -LiteralPath $requiredPath)) {
             throw "Required signing file '$requiredPath' is missing."
         }
@@ -99,73 +104,92 @@ try {
         Pop-Location
     }
 
-    $windowsProject = [System.IO.Path]::Combine($repositoryRoot, 'src', 'windows', 'SmartphoneLink.Windows', 'SmartphoneLink.Windows.csproj')
-    & dotnet publish $windowsProject `
-        --configuration Release `
-        --runtime win-x64 `
-        --self-contained true `
-        --output $windowsStaging `
-        -p:Version=$AndroidVersionName `
-        -p:DebugType=None `
-        -p:DebugSymbols=false
-    if ($LASTEXITCODE -ne 0) {
-        throw "dotnet publish failed with exit code $LASTEXITCODE."
-    }
-
-    $assetDirectory = [System.IO.Path]::Combine($windowsStaging, 'Assets')
-    & ([System.IO.Path]::Combine($repositoryRoot, 'packaging', 'windows', 'Generate-Assets.ps1')) -OutputDirectory $assetDirectory
-
-    $manifestTemplatePath = [System.IO.Path]::Combine($repositoryRoot, 'packaging', 'windows', 'AppxManifest.xml.template')
-    $manifest = Get-Content -LiteralPath $manifestTemplatePath -Raw
-    $publisher = [System.Security.SecurityElement]::Escape([string] $metadata.windowsPublisher)
-    $manifest = $manifest.Replace('__PUBLISHER__', $publisher).Replace('__VERSION__', $PackageVersion)
-    [System.IO.File]::WriteAllText(
-        [System.IO.Path]::Combine($windowsStaging, 'AppxManifest.xml'),
-        $manifest,
-        [System.Text.UTF8Encoding]::new($false))
-
-    $windowsKitBin = 'C:\Program Files (x86)\Windows Kits\10\bin'
-    $makeAppx = Get-ChildItem -LiteralPath $windowsKitBin -Filter makeappx.exe -Recurse -ErrorAction SilentlyContinue |
-        Where-Object { $_.FullName -match '\\x64\\makeappx\.exe$' } |
-        Sort-Object FullName -Descending |
-        Select-Object -First 1
-    $signTool = Get-ChildItem -LiteralPath $windowsKitBin -Filter signtool.exe -Recurse -ErrorAction SilentlyContinue |
-        Where-Object { $_.FullName -match '\\x64\\signtool\.exe$' } |
-        Sort-Object FullName -Descending |
-        Select-Object -First 1
-    if (-not $makeAppx -or -not $signTool) {
-        throw 'Windows SDK makeappx.exe and signtool.exe are required.'
-    }
-
-    $msixPath = [System.IO.Path]::Combine($windowsOutput, 'SmartphoneLink.msix')
-    & $makeAppx.FullName pack /d $windowsStaging /p $msixPath /o
-    if ($LASTEXITCODE -ne 0) {
-        throw "makeappx failed with exit code $LASTEXITCODE."
-    }
-    & $signTool.FullName sign /fd SHA256 /f $metadata.windowsPfx /p $plainPassword $msixPath
-    if ($LASTEXITCODE -ne 0) {
-        throw "signtool sign failed with exit code $LASTEXITCODE."
-    }
-    & $signTool.FullName verify /pa $msixPath
-    if ($LASTEXITCODE -ne 0) {
-        throw "signtool verification failed with exit code $LASTEXITCODE. In an elevated PowerShell window, import the public CER into Cert:\LocalMachine\TrustedPeople, then retry."
-    }
-    Copy-Item -LiteralPath $metadata.windowsCertificate -Destination ([System.IO.Path]::Combine($windowsOutput, 'SmartphoneLink-private-release.cer')) -Force
-
-    if ($ReleaseBaseUrl) {
-        if (-not $LatestBaseUrl) {
-            throw '-LatestBaseUrl is required with -ReleaseBaseUrl.'
+    $msixPath = $null
+    if ($WindowsPackage -ne 'None') {
+        if ($WindowsPackage -eq 'Store') {
+            foreach ($name in 'STORE_IDENTITY_NAME', 'STORE_PUBLISHER', 'STORE_PUBLISHER_DISPLAY_NAME', 'STORE_DISPLAY_NAME') {
+                if (-not [Environment]::GetEnvironmentVariable($name)) {
+                    throw "$name is required for a Store package; copy it from Partner Center > Product identity."
+                }
+            }
+            $identity = @{
+                Name = $env:STORE_IDENTITY_NAME
+                Publisher = $env:STORE_PUBLISHER
+                PublisherDisplayName = $env:STORE_PUBLISHER_DISPLAY_NAME
+                DisplayName = $env:STORE_DISPLAY_NAME
+            }
         }
-        $appInstallerTemplatePath = [System.IO.Path]::Combine($repositoryRoot, 'packaging', 'windows', 'SmartphoneLink.appinstaller.template')
-        $appInstaller = (Get-Content -LiteralPath $appInstallerTemplatePath -Raw).
-            Replace('__PUBLISHER__', $publisher).
-            Replace('__VERSION__', $PackageVersion).
-            Replace('__RELEASE_BASE_URL__', $ReleaseBaseUrl.TrimEnd('/')).
-            Replace('__LATEST_BASE_URL__', $LatestBaseUrl.TrimEnd('/'))
+        else {
+            $identity = @{
+                Name = 'SmartphoneLink.Private'
+                Publisher = [string] $metadata.windowsPublisher
+                PublisherDisplayName = 'Smartphone Link'
+                DisplayName = 'Smartphone Link'
+            }
+        }
+
+        $windowsProject = [System.IO.Path]::Combine($repositoryRoot, 'src', 'windows', 'SmartphoneLink.Windows', 'SmartphoneLink.Windows.csproj')
+        & dotnet publish $windowsProject `
+            --configuration Release `
+            --runtime win-x64 `
+            --self-contained true `
+            --output $windowsStaging `
+            -p:Version=$AndroidVersionName `
+            -p:DebugType=None `
+            -p:DebugSymbols=false
+        if ($LASTEXITCODE -ne 0) {
+            throw "dotnet publish failed with exit code $LASTEXITCODE."
+        }
+
+        $assetDirectory = [System.IO.Path]::Combine($windowsStaging, 'Assets')
+        & ([System.IO.Path]::Combine($repositoryRoot, 'packaging', 'windows', 'Generate-Assets.ps1')) -OutputDirectory $assetDirectory
+
+        $escape = { param([string] $value) [System.Security.SecurityElement]::Escape($value) }
+        $manifestTemplatePath = [System.IO.Path]::Combine($repositoryRoot, 'packaging', 'windows', 'AppxManifest.xml.template')
+        $manifest = (Get-Content -LiteralPath $manifestTemplatePath -Raw).
+            Replace('__IDENTITY_NAME__', (& $escape $identity.Name)).
+            Replace('__PUBLISHER_DISPLAY_NAME__', (& $escape $identity.PublisherDisplayName)).
+            Replace('__DISPLAY_NAME__', (& $escape $identity.DisplayName)).
+            Replace('__PUBLISHER__', (& $escape $identity.Publisher)).
+            Replace('__VERSION__', $PackageVersion)
         [System.IO.File]::WriteAllText(
-            [System.IO.Path]::Combine($windowsOutput, 'SmartphoneLink.appinstaller'),
-            $appInstaller,
+            [System.IO.Path]::Combine($windowsStaging, 'AppxManifest.xml'),
+            $manifest,
             [System.Text.UTF8Encoding]::new($false))
+
+        $windowsKitBin = 'C:\Program Files (x86)\Windows Kits\10\bin'
+        $makeAppx = Get-ChildItem -LiteralPath $windowsKitBin -Filter makeappx.exe -Recurse -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -match '\\x64\\makeappx\.exe$' } |
+            Sort-Object FullName -Descending |
+            Select-Object -First 1
+        if (-not $makeAppx) {
+            throw 'Windows SDK makeappx.exe is required.'
+        }
+
+        $msixPath = [System.IO.Path]::Combine($windowsOutput, 'SmartphoneLink.msix')
+        & $makeAppx.FullName pack /d $windowsStaging /p $msixPath /o
+        if ($LASTEXITCODE -ne 0) {
+            throw "makeappx failed with exit code $LASTEXITCODE."
+        }
+
+        if ($WindowsPackage -eq 'Sideload') {
+            $signTool = Get-ChildItem -LiteralPath $windowsKitBin -Filter signtool.exe -Recurse -ErrorAction SilentlyContinue |
+                Where-Object { $_.FullName -match '\\x64\\signtool\.exe$' } |
+                Sort-Object FullName -Descending |
+                Select-Object -First 1
+            if (-not $signTool) {
+                throw 'Windows SDK signtool.exe is required.'
+            }
+            & $signTool.FullName sign /fd SHA256 /f $metadata.windowsPfx /p $plainPassword $msixPath
+            if ($LASTEXITCODE -ne 0) {
+                throw "signtool sign failed with exit code $LASTEXITCODE."
+            }
+            & $signTool.FullName verify /pa $msixPath
+            if ($LASTEXITCODE -ne 0) {
+                throw "signtool verification failed with exit code $LASTEXITCODE. In an elevated PowerShell window, import the public CER into Cert:\LocalMachine\TrustedPeople, then retry."
+            }
+            Copy-Item -LiteralPath $metadata.windowsCertificate -Destination ([System.IO.Path]::Combine($windowsOutput, 'SmartphoneLink-private-release.cer')) -Force
+        }
     }
 
     $builtApk = Get-ChildItem -LiteralPath ([System.IO.Path]::Combine($androidRoot, 'app', 'build', 'outputs', 'apk', 'release')) -Filter '*.apk' |
@@ -194,7 +218,9 @@ try {
         throw "Android signature verification failed with exit code $LASTEXITCODE."
     }
 
-    Write-Host "Windows release: $msixPath"
+    if ($msixPath) {
+        Write-Host "Windows release ($WindowsPackage): $msixPath"
+    }
     Write-Host "Android release: $releaseApk"
 }
 finally {

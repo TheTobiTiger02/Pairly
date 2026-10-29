@@ -1070,7 +1070,7 @@
                                                 <TextBlock Text="&#xE895;" Style="{StaticResource SettingsCardGlyph}" />
                                                 <StackPanel VerticalAlignment="Center">
                                                     <TextBlock x:Name="AppVersionText" Text="Smartphone Link" Style="{StaticResource SettingsCardTitle}" />
-                                                    <TextBlock Text="New releases install automatically when the app starts, if it was installed from the .appinstaller file."
+                                                    <TextBlock Text="Updates are installed by the Microsoft Store."
                                                                Style="{StaticResource SettingsCardDescription}" />
                                                 </StackPanel>
                                             </DockPanel>

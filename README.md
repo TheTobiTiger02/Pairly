@@ -40,14 +40,14 @@ The unsigned local outputs are under each project’s `bin` or `build/outputs` d
 
 ## Install
 
-Download the latest assets from [Releases](https://github.com/TheTobiTiger02/Smartphone-Link/releases/latest).
+- **Windows:** install from the Microsoft Store. The Store keeps the app updated.
+- **Android:** install `SmartphoneLink.apk` from the [latest release](https://github.com/TheTobiTiger02/Smartphone-Link/releases/latest). The app checks for new releases every 12 hours and from **Settings → Check for updates**. The first update asks for one confirmation; later updates install without prompting on Android 12+.
 
-- **Windows:** once per PC, import `SmartphoneLink-private-release.cer` into **Local Computer → Trusted People** from an elevated PowerShell (`Import-Certificate -FilePath .\SmartphoneLink-private-release.cer -CertStoreLocation Cert:\LocalMachine\TrustedPeople`). Then open `SmartphoneLink.appinstaller`. Installing through the `.appinstaller` file (not the `.msix`) makes Windows install new releases automatically when the app starts.
-- **Android:** install `SmartphoneLink.apk`. The app checks for new releases every 12 hours and from **Settings → Check for updates**. The first update asks for one confirmation; later updates install without prompting on Android 12+.
+See the [privacy policy](PRIVACY.md).
 
 ## Releases
 
-Pushing a tag like `v1.2.0` runs the Release workflow, which builds, signs and publishes both apps. Signing keys stay outside Git; see `docs/private-release.md` for the one-time setup.
+Pushing a tag like `v1.2.0` runs the Release workflow. It submits the Windows package to the Microsoft Store and publishes the signed Android APK on GitHub. See `docs/private-release.md` for the one-time setup.
 
 Do not replace the Android signing key between releases: an installed app cannot receive an in-place update signed by a different key.
 
