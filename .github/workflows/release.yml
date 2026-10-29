@@ -1,0 +1,87 @@
+name: Release
+
+# Push a tag like v1.2.3 to build, sign and publish both apps. Installed apps update from the
+# latest release: Windows through the .appinstaller file, Android through its in-app updater.
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Derive versions from tag
+        id: version
+        shell: pwsh
+        run: |
+          $tag = '${{ github.ref_name }}'
+          if ($tag -notmatch '^v(\d+)\.(\d+)\.(\d+)$') { throw "Tag '$tag' must look like v1.2.3." }
+          $major = [int] $Matches[1]; $minor = [int] $Matches[2]; $patch = [int] $Matches[3]
+          if ($minor -gt 99 -or $patch -gt 99) { throw 'Minor and patch must be below 100 for the Android versionCode.' }
+          "name=$major.$minor.$patch" >> $env:GITHUB_OUTPUT
+          "package=$major.$minor.$patch.0" >> $env:GITHUB_OUTPUT
+          "code=$($major * 10000 + $minor * 100 + $patch)" >> $env:GITHUB_OUTPUT
+
+      - name: Restore signing material
+        shell: pwsh
+        env:
+          ANDROID_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          WINDOWS_PFX_B64: ${{ secrets.WINDOWS_PFX_B64 }}
+          WINDOWS_CER_B64: ${{ secrets.WINDOWS_CER_B64 }}
+        run: |
+          $dir = Join-Path $env:RUNNER_TEMP 'signing'
+          New-Item -ItemType Directory -Force -Path $dir | Out-Null
+          [IO.File]::WriteAllBytes("$dir\release.p12", [Convert]::FromBase64String($env:ANDROID_KEYSTORE_B64))
+          [IO.File]::WriteAllBytes("$dir\release.pfx", [Convert]::FromBase64String($env:WINDOWS_PFX_B64))
+          [IO.File]::WriteAllBytes("$dir\release.cer", [Convert]::FromBase64String($env:WINDOWS_CER_B64))
+          # Lets signtool verify the self-signed package on this runner.
+          Import-Certificate -FilePath "$dir\release.cer" -CertStoreLocation Cert:\LocalMachine\TrustedPeople | Out-Null
+          "SL_ANDROID_KEYSTORE=$dir\release.p12" >> $env:GITHUB_ENV
+          "SL_WINDOWS_PFX=$dir\release.pfx" >> $env:GITHUB_ENV
+          "SL_WINDOWS_CER=$dir\release.cer" >> $env:GITHUB_ENV
+
+      - name: Build and sign
+        shell: pwsh
+        env:
+          SL_SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+          SL_ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          SL_WINDOWS_PUBLISHER: ${{ secrets.WINDOWS_PUBLISHER }}
+        run: |
+          $repo = 'https://github.com/${{ github.repository }}/releases'
+          .\scripts\Build-PrivateRelease.ps1 `
+            -PackageVersion '${{ steps.version.outputs.package }}' `
+            -AndroidVersionName '${{ steps.version.outputs.name }}' `
+            -AndroidVersionCode ${{ steps.version.outputs.code }} `
+            -ReleaseBaseUrl "$repo/download/${{ github.ref_name }}" `
+            -LatestBaseUrl "$repo/latest/download"
+
+      - name: Publish release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create '${{ github.ref_name }}' `
+            artifacts/release/windows/SmartphoneLink.msix `
+            artifacts/release/windows/SmartphoneLink.appinstaller `
+            artifacts/release/windows/SmartphoneLink-private-release.cer `
+            artifacts/release/android/SmartphoneLink.apk `
+            --title 'Smartphone Link ${{ steps.version.outputs.name }}' `
+            --generate-notes
+
+      - name: Remove signing material
+        if: always()
+        shell: pwsh
+        run: Remove-Item -Recurse -Force (Join-Path $env:RUNNER_TEMP 'signing') -ErrorAction SilentlyContinue

@@ -1,0 +1,35 @@
+bin/
+obj/
+**/build/
+.vs/
+.vscode/
+.idea/
+.gradle/
+.dotnet/
+.templateengine/
+artifacts/release/.staging/
+.signing/
+keystore.properties
+local.properties
+*.user
+*.suo
+*.apk
+*.aab
+*.jks
+*.keystore
+*.pfx
+*.p12
+*.cer
+*.msix
+*.msixbundle
+
+# Local tool state and caches
+.nuget/
+.projectatlas/
+.agents/
+.codex/
+.kotlin/
+*.dpapi
+
+# Build output (releases are published by CI)
+artifacts/

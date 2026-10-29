@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <!-- WinForms uses the SDK setting; WPF/down-level Windows use the explicit manifest fallback. -->
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\SmartphoneLink.ico</ApplicationIcon>
+    <AssemblyName>SmartphoneLink.Windows</AssemblyName>
+    <RootNamespace>SmartphoneLink.Windows</RootNamespace>
+    <Product>Smartphone Link</Product>
+    <Title>Smartphone Link</Title>
+    <Description>A private Windows companion for trusted Android devices.</Description>
+    <Company>Smartphone Link</Company>
+    <Authors>Smartphone Link</Authors>
+    <Copyright>Copyright (c) 2026 Smartphone Link</Copyright>
+    <VersionPrefix>1.0.1.1</VersionPrefix>
+    <NeutralLanguage>en</NeutralLanguage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\SmartphoneLink.Protocol\SmartphoneLink.Protocol.csproj" />
+    <ProjectReference Include="..\..\shared\SmartphoneLink.Core\SmartphoneLink.Core.csproj" />
+    <ProjectReference Include="..\SmartphoneLink.Server\SmartphoneLink.Server.csproj" />
+    <ProjectReference Include="..\SmartphoneLink.Media\SmartphoneLink.Media.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Assets\SmartphoneLinkMark.svg" CopyToOutputDirectory="PreserveNewest" />
+    <None Remove="Assets\SmartphoneLink.ico" />
+    <Resource Include="Assets\SmartphoneLink.ico" />
+  </ItemGroup>
+
+  <!-- ADB mode's phone-side server, built by `gradlew :server:assembleRelease`. Optional: without
+       it the app still works, in app mode only. -->
+  <ItemGroup Condition="Exists('..\..\android\server\build\outputs\apk\release\server-release.apk')">
+    <None Include="..\..\android\server\build\outputs\apk\release\server-release.apk" Link="adb\smartphonelink-server.jar" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>
