@@ -34,17 +34,13 @@ This sets `SIGNING_PASSWORD`, `ANDROID_KEYSTORE_B64`, and `ANDROID_KEY_ALIAS`. V
 
 3. Push a tag (see below). The workflow builds the Store package and attaches it to the run as the `...-store-msix` artifact.
 4. Create the first submission by hand: pricing, markets, age rating, privacy policy URL (`https://github.com/TheTobiTiger02/Pairly/blob/main/PRIVACY.md`), listing and screenshots, and the `runFullTrust` justification ("Desktop companion app that hosts a LAN server for paired phones"). Upload the MSIX from the artifact.
-5. For automated submissions, go to **Account settings → User management → Microsoft Entra applications**, add an application with the **Manager** role, and create a client key. Then:
+5. Store the Store ID so release notes link to the Store page:
 
    ```powershell
-   gh variable set STORE_PRODUCT_ID --body '<Store ID, e.g. 9NXXXXXXXXXX>'
-   gh secret set STORE_TENANT_ID
-   gh secret set STORE_SELLER_ID
-   gh secret set STORE_CLIENT_ID
-   gh secret set STORE_CLIENT_SECRET
+   gh variable set STORE_PRODUCT_ID --body '9NDLWS4D52HM'
    ```
 
-Until `STORE_IDENTITY_NAME` is set, releases contain Android only. Until `STORE_PRODUCT_ID` is set, the Store package is built but not submitted.
+Until `STORE_IDENTITY_NAME` is set, releases contain Android only.
 
 ## Releasing
 
@@ -55,7 +51,24 @@ git push origin v1.2.0
 
 The tag is the single version source: the MSIX becomes `1.2.0.0` (the Store requires the last part to be 0), Android `versionName` `1.2.0` and `versionCode` `10200` (`major*10000 + minor*100 + patch`). Minor and patch must stay below 100, and every tag must be higher than the previous one.
 
-The workflow submits the MSIX to the Store, where it appears after certification (usually 1–3 business days), and creates a GitHub release with `Pairly.apk`.
+The workflow creates a GitHub release with `Pairly.apk` and attaches the Store package to the workflow run as the `Pairly-<version>-store-msix` artifact. Then update the Store by hand:
+
+1. Download the artifact: `gh run download <run id> --repo TheTobiTiger02/Pairly` (or from the run page on GitHub).
+2. In Partner Center, open Pairly and choose **Update** on the latest submission.
+3. On **Packages**, remove the old MSIX, upload the new one, and **Submit to the Store**. Certification usually takes 1–3 business days.
+
+Partner Center accepts one submission at a time, so do not tag a new version while a submission is still in certification.
+
+### Optional: automatic Store submission
+
+The workflow submits to the Store itself once these secrets exist. They need a Microsoft Entra application with the **Manager** role under **Account settings → User management → Microsoft Entra applications**, which individual accounts can only get with an Entra tenant (for example through a free Azure account).
+
+```powershell
+gh secret set STORE_TENANT_ID
+gh secret set STORE_SELLER_ID
+gh secret set STORE_CLIENT_ID
+gh secret set STORE_CLIENT_SECRET
+```
 
 ## Automatic updates
 

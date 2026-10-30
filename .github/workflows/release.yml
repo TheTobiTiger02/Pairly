@@ -5,7 +5,9 @@ name: Release
 #
 # Repository variables (public Partner Center identity): STORE_IDENTITY_NAME, STORE_PUBLISHER,
 # STORE_PUBLISHER_DISPLAY_NAME, STORE_DISPLAY_NAME, STORE_PRODUCT_ID.
-# Secrets: Android signing, plus STORE_TENANT_ID, STORE_SELLER_ID, STORE_CLIENT_ID, STORE_CLIENT_SECRET.
+# Secrets: Android signing. Optional, for automatic Store submission: STORE_TENANT_ID,
+# STORE_SELLER_ID, STORE_CLIENT_ID, STORE_CLIENT_SECRET. Without them, upload the -store-msix
+# artifact to Partner Center by hand (see docs/private-release.md).
 on:
   push:
     tags: ['v*.*.*']
@@ -22,6 +24,7 @@ jobs:
       STORE_PUBLISHER_DISPLAY_NAME: ${{ vars.STORE_PUBLISHER_DISPLAY_NAME }}
       STORE_DISPLAY_NAME: ${{ vars.STORE_DISPLAY_NAME }}
       STORE_PRODUCT_ID: ${{ vars.STORE_PRODUCT_ID }}
+      STORE_API_CONFIGURED: ${{ secrets.STORE_CLIENT_ID != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -77,11 +80,11 @@ jobs:
           path: artifacts/release/windows/Pairly.msix
 
       - name: Set up Microsoft Store CLI
-        if: env.STORE_PRODUCT_ID != '' && env.STORE_IDENTITY_NAME != ''
+        if: env.STORE_API_CONFIGURED == 'true' && env.STORE_PRODUCT_ID != '' && env.STORE_IDENTITY_NAME != ''
         uses: microsoft/setup-msstore-cli@v1
 
       - name: Submit to Microsoft Store
-        if: env.STORE_PRODUCT_ID != '' && env.STORE_IDENTITY_NAME != ''
+        if: env.STORE_API_CONFIGURED == 'true' && env.STORE_PRODUCT_ID != '' && env.STORE_IDENTITY_NAME != ''
         shell: pwsh
         env:
           STORE_TENANT_ID: ${{ secrets.STORE_TENANT_ID }}
@@ -100,7 +103,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           $notes = if ($env:STORE_PRODUCT_ID) {
-            "Windows: [Microsoft Store](https://apps.microsoft.com/detail/$env:STORE_PRODUCT_ID). The Store update follows once certification passes.`n`nAndroid: install Pairly.apk; installed apps update themselves."
+            "Windows: [Microsoft Store](https://apps.microsoft.com/detail/$env:STORE_PRODUCT_ID). New versions reach the Store after certification.`n`nAndroid: install Pairly.apk; installed apps update themselves."
           } else {
             "Android: install Pairly.apk; installed apps update themselves."
           }
