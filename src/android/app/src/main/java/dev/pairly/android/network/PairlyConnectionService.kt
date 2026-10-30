@@ -117,6 +117,8 @@ class PairlyConnectionService : Service() {
     private val inboundClipboardTransfers = mutableMapOf<String, InboundClipboardTransfer>()
     private var pendingPairingCode: String? = null
     private var pendingPairingCandidate: DiscoveredPc? = null
+    // Addresses from a scanned QR code; their fingerprint came from the PC's screen, not UDP.
+    private var pendingPairingAddresses: List<String> = emptyList()
     private var lastTransportStatus: String = ""
     private var retryIndex = 0
     private var connecting = false
@@ -234,6 +236,7 @@ class PairlyConnectionService : Service() {
             ACTION_PAIR -> {
                 pendingPairingCode = intent.getStringExtra(EXTRA_PAIRING_CODE).orEmpty()
                 pendingPairingCandidate = intent.toDiscoveredPc()
+                pendingPairingAddresses = intent.getStringArrayExtra(EXTRA_ADDRESSES)?.toList().orEmpty()
                 settings.clearRejectedSavedPairing()
                 settings.autoConnectEnabled = true
                 manualDisconnect = false
@@ -455,6 +458,11 @@ class PairlyConnectionService : Service() {
             return
         }
 
+        if (pendingPairingAddresses.isNotEmpty()) {
+            connectToScannedPc(selected, pendingPairingAddresses)
+            return
+        }
+
         publishState(ConnectionPhase.Discovering, "Verifying the selected PC identity...")
         serviceScope.launch {
             val validation = PairingCandidatePolicy.validate(
@@ -482,6 +490,42 @@ class PairlyConnectionService : Service() {
                         "Connection timed out. Keep only the active Windows app open and search again."
                 }
                 publishState(ConnectionPhase.Rejected, detail)
+            }
+        }
+    }
+
+    /**
+     * QR pairing: the identity is already trusted from the QR code, so skip UDP discovery and use
+     * the first address that accepts a connection. The TLS session is still pinned to the
+     * scanned fingerprint, so a wrong address cannot impersonate the PC.
+     */
+    private fun connectToScannedPc(selected: DiscoveredPc, addresses: List<String>) {
+        val port = selected.securePort ?: return
+        publishState(ConnectionPhase.Discovering, "Reaching ${selected.name}...")
+        serviceScope.launch {
+            val reachable = addresses.firstOrNull { address ->
+                runCatching {
+                    java.net.Socket().use { socket ->
+                        socket.connect(java.net.InetSocketAddress(address, port), SCANNED_PC_CONNECT_TIMEOUT_MS)
+                    }
+                }.isSuccess
+            }
+            mainHandler.post {
+                if (reachable != null) {
+                    val candidate = selected.copy(ip = reachable)
+                    pendingPairingCandidate = candidate
+                    settings.rememberPairingCandidate(candidate)
+                    PairlyConnection.host = settings.endpoint
+                    connectNow("Pairing with ${candidate.name}...")
+                    return@post
+                }
+
+                pendingPairingCode = null
+                pendingPairingCandidate = null
+                publishState(
+                    ConnectionPhase.Rejected,
+                    "Couldn't reach ${selected.name}. Connect your phone to the same Wi-Fi as the PC and allow Pairly through Windows Firewall, then scan again."
+                )
             }
         }
     }
@@ -2343,6 +2387,8 @@ class PairlyConnectionService : Service() {
         const val EXTRA_PROTOCOL_VERSION = "protocolVersion"
         const val EXTRA_SECURE_PORT = "securePort"
         const val EXTRA_CERTIFICATE_FINGERPRINT = "certificateFingerprint"
+        const val EXTRA_ADDRESSES = "scannedAddresses"
+        private const val SCANNED_PC_CONNECT_TIMEOUT_MS = 1_500
         const val EXTRA_CLIPBOARD_TEXT = "clipboardText"
         const val EXTRA_CLIPBOARD_TEXT_PATH = "clipboardTextPath"
         const val EXTRA_CLIPBOARD_IMAGE_PATH = "clipboardImagePath"
@@ -2372,9 +2418,10 @@ class PairlyConnectionService : Service() {
             ContextCompat.startForegroundService(context, intent)
         }
 
-        fun startPair(context: Context, pc: DiscoveredPc, pairingCode: String) {
+        fun startPair(context: Context, pc: DiscoveredPc, pairingCode: String, scannedAddresses: List<String> = emptyList()) {
             val intent = Intent(context, PairlyConnectionService::class.java)
                 .setAction(ACTION_PAIR)
+                .putExtra(EXTRA_ADDRESSES, scannedAddresses.toTypedArray())
                 .putExtra(EXTRA_HOST, pc.ip)
                 .putExtra(EXTRA_PAIRING_CODE, pairingCode)
                 .putExtra(EXTRA_HOST_ID, pc.hostId)

@@ -13,7 +13,7 @@
     <string name="onboarding_body">Connect once to share notifications, photos, messages, clipboard items, and your phone screen over your local network.</string>
     <string name="onboarding_choose_pc">Choose your PC</string>
     <string name="onboarding_choose_pc_detail">Open Pairly on Windows and keep both devices on the same network.</string>
-    <string name="onboarding_pair_code">Confirm the pairing code</string>
+    <string name="onboarding_pair_code">Enter the 6-digit code from your PC</string>
     <string name="onboarding_pair_code_detail">Enter the code shown by the Windows app. You should only need to do this once.</string>
     <string name="onboarding_privacy_note">Your pairing secret is encrypted with Android Keystore. Pairly reconnects to the same verified PC after reboots, updates, and address changes.</string>
     <string name="manual_address_title">Can’t see your PC?</string>
@@ -131,4 +131,28 @@
     <string name="mirror_active_channel_name">Screen mirroring</string>
     <string name="mirror_active_notification_title">Pairly mirror</string>
     <string name="mirror_active_notification_text">Your screen is being mirrored to the paired PC.</string>
+    <string name="onboarding_welcome_title">Your phone, on your PC</string>
+    <string name="onboarding_welcome_body">Pairly connects this phone to your Windows PC over your own Wi-Fi. Set it up once, and it reconnects on its own.</string>
+    <string name="onboarding_benefit_notifications">See and answer notifications on your PC</string>
+    <string name="onboarding_benefit_messages">Read and reply to texts from your keyboard</string>
+    <string name="onboarding_benefit_sharing">Share photos, files and your clipboard</string>
+    <string name="onboarding_benefit_private">Private: no account, no cloud</string>
+    <string name="action_get_started">Get started</string>
+    <string name="onboarding_connect_title">Connect to your PC</string>
+    <string name="onboarding_connect_body">Open Pairly on your Windows PC and choose Add your phone. Keep both on the same Wi-Fi.</string>
+    <string name="scan_card_title">Scan the QR code on your PC</string>
+    <string name="scan_card_detail">The fastest way: it pairs securely without typing anything.</string>
+    <string name="action_scan_qr">Scan QR code</string>
+    <string name="scan_not_pairing_code">That QR code isn’t a Pairly pairing code. Scan the code under Pair on your PC.</string>
+    <string name="action_enter_code_instead">Enter a code instead</string>
+    <string name="onboarding_permissions_title">Choose what to share</string>
+    <string name="onboarding_permissions_body">Turn on the features you want. You can change these any time under Features.</string>
+    <string name="action_continue">Continue</string>
+    <string name="action_do_this_later">Do this later</string>
+    <string name="onboarding_done_title">Connected to %1$s</string>
+    <string name="onboarding_done_body">Pairly keeps your phone and PC connected whenever they are on the same network.</string>
+    <string name="action_start_using">Start using Pairly</string>
+    <string name="repair_dialog_title">Pair with %1$s?</string>
+    <string name="repair_dialog_body">This phone is paired with %1$s. Pairing with the new PC replaces that connection.</string>
+    <string name="action_pair">Pair</string>
 </resources>

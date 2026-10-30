@@ -8,14 +8,21 @@ import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import dev.pairly.android.features.mirror.MirrorConsentGate
 import dev.pairly.android.features.clipboard.ClipboardSyncController
 import dev.pairly.android.features.sync.FeaturePermissionState
 import dev.pairly.android.features.sync.FeatureSyncController
 import dev.pairly.android.network.ConnectionSettings
+import dev.pairly.android.network.PairingLink
 import dev.pairly.android.ui.PairlyApp
 
 class MainActivity : ComponentActivity() {
+    // A pairly://pair link the activity was opened with, until the UI has handled it.
+    private var incomingPairingLink by mutableStateOf<String?>(null)
+
     private val photosPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { grants ->
@@ -72,6 +79,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        if (savedInstanceState == null) incomingPairingLink = intent.pairingLink()
         setContent {
             PairlyApp(
                 openNotificationSettings = {
@@ -102,10 +110,20 @@ class MainActivity : ComponentActivity() {
                 },
                 refreshPhoneData = {
                     FeatureSyncController.syncAll(this)
-                }
+                },
+                incomingPairingLink = incomingPairingLink,
+                onPairingLinkHandled = { incomingPairingLink = null }
             )
         }
     }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        intent.pairingLink()?.let { incomingPairingLink = it }
+    }
+
+    private fun Intent.pairingLink(): String? =
+        data?.takeIf { action == Intent.ACTION_VIEW && it.scheme == PairingLink.SCHEME }?.toString()
 
     override fun onStart() {
         super.onStart()

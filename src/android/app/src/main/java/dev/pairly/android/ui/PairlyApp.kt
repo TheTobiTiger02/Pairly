@@ -9,6 +9,7 @@ import android.os.PowerManager
 import android.provider.Settings as AndroidSettings
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -58,12 +59,14 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -71,6 +74,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
@@ -96,6 +100,7 @@ import dev.pairly.android.network.DiscoveredPc
 import dev.pairly.android.network.LanDiscovery
 import dev.pairly.android.network.PairlyConnection
 import dev.pairly.android.network.PairlyConnectionService
+import dev.pairly.android.network.PairingLink
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -128,7 +133,9 @@ fun PairlyApp(
     requestNotificationPermission: () -> Unit,
     requestStoragePermission: () -> Unit,
     requestCallPermission: () -> Unit,
-    refreshPhoneData: () -> Unit
+    refreshPhoneData: () -> Unit,
+    incomingPairingLink: String? = null,
+    onPairingLinkHandled: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val settings = remember { ConnectionSettings(context) }
@@ -139,6 +146,15 @@ fun PairlyApp(
     var permissionSnapshot by remember { mutableStateOf(readPermissions(context)) }
     var discoveredPcs by remember { mutableStateOf<List<DiscoveredPc>>(emptyList()) }
     var isDiscovering by remember { mutableStateOf(false) }
+    var onboardingActive by rememberSaveable { mutableStateOf(settings.trustKey.isBlank()) }
+    var onboardingStep by rememberSaveable { mutableStateOf(OnboardingStep.Welcome) }
+    var linkAwaitingConfirmation by remember { mutableStateOf<PairingLink?>(null) }
+
+    fun pairWithLink(link: PairingLink) {
+        onboardingActive = true
+        onboardingStep = OnboardingStep.Connect
+        PairlyConnectionService.startPair(context, link.toDiscoveredPc(link.addresses.first()), link.code, link.addresses)
+    }
 
     fun discover() {
         if (isDiscovering) return
@@ -180,18 +196,69 @@ fun PairlyApp(
         }
     }
 
+    LaunchedEffect(hasSavedPairing) {
+        if (!hasSavedPairing) {
+            onboardingActive = true
+            if (onboardingStep > OnboardingStep.Connect) onboardingStep = OnboardingStep.Connect
+        } else if (onboardingActive && onboardingStep <= OnboardingStep.Connect) {
+            // Just paired: continue with the permissions that make Pairly useful.
+            onboardingStep = OnboardingStep.Permissions
+        }
+    }
+
+    // A pairly://pair link opened from the camera or another app.
+    LaunchedEffect(incomingPairingLink) {
+        if (incomingPairingLink == null) return@LaunchedEffect
+        val link = PairingLink.parse(incomingPairingLink)
+        onPairingLinkHandled()
+        when {
+            link == null -> PairlyConnection.updateState(ConnectionPhase.Rejected, context.getString(R.string.scan_not_pairing_code))
+            hasSavedPairing -> linkAwaitingConfirmation = link
+            else -> pairWithLink(link)
+        }
+    }
+
     PairlyTheme {
+        linkAwaitingConfirmation?.let { link ->
+            AlertDialog(
+                onDismissRequest = { linkAwaitingConfirmation = null },
+                title = { Text(stringResource(R.string.repair_dialog_title, link.pcName)) },
+                text = { Text(stringResource(R.string.repair_dialog_body, settings.pcDisplayName.ifBlank { stringResource(R.string.paired_pc_fallback) })) },
+                confirmButton = {
+                    TextButton(onClick = { linkAwaitingConfirmation = null; pairWithLink(link) }) {
+                        Text(stringResource(R.string.action_pair))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { linkAwaitingConfirmation = null }) { Text(stringResource(R.string.action_cancel)) }
+                }
+            )
+        }
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            if (!hasSavedPairing) {
-                OnboardingScreen(
+            if (onboardingActive) {
+                OnboardingFlow(
+                    step = onboardingStep,
+                    onStepChange = { onboardingStep = it },
                     connectionState = connectionState,
                     discoveredPcs = discoveredPcs,
                     isDiscovering = isDiscovering,
                     settings = settings,
+                    permissions = OnboardingPermissions(
+                        notifications = permissionSnapshot.notifications,
+                        sms = permissionSnapshot.sms,
+                        photos = permissionSnapshot.photos,
+                        storage = permissionSnapshot.storage
+                    ),
                     onDiscover = ::discover,
                     onPair = { pc, pairingCode ->
                         PairlyConnectionService.startPair(context, pc, pairingCode)
-                    }
+                    },
+                    onScannedLink = ::pairWithLink,
+                    openNotificationSettings = openNotificationSettings,
+                    requestSmsPermission = requestSmsPermission,
+                    requestPhotosPermission = requestPhotosPermission,
+                    requestStoragePermission = requestStoragePermission,
+                    onFinish = { onboardingActive = false }
                 )
             } else {
                 LinkedAppShell(
@@ -210,138 +277,6 @@ fun PairlyApp(
                     onForget = { PairlyConnectionService.forget(context) }
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun OnboardingScreen(
-    connectionState: ConnectionState,
-    discoveredPcs: List<DiscoveredPc>,
-    isDiscovering: Boolean,
-    settings: ConnectionSettings,
-    onDiscover: () -> Unit,
-    onPair: (DiscoveredPc, String) -> Unit
-) {
-    var pairingCode by remember { mutableStateOf("") }
-    var manualHost by remember { mutableStateOf(settings.host) }
-    var selectedPc by remember { mutableStateOf<DiscoveredPc?>(null) }
-    val canPair = selectedPc?.isSecurePairingCompatible == true && pairingCode.isNotBlank()
-
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding(),
-        contentPadding = PaddingValues(
-            start = LinkTokens.Space5,
-            top = LinkTokens.Space6,
-            end = LinkTokens.Space5,
-            bottom = LinkTokens.Space8
-        ),
-        verticalArrangement = Arrangement.spacedBy(LinkTokens.Space5)
-    ) {
-        item {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                LinkArtwork(Modifier.size(72.dp))
-                Spacer(Modifier.width(LinkTokens.Space4))
-                Column {
-                    Text(stringResource(R.string.onboarding_eyebrow), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
-                    Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineMedium)
-                }
-            }
-        }
-        item {
-            Text(stringResource(R.string.onboarding_title), style = MaterialTheme.typography.displaySmall)
-            Spacer(Modifier.height(LinkTokens.Space2))
-            Text(
-                stringResource(R.string.onboarding_body),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        item { ConnectionNotice(connectionState) }
-        item {
-            SectionHeading(stringResource(R.string.onboarding_choose_pc), stringResource(R.string.onboarding_choose_pc_detail))
-            Spacer(Modifier.height(LinkTokens.Space3))
-            if (discoveredPcs.isEmpty()) {
-                OutlinedButton(onClick = onDiscover, modifier = Modifier.fillMaxWidth().height(LinkTokens.MinTouchTarget)) {
-                    if (isDiscovering) {
-                        CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                        Spacer(Modifier.width(LinkTokens.Space2))
-                    }
-                    Text(stringResource(if (isDiscovering) R.string.action_searching else R.string.action_find_pc))
-                }
-            } else {
-                Column(verticalArrangement = Arrangement.spacedBy(LinkTokens.Space2)) {
-                    discoveredPcs.forEach { pc ->
-                        PcChoiceCard(
-                            pc = pc,
-                            selected = pc == selectedPc,
-                            onClick = {
-                                if (pc.isSecurePairingCompatible) {
-                                    selectedPc = pc
-                                    manualHost = pc.ip
-                                }
-                            }
-                        )
-                    }
-                    TextButton(onClick = onDiscover, modifier = Modifier.align(Alignment.End)) {
-                        Text(stringResource(R.string.action_search_again))
-                    }
-                }
-            }
-        }
-        item {
-            SectionHeading(stringResource(R.string.onboarding_pair_code), stringResource(R.string.onboarding_pair_code_detail))
-            Spacer(Modifier.height(LinkTokens.Space3))
-            OutlinedTextField(
-                value = pairingCode,
-                onValueChange = { pairingCode = it.filter(Char::isLetterOrDigit).take(12) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                label = { Text(stringResource(R.string.pairing_code_label)) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword)
-            )
-            Spacer(Modifier.height(LinkTokens.Space3))
-            Button(
-                onClick = { selectedPc?.let { onPair(it, pairingCode) } },
-                enabled = canPair,
-                modifier = Modifier.fillMaxWidth().height(LinkTokens.MinTouchTarget)
-            ) {
-                Text(stringResource(R.string.action_pair_securely))
-            }
-        }
-        item {
-            Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                shape = RoundedCornerShape(LinkTokens.CardRadius)
-            ) {
-                Column(Modifier.padding(LinkTokens.Space4)) {
-                    Text(stringResource(R.string.manual_address_title), style = MaterialTheme.typography.titleMedium)
-                    Spacer(Modifier.height(LinkTokens.Space2))
-                    Text(stringResource(R.string.manual_address_detail), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(Modifier.height(LinkTokens.Space3))
-                    OutlinedTextField(
-                        value = manualHost,
-                        onValueChange = {
-                            manualHost = it
-                            selectedPc = null
-                            settings.rememberManualEndpoint(it)
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        label = { Text(stringResource(R.string.pc_address_label)) }
-                    )
-                }
-            }
-        }
-        item {
-            Text(
-                stringResource(R.string.onboarding_privacy_note),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }
@@ -704,7 +639,7 @@ private fun DeviceHero(connectionState: ConnectionState, pcName: String, onRecon
 }
 
 @Composable
-private fun ConnectionNotice(connectionState: ConnectionState) {
+internal fun ConnectionNotice(connectionState: ConnectionState) {
     val container = when (connectionState.phase) {
         ConnectionPhase.Rejected -> MaterialTheme.colorScheme.errorContainer
         ConnectionPhase.Ready -> MaterialTheme.colorScheme.primaryContainer
@@ -720,7 +655,7 @@ private fun ConnectionNotice(connectionState: ConnectionState) {
 }
 
 @Composable
-private fun PcChoiceCard(pc: DiscoveredPc, selected: Boolean, onClick: () -> Unit) {
+internal fun PcChoiceCard(pc: DiscoveredPc, selected: Boolean, onClick: () -> Unit) {
     val compatible = pc.isSecurePairingCompatible
     val selectionDescription = stringResource(if (selected) R.string.pc_selected else R.string.pc_not_selected)
     Card(
@@ -751,7 +686,7 @@ private fun PcChoiceCard(pc: DiscoveredPc, selected: Boolean, onClick: () -> Uni
 }
 
 @Composable
-private fun PermissionCard(mark: String, @StringRes title: Int, @StringRes detail: Int, granted: Boolean, onClick: () -> Unit) {
+internal fun PermissionCard(mark: String, @StringRes title: Int, @StringRes detail: Int, granted: Boolean, onClick: () -> Unit) {
     Card(
         shape = RoundedCornerShape(LinkTokens.CardRadius),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -907,38 +842,19 @@ private fun NavMark(mark: String, selected: Boolean) {
 }
 
 @Composable
-private fun LinkArtwork(modifier: Modifier = Modifier) {
-    val primary = MaterialTheme.colorScheme.primary
-    val surface = MaterialTheme.colorScheme.surface
+private fun LinkArtwork(modifier: Modifier = Modifier) = AppIcon(modifier)
+
+/** The launcher icon's two layers, cropped like a launcher would show them. */
+@Composable
+internal fun AppIcon(modifier: Modifier = Modifier) {
     val description = stringResource(R.string.logo_content_description)
-    Canvas(modifier.semantics { contentDescription = description }) {
-        drawRoundRect(primary.copy(alpha = 0.14f), cornerRadius = CornerRadius(size.minDimension * 0.22f))
-        val phoneWidth = size.width * 0.36f
-        val phoneHeight = size.height * 0.62f
-        val phoneLeft = size.width * 0.18f
-        val phoneTop = size.height * 0.17f
-        drawRoundRect(
-            primary,
-            topLeft = Offset(phoneLeft, phoneTop),
-            size = Size(phoneWidth, phoneHeight),
-            cornerRadius = CornerRadius(size.width * 0.07f),
-            style = Stroke(width = size.width * 0.045f)
+    Box(modifier.clip(RoundedCornerShape(percent = 24)).semantics { contentDescription = description }) {
+        Image(painterResource(R.drawable.ic_launcher_background), contentDescription = null, modifier = Modifier.matchParentSize())
+        Image(
+            painterResource(R.drawable.ic_launcher_foreground),
+            contentDescription = null,
+            modifier = Modifier.matchParentSize().graphicsLayer(scaleX = 1.45f, scaleY = 1.45f)
         )
-        drawCircle(primary, radius = size.width * 0.018f, center = Offset(phoneLeft + phoneWidth / 2f, phoneTop + phoneHeight * 0.9f))
-        drawRoundRect(
-            surface,
-            topLeft = Offset(size.width * 0.45f, size.height * 0.4f),
-            size = Size(size.width * 0.38f, size.height * 0.28f),
-            cornerRadius = CornerRadius(size.width * 0.035f)
-        )
-        drawRoundRect(
-            primary,
-            topLeft = Offset(size.width * 0.45f, size.height * 0.4f),
-            size = Size(size.width * 0.38f, size.height * 0.28f),
-            cornerRadius = CornerRadius(size.width * 0.035f),
-            style = Stroke(width = size.width * 0.045f)
-        )
-        drawLine(primary, Offset(size.width * 0.58f, size.height * 0.72f), Offset(size.width * 0.72f, size.height * 0.72f), strokeWidth = size.width * 0.04f)
     }
 }
 
