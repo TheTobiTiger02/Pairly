@@ -1340,60 +1340,171 @@
             </TabControl>
         </Border>
 
-        <!-- Add-a-device dialog. Pairing is intentionally transient instead of a permanent page. -->
+        <!-- Add-a-device dialog: get the app, pair by QR or code, done. Pairing is transient instead of a permanent page. -->
         <Grid x:Name="PairingOverlay" Grid.RowSpan="2" Grid.ColumnSpan="2" Panel.ZIndex="20" Background="{DynamicResource SmokeBrush}"
               Visibility="Collapsed">
-            <Border x:Name="PairingPanel" Width="460" HorizontalAlignment="Center" VerticalAlignment="Center" Focusable="True"
+            <Border x:Name="PairingPanel" Width="580" HorizontalAlignment="Center" VerticalAlignment="Center" Focusable="True"
                     Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource FlyoutStrokeBrush}" BorderThickness="1"
                     CornerRadius="{StaticResource OverlayRadius}" Effect="{StaticResource DialogShadow}"
-                    AutomationProperties.Name="Add a device">
+                    AutomationProperties.Name="Add your phone">
                 <Grid>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
-                    <StackPanel Margin="24,22,24,20">
+
+                    <!-- Header with step indicator -->
+                    <StackPanel Margin="28,24,28,0">
                         <DockPanel>
                             <Button DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE711;" FontSize="12" ToolTip="Close"
-                                    Margin="0,-6,-10,0" VerticalAlignment="Top" Click="ClosePairingPanel_Click" AutomationProperties.Name="Close add device dialog" />
-                            <TextBlock Text="Add a device" Style="{StaticResource SubtitleText}" />
+                                    Margin="0,-6,-12,0" VerticalAlignment="Top" Click="ClosePairingPanel_Click" AutomationProperties.Name="Close add phone dialog" />
+                            <controls:BrandMark Width="28" Height="28" Margin="0,0,12,0" VerticalAlignment="Center" />
+                            <TextBlock Text="Add your phone" Style="{StaticResource SubtitleText}" VerticalAlignment="Center" />
                         </DockPanel>
-                        <TextBlock Text="Open Pairly on your Android phone and enter the code below. You only need to pair once."
-                                   Style="{StaticResource BodyText}" Margin="0,8,0,0" />
-                        <Border Style="{StaticResource PageCard}" Margin="0,20,0,0" Padding="16,20">
-                            <StackPanel>
-                                <controls:BrandMark Width="44" Height="44" HorizontalAlignment="Center" />
-                                <TextBlock x:Name="PairingCodeText" Text="No active code" FontFamily="Cascadia Mono, Consolas" FontSize="34"
-                                           FontWeight="SemiBold" Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center" Margin="0,14,0,0" />
-                                <TextBlock x:Name="PairingExpiryText" Text="Create a code when your phone is ready."
-                                           Style="{StaticResource CaptionText}" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                        <Grid Margin="0,20,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel x:Name="PairingStep1Indicator" Orientation="Horizontal">
+                                <Border Width="22" Height="22" CornerRadius="11" Background="{DynamicResource AccentBrush}">
+                                    <TextBlock Text="1" Foreground="White" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock Text="Get the app" Margin="8,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" />
+                            </StackPanel>
+                            <Border Grid.Column="1" Height="1" Margin="12,0" Background="{DynamicResource DividerBrush}" />
+                            <StackPanel x:Name="PairingStep2Indicator" Grid.Column="2" Orientation="Horizontal">
+                                <Border Width="22" Height="22" CornerRadius="11" Background="{DynamicResource AccentBrush}">
+                                    <TextBlock Text="2" Foreground="White" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock Text="Pair" Margin="8,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" />
+                            </StackPanel>
+                            <Border Grid.Column="3" Height="1" Margin="12,0" Background="{DynamicResource DividerBrush}" />
+                            <StackPanel x:Name="PairingStep3Indicator" Grid.Column="4" Orientation="Horizontal">
+                                <Border Width="22" Height="22" CornerRadius="11" Background="{DynamicResource AccentBrush}">
+                                    <TextBlock Text="3" Foreground="White" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock Text="Done" Margin="8,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Step 1: get the Android app -->
+                    <Grid x:Name="PairingGetAppStep" Grid.Row="1" Margin="28,22,28,24">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="24" />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <Border Background="White" CornerRadius="12" Padding="6" Width="196" Height="196">
+                            <Image x:Name="InstallQrImage" RenderOptions.BitmapScalingMode="NearestNeighbor" Stretch="Uniform"
+                                   AutomationProperties.Name="QR code that downloads Pairly for Android" />
+                        </Border>
+                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                            <TextBlock Text="Install Pairly on your phone" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap" />
+                            <TextBlock Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,8,0,0"
+                                       Text="Point your Android phone's camera at the code and open the link. When Android asks, allow your browser to install apps." />
+                            <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                                <Button Content="Copy link" Style="{StaticResource SecondaryButton}" Click="CopyInstallLink_Click" />
+                                <Button Content="Open release page" Style="{StaticResource SubtleButton}" Margin="8,0,0,0" Click="OpenReleasePage_Click" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Step 2: pair by QR or code -->
+                    <StackPanel x:Name="PairingPairStep" Grid.Row="1" Margin="28,22,28,20" Visibility="Collapsed">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="24" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <Border Background="White" CornerRadius="12" Padding="6" Width="196" Height="196">
+                                <Grid>
+                                    <Image x:Name="PairingQrImage" RenderOptions.BitmapScalingMode="NearestNeighbor" Stretch="Uniform"
+                                           AutomationProperties.Name="QR code that pairs your phone with this PC" />
+                                    <TextBlock x:Name="PairingQrPlaceholder" Text="Creating code…" Foreground="#5F6368" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+                            <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                <TextBlock Text="Scan with Pairly" FontSize="18" FontWeight="SemiBold" />
+                                <TextBlock Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,8,0,0"
+                                           Text="In Pairly on your phone, tap Scan QR code. Or enter this code:" />
+                                <ItemsControl x:Name="PairingCodeDigits" Margin="0,12,0,0" Focusable="False"
+                                              AutomationProperties.Name="Pairing code">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Width="36" Height="44" Margin="0,0,6,0" CornerRadius="8"
+                                                    Background="{DynamicResource CardFillSecondaryBrush}" BorderBrush="{DynamicResource CardStrokeBrush}" BorderThickness="1">
+                                                <TextBlock Text="{Binding}" FontFamily="Cascadia Mono, Consolas" FontSize="24" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <Grid Height="4" Margin="0,14,0,0" ClipToBounds="True">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition x:Name="PairingCountdownRemaining" Width="1*" />
+                                        <ColumnDefinition x:Name="PairingCountdownElapsed" Width="0*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.ColumnSpan="2" CornerRadius="2" Background="{DynamicResource DividerBrush}" />
+                                    <Border CornerRadius="2" Background="{DynamicResource AccentBrush}" />
+                                </Grid>
+                                <TextBlock x:Name="PairingExpiryText" Text="Creating a pairing code…" Style="{StaticResource CaptionText}" Margin="0,6,0,0" />
+                            </StackPanel>
+                        </Grid>
+                        <Border Margin="0,18,0,0" Padding="12,10" CornerRadius="8" Background="{DynamicResource CardFillSecondaryBrush}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE895;" Style="{StaticResource IconGlyph}" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" />
+                                <TextBlock x:Name="PairingWaitingText" Text="Waiting for your phone…" Margin="10,0,0,0" VerticalAlignment="Center" />
                             </StackPanel>
                         </Border>
-                        <Expander Header="Having trouble?" Margin="-8,14,0,0">
+                        <Expander Header="Having trouble?" Margin="-8,12,0,0">
                             <StackPanel Margin="8,4,0,0">
-                                <TextBlock Text="Trusted-device storage" FontWeight="SemiBold" />
+                                <TextBlock Style="{StaticResource BodyText}" FontSize="12" TextWrapping="Wrap"
+                                           Text="• Keep your phone and this PC on the same Wi-Fi network.&#10;• If Windows asks, allow Pairly through Windows Firewall on private networks.&#10;• Scanning works even when your phone can't find this PC on its own." />
+                                <TextBlock x:Name="PairingAddressesText" Style="{StaticResource CaptionText}" TextWrapping="Wrap" Margin="0,8,0,0" />
+                                <TextBlock Text="Trusted-device storage" FontWeight="SemiBold" Margin="0,14,0,0" />
                                 <TextBlock x:Name="TrustStoreStatusText" Text="Checking trusted devices..." Style="{StaticResource BodyText}"
                                            FontSize="12" Margin="0,4,0,8" />
                                 <Button Content="Repair from backup" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left"
                                         Click="RepairTrustStore_Click" />
-                                <TextBlock Text="Pairing codes are only needed for new or explicitly forgotten devices."
-                                           Style="{StaticResource CaptionText}" TextWrapping="Wrap" Margin="0,10,0,0" />
                             </StackPanel>
                         </Expander>
                     </StackPanel>
-                    <!-- Dialog footer -->
-                    <Border Grid.Row="1" Background="{DynamicResource CardFillSecondaryBrush}" BorderBrush="{DynamicResource DividerBrush}"
-                            BorderThickness="0,1,0,0" CornerRadius="0,0,8,8" Padding="24">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition />
-                                <ColumnDefinition Width="8" />
-                                <ColumnDefinition />
-                            </Grid.ColumnDefinitions>
-                            <Button x:Name="CreatePairingCodeButton" Content="Create pairing code" Style="{StaticResource AccentButton}"
-                                    Click="CreatePairingTicket_Click" />
-                            <Button Grid.Column="2" Content="Close" Click="ClosePairingPanel_Click" />
-                        </Grid>
+
+                    <!-- Step 3: paired -->
+                    <StackPanel x:Name="PairingDoneStep" Grid.Row="1" Margin="28,30,28,28" Visibility="Collapsed">
+                        <Border Width="64" Height="64" CornerRadius="32" Background="{DynamicResource SuccessBrush}" HorizontalAlignment="Center">
+                            <TextBlock Text="&#xE73E;" Style="{StaticResource IconGlyph}" FontSize="28" Foreground="White"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <TextBlock x:Name="PairingDoneTitle" Text="Your phone is paired" FontSize="20" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" Margin="0,16,0,0" />
+                        <TextBlock Style="{StaticResource BodyText}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,8,0,0" MaxWidth="420"
+                                   Text="It reconnects on its own from now on. In Pairly on your phone, turn on the features you want: notifications, messages, photos and files." />
+                    </StackPanel>
+
+                    <!-- Footer -->
+                    <Border Grid.Row="2" Background="{DynamicResource CardFillSecondaryBrush}" BorderBrush="{DynamicResource DividerBrush}"
+                            BorderThickness="0,1,0,0" CornerRadius="0,0,8,8" Padding="28,16">
+                        <DockPanel LastChildFill="False">
+                            <Button x:Name="PairingBackButton" DockPanel.Dock="Left" Content="Need the app?" Style="{StaticResource SubtleButton}"
+                                    Click="PairingShowGetApp_Click" />
+                            <Button x:Name="PairingPrimaryButton" DockPanel.Dock="Right" Content="I have the app" Style="{StaticResource AccentButton}"
+                                    MinWidth="140" Click="PairingPrimary_Click" />
+                            <Button x:Name="PairingSecondaryButton" DockPanel.Dock="Right" Content="Close" Margin="0,0,8,0" MinWidth="90"
+                                    Click="ClosePairingPanel_Click" />
+                        </DockPanel>
                     </Border>
                 </Grid>
             </Border>

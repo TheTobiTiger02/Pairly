@@ -43,5 +43,8 @@
   <ItemGroup Condition="Exists('..\..\android\server\build\outputs\apk\release\server-release.apk')">
     <None Include="..\..\android\server\build\outputs\apk\release\server-release.apk" Link="adb\pairly-server.jar" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="QRCoder" Version="1.6.0" />
+  </ItemGroup>
 
 </Project>

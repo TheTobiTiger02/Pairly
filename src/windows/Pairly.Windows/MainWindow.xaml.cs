@@ -23,6 +23,7 @@ using Pairly.Protocol;
 using Pairly.Server;
 using Pairly.Server.Adb;
 using Pairly.Server.Streaming;
+using Pairly.Windows.Pairing;
 
 namespace Pairly.Windows;
 
@@ -63,6 +64,12 @@ public partial class MainWindow : Window
     private bool _initializingStartupSetting;
     private bool _initializingPreferences;
     private bool _firstRunPairingShown;
+    private static readonly TimeSpan PairingTicketLifetime = TimeSpan.FromMinutes(5);
+    private PairingStep _pairingStep;
+    private DispatcherTimer? _pairingTimer;
+    private PairingTicketResponse? _pairingTicket;
+    private HashSet<string>? _pairingBaselineDeviceIds;
+    private bool _pairingHostAvailable;
 
     private System.Windows.Forms.NotifyIcon? _notifyIcon;
     private bool _exitFully;
@@ -173,7 +180,7 @@ public partial class MainWindow : Window
             navigationButton.IsChecked = int.TryParse(navigationButton.Tag?.ToString(), out var index) && index == pageIndex;
         }
 
-        PairingOverlay.Visibility = Visibility.Collapsed;
+        ClosePairingPanel();
     }
 
     private void SettingsNav_Checked(object sender, RoutedEventArgs e)
@@ -199,13 +206,200 @@ public partial class MainWindow : Window
     private void OpenPairingPanel_Click(object sender, RoutedEventArgs e)
     {
         DevicePickerToggle.IsChecked = false;
+        ShowPairingPanel(PairingStep.Pair);
+    }
+
+    private void ClosePairingPanel_Click(object sender, RoutedEventArgs e) => ClosePairingPanel();
+
+    private void PairingShowGetApp_Click(object sender, RoutedEventArgs e) => SetPairingStep(PairingStep.GetApp);
+
+    private void PairingPrimary_Click(object sender, RoutedEventArgs e)
+    {
+        if (_pairingStep == PairingStep.GetApp)
+        {
+            SetPairingStep(PairingStep.Pair);
+        }
+        else
+        {
+            ClosePairingPanel();
+        }
+    }
+
+    private void CopyInstallLink_Click(object sender, RoutedEventArgs e)
+    {
+        Clipboard.SetText(PairingQr.AndroidApkUrl);
+        StatusText.Text = "Download link copied.";
+    }
+
+    private void OpenReleasePage_Click(object sender, RoutedEventArgs e) =>
+        Process.Start(new ProcessStartInfo(PairingQr.ReleasePageUrl) { UseShellExecute = true });
+
+    private void ShowPairingPanel(PairingStep step)
+    {
         PairingOverlay.Visibility = Visibility.Visible;
+        SetPairingStep(step);
         PairingPanel.Focus();
     }
 
-    private void ClosePairingPanel_Click(object sender, RoutedEventArgs e)
+    private void ClosePairingPanel()
     {
         PairingOverlay.Visibility = Visibility.Collapsed;
+        _pairingTimer?.Stop();
+        _pairingTicket = null;
+    }
+
+    private void SetPairingStep(PairingStep step)
+    {
+        _pairingStep = step;
+        PairingGetAppStep.Visibility = step == PairingStep.GetApp ? Visibility.Visible : Visibility.Collapsed;
+        PairingPairStep.Visibility = step == PairingStep.Pair ? Visibility.Visible : Visibility.Collapsed;
+        PairingDoneStep.Visibility = step == PairingStep.Done ? Visibility.Visible : Visibility.Collapsed;
+        PairingStep2Indicator.Opacity = step >= PairingStep.Pair ? 1 : 0.45;
+        PairingStep3Indicator.Opacity = step == PairingStep.Done ? 1 : 0.45;
+
+        PairingBackButton.Visibility = step == PairingStep.Pair ? Visibility.Visible : Visibility.Collapsed;
+        PairingSecondaryButton.Visibility = step == PairingStep.Done ? Visibility.Collapsed : Visibility.Visible;
+        PairingPrimaryButton.Visibility = step == PairingStep.Pair ? Visibility.Collapsed : Visibility.Visible;
+        PairingPrimaryButton.Content = step == PairingStep.GetApp ? "I have the app" : "Start using Pairly";
+
+        if (step == PairingStep.GetApp)
+        {
+            InstallQrImage.Source ??= PairingQr.Render(PairingQr.AndroidApkUrl);
+            _pairingTimer?.Stop();
+        }
+        else if (step == PairingStep.Pair)
+        {
+            var addresses = GetLocalIPv4Addresses();
+            PairingAddressesText.Text = addresses.Length == 0
+                ? "This PC has no network address right now."
+                : $"This PC's addresses: {string.Join(", ", addresses)}";
+            _ = StartPairingAsync();
+        }
+        else
+        {
+            _pairingTimer?.Stop();
+        }
+    }
+
+    private async Task StartPairingAsync()
+    {
+        // Devices already paired before this code was shown; a new one moves the flow to Done.
+        try
+        {
+            var devices = await _host.GetFromJsonAsync<LinkedDevice[]>("v1/devices", JsonOptions) ?? Array.Empty<LinkedDevice>();
+            _pairingBaselineDeviceIds = devices.Select(device => device.DeviceId).ToHashSet(StringComparer.Ordinal);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Could not read paired devices before pairing: {ex.Message}");
+            _pairingBaselineDeviceIds = null;
+        }
+
+        await CreatePairingTicketAsync();
+        if (_pairingTimer is null)
+        {
+            _pairingTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            _pairingTimer.Tick += async (_, _) => await OnPairingTimerTickAsync();
+        }
+        _pairingTimer.Start();
+    }
+
+    private async Task CreatePairingTicketAsync()
+    {
+        PairingQrPlaceholder.Visibility = Visibility.Visible;
+        PairingQrPlaceholder.Text = "Creating code…";
+        PairingQrImage.Source = null;
+        if (!_pairingHostAvailable)
+        {
+            PairingQrPlaceholder.Text = "Pairing unavailable";
+            PairingExpiryText.Text = "Pairing is disabled until the port conflict is resolved.";
+            return;
+        }
+
+        try
+        {
+            using var response = await _host.PostAsync("v1/pairing-ticket", content: null);
+            response.EnsureSuccessStatusCode();
+            var ticket = await response.Content.ReadFromJsonAsync<PairingTicketResponse>(JsonOptions)
+                ?? throw new InvalidOperationException("Host returned an empty pairing ticket.");
+
+            _pairingTicket = ticket;
+            PairingCodeDigits.ItemsSource = ticket.Code.Select(digit => digit.ToString()).ToArray();
+            PairingQrImage.Source = PairingQr.Render(PairingQr.BuildPairingLink(ticket, Environment.MachineName, GetLocalIPv4Addresses()));
+            PairingQrPlaceholder.Visibility = Visibility.Collapsed;
+            UpdatePairingCountdown();
+        }
+        catch (Exception ex)
+        {
+            _pairingTicket = null;
+            PairingQrPlaceholder.Text = "Could not create a code";
+            PairingExpiryText.Text = UserFacingError("Could not create a pairing code. Retrying in a moment.", ex);
+        }
+    }
+
+    private async Task OnPairingTimerTickAsync()
+    {
+        if (_pairingStep != PairingStep.Pair || PairingOverlay.Visibility != Visibility.Visible)
+        {
+            _pairingTimer?.Stop();
+            return;
+        }
+
+        if (_pairingTicket is null || _pairingTicket.ExpiresAt <= DateTimeOffset.Now)
+        {
+            await CreatePairingTicketAsync();
+            return;
+        }
+
+        UpdatePairingCountdown();
+        if (DateTime.Now.Second % 2 == 0)
+        {
+            await CheckForNewlyPairedDeviceAsync();
+        }
+    }
+
+    private void UpdatePairingCountdown()
+    {
+        if (_pairingTicket is null)
+        {
+            return;
+        }
+
+        var remaining = _pairingTicket.ExpiresAt - DateTimeOffset.Now;
+        if (remaining < TimeSpan.Zero)
+        {
+            remaining = TimeSpan.Zero;
+        }
+        var fraction = Math.Clamp(remaining.TotalSeconds / PairingTicketLifetime.TotalSeconds, 0, 1);
+        PairingCountdownRemaining.Width = new GridLength(fraction, GridUnitType.Star);
+        PairingCountdownElapsed.Width = new GridLength(1 - fraction, GridUnitType.Star);
+        PairingExpiryText.Text = $"New code in {(int)remaining.TotalMinutes}:{remaining.Seconds:00}";
+    }
+
+    private async Task CheckForNewlyPairedDeviceAsync()
+    {
+        if (_pairingBaselineDeviceIds is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var devices = await _host.GetFromJsonAsync<LinkedDevice[]>("v1/devices", JsonOptions) ?? Array.Empty<LinkedDevice>();
+            var paired = devices.FirstOrDefault(device => !_pairingBaselineDeviceIds.Contains(device.DeviceId));
+            if (paired is null || _pairingStep != PairingStep.Pair)
+            {
+                return;
+            }
+
+            PairingDoneTitle.Text = $"Paired with {paired.DisplayName}";
+            SetPairingStep(PairingStep.Done);
+            await RefreshFromHostAsync(showErrors: false);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Could not check for a newly paired device: {ex.Message}");
+        }
     }
 
     private async void DevicesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -784,7 +978,7 @@ public partial class MainWindow : Window
         try
         {
             await _embeddedServer.StartAsync();
-            CreatePairingCodeButton.IsEnabled = true;
+            _pairingHostAvailable = true;
             var addresses = GetLocalIPv4Addresses();
             StatusText.Text = addresses.Length == 0
                 ? "Embedded host started on port 7816. Allow Windows Firewall if prompted."
@@ -793,39 +987,13 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            CreatePairingCodeButton.IsEnabled = false;
-            PairingCodeText.Text = "Host unavailable";
-            PairingExpiryText.Text = "Pairing is disabled until the port conflict is resolved.";
+            _pairingHostAvailable = false;
             StatusText.Text = ex is HostStartupException
                 ? ex.Message
                 : UserFacingError(
                     "Pairly could not start all required services. Close another running host and try again.",
                     ex);
             return false;
-        }
-    }
-
-    private async void CreatePairingTicket_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            using var response = await _host.PostAsync("v1/pairing-ticket", content: null);
-            response.EnsureSuccessStatusCode();
-            var ticket = await response.Content.ReadFromJsonAsync<PairingTicketResponse>(JsonOptions);
-
-            if (ticket is null)
-            {
-                StatusText.Text = "Host returned an empty pairing ticket.";
-                return;
-            }
-
-            PairingCodeText.Text = ticket.Code;
-            PairingExpiryText.Text = $"Expires at {ticket.ExpiresAt.LocalDateTime:t}";
-            StatusText.Text = "Pairing ticket opened on the live PC host. Enter this code on Android.";
-        }
-        catch (Exception ex)
-        {
-            StatusText.Text = UserFacingError("Could not create a pairing code. Try again.", ex);
         }
     }
 
@@ -1758,13 +1926,9 @@ public partial class MainWindow : Window
 
             if (devicesData.Length == 0 && !_firstRunPairingShown && !App.StartHidden)
             {
+                // First run starts with installing the phone app; pairing follows from there.
                 _firstRunPairingShown = true;
-                PairingOverlay.Visibility = Visibility.Visible;
-            }
-            else if (devicesData.Length > 0 && _firstRunPairingShown)
-            {
-                _firstRunPairingShown = false;
-                PairingOverlay.Visibility = Visibility.Collapsed;
+                ShowPairingPanel(PairingStep.GetApp);
             }
 
             if (devicesData.Length > 0 && !StartupRegistration.IsEnabled)
@@ -2537,6 +2701,13 @@ public partial class MainWindow : Window
     }
 }
 
+
+internal enum PairingStep
+{
+    GetApp,
+    Pair,
+    Done
+}
 
 internal sealed record PairingTicketResponse(
     string Code,
