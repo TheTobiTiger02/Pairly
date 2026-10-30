@@ -26,14 +26,15 @@ object LinkTokens {
     val MinTouchTarget = 48.dp
 }
 
-private val LinkBlue = Color(0xFF0F6CBD)
-private val LinkBlueDark = Color(0xFF60A5E8)
+// Indigo between the icon's blue (#3B82F6) and violet (#7C3AED) ends.
+private val LinkBlue = Color(0xFF4F5BE8)
+private val LinkBlueDark = Color(0xFFA5B4FC)
 
 private val LightColors = lightColorScheme(
     primary = LinkBlue,
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFD7E9FA),
-    onPrimaryContainer = Color(0xFF092F4F),
+    primaryContainer = Color(0xFFE3E6FF),
+    onPrimaryContainer = Color(0xFF1A1F6B),
     secondary = Color(0xFF4F6475),
     onSecondary = Color.White,
     secondaryContainer = Color(0xFFE3ECF3),
@@ -52,9 +53,9 @@ private val LightColors = lightColorScheme(
 
 private val DarkColors = darkColorScheme(
     primary = LinkBlueDark,
-    onPrimary = Color(0xFF00345B),
-    primaryContainer = Color(0xFF164D73),
-    onPrimaryContainer = Color(0xFFD6EAFA),
+    onPrimary = Color(0xFF14185A),
+    primaryContainer = Color(0xFF2E3494),
+    onPrimaryContainer = Color(0xFFE0E3FF),
     secondary = Color(0xFFB7C8D5),
     onSecondary = Color(0xFF233640),
     secondaryContainer = Color(0xFF344A58),

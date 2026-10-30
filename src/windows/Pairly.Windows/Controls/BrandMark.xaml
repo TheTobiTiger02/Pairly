@@ -3,19 +3,24 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              IsHitTestVisible="False" Focusable="False">
     <Viewbox Stretch="Uniform">
-        <Canvas Width="40" Height="40">
-            <!-- Two offset screens joined by a continuous link: an original Pairly motif. -->
-            <Border Canvas.Left="5" Canvas.Top="3" Width="23" Height="31" CornerRadius="6"
-                    Background="{DynamicResource SurfaceElevatedBrush}"
-                    BorderBrush="{DynamicResource AccentBrush}" BorderThickness="2.3" />
-            <Border Canvas.Left="12" Canvas.Top="8" Width="23" Height="29" CornerRadius="6"
-                    Background="{DynamicResource NavigationBrush}"
-                    BorderBrush="{DynamicResource TextPrimaryBrush}" BorderThickness="2.3" />
-            <Path Data="M 9,23 C 13,17 18,17 22,22 C 26,27 30,26 33,21"
-                  Stroke="{DynamicResource AccentBrush}" StrokeThickness="3.2"
-                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
-            <Ellipse Canvas.Left="20" Canvas.Top="31" Width="5" Height="2"
-                     Fill="{DynamicResource TextSecondaryBrush}" />
+        <!-- The Pairly mark: a PC screen partly behind a phone on a blue-to-violet tile. Same
+             geometry as packaging/windows/Generate-Assets.ps1; fixed colors so the logo does not
+             follow the Windows accent. -->
+        <Canvas Width="100" Height="100">
+            <Rectangle Width="100" Height="100" RadiusX="22" RadiusY="22">
+                <Rectangle.Fill>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#3B82F6" Offset="0" />
+                        <GradientStop Color="#7C3AED" Offset="1" />
+                    </LinearGradientBrush>
+                </Rectangle.Fill>
+            </Rectangle>
+            <Path Data="M44 28 A6 6 0 0 1 50 22 H76 A6 6 0 0 1 82 28 V44 A6 6 0 0 1 76 50 H60"
+                  Stroke="White" StrokeThickness="8.5"
+                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" />
+            <Path Data="M28 38 H42 A8 8 0 0 1 50 46 V74 A8 8 0 0 1 42 82 H28 A8 8 0 0 1 20 74 V46 A8 8 0 0 1 28 38 Z"
+                  Stroke="White" StrokeThickness="8.5" StrokeLineJoin="Round" />
+            <Ellipse Canvas.Left="31.5" Canvas.Top="68.5" Width="7" Height="7" Fill="White" />
         </Canvas>
     </Viewbox>
 </UserControl>

@@ -1,25 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Launch screen mark before Android 12: the full icon tile. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="112dp"
     android:height="112dp"
-    android:viewportWidth="112"
-    android:viewportHeight="112">
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <path android:pathData="M22,0 H78 A22,22 0 0,1 100,22 V78 A22,22 0 0,1 78,100 H22 A22,22 0 0,1 0,78 V22 A22,22 0 0,1 22,0 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="0"
+                android:startY="0"
+                android:endX="100"
+                android:endY="100"
+                android:startColor="#3B82F6"
+                android:endColor="#7C3AED" />
+        </aapt:attr>
+    </path>
     <path
-        android:fillColor="#0F6CBD"
-        android:pathData="M20,8H92C99,8 104,13 104,20V92C104,99 99,104 92,104H20C13,104 8,99 8,92V20C8,13 13,8 20,8Z" />
+        android:pathData="M44,28 A6,6 0 0,1 50,22 H76 A6,6 0 0,1 82,28 V44 A6,6 0 0,1 76,50 H60"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="7"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M25,29H70C74,29 77,32 77,36V63C77,67 74,70 70,70H53V75H61C63,75 64,76 64,78V80H31V78C31,76 32,75 34,75H42V70H25C21,70 18,67 18,63V36C18,32 21,29 25,29Z" />
+        android:pathData="M28,38 H42 A8,8 0 0,1 50,46 V74 A8,8 0 0,1 42,82 H28 A8,8 0 0,1 20,74 V46 A8,8 0 0,1 28,38 Z"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="7"
+        android:strokeLineJoin="round" />
     <path
-        android:fillColor="#0F6CBD"
-        android:pathData="M25,36H70V62H25Z" />
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M69,40H86C90,40 92,42 92,46V83C92,87 90,89 86,89H69C65,89 63,87 63,83V46C63,42 65,40 69,40Z" />
-    <path
-        android:fillColor="#0F6CBD"
-        android:pathData="M69,47H86V80H69Z" />
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M76,83H79V86H76Z" />
+        android:pathData="M31.5,72 a3.5,3.5 0 1,0 7,0 a3.5,3.5 0 1,0 -7,0 Z"
+        android:fillColor="#FFFFFF" />
 </vector>
