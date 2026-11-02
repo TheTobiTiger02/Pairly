@@ -97,21 +97,35 @@ jobs:
           $headers = @{ Authorization = "Bearer $token" }
           $api = "https://manage.devcenter.microsoft.com/v1.0/my/applications/$env:STORE_PRODUCT_ID"
 
+          # Partner Center explains refusals in the response body; show it instead of a bare status code.
+          function Invoke-Store([string]$Method, [string]$Uri, $Body) {
+            try {
+              if ($null -eq $Body) { return Invoke-RestMethod -Method $Method -Uri $Uri -Headers $headers }
+              return Invoke-RestMethod -Method $Method -Uri $Uri -Headers $headers -ContentType 'application/json; charset=utf-8' -Body $Body
+            } catch {
+              $detail = $_.ErrorDetails.Message
+              Write-Host "::error::$Method $Uri failed: $($_.Exception.Message) $detail"
+              "### Partner Center refused the request`n``$Method $($Uri -replace '.*/applications/[^/]+', '')`` → $($_.Exception.Message)`n`n``````n$detail`n``````" >> $env:GITHUB_STEP_SUMMARY
+              throw
+            }
+          }
+
           # Partner Center has one pending submission at a time: reuse a draft, wait if one is in certification.
-          $app = Invoke-RestMethod -Uri $api -Headers $headers
+          $app = Invoke-Store Get $api
+          Write-Host "Pending submission: $($app.pendingApplicationSubmission.id); last published: $($app.lastPublishedApplicationSubmission.id)"
           $busy = 'CommitStarted', 'PreProcessing', 'Certification', 'Release', 'PendingPublication', 'Publishing'
           if ($app.pendingApplicationSubmission) {
             $id = $app.pendingApplicationSubmission.id
-            $status = (Invoke-RestMethod -Uri "$api/submissions/$id/status" -Headers $headers).status
+            $status = (Invoke-Store Get "$api/submissions/$id/status").status
             if ($status -in $busy) {
               "### Store listing not updated`nThe current submission is still **$status**. Run this again once it's published (usually 1–3 business days). The screenshots are attached to this run as **store-screenshots**." >> $env:GITHUB_STEP_SUMMARY
               throw "A Store submission is still in '$status'."
             }
             Write-Host "Reusing the draft submission $id ($status)."
-            $submission = Invoke-RestMethod -Uri "$api/submissions/$id" -Headers $headers
+            $submission = Invoke-Store Get "$api/submissions/$id"
           } else {
             Write-Host 'Creating a draft from the published submission.'
-            $submission = Invoke-RestMethod -Method Post -Uri "$api/submissions" -Headers $headers
+            $submission = Invoke-Store Post "$api/submissions" $null
           }
 
           function Set-Field($object, $name, $value) { $object | Add-Member -NotePropertyName $name -NotePropertyValue $value -Force }
@@ -146,7 +160,7 @@ jobs:
           if (-not $updated) { throw 'No listing language matched store/listing.json.' }
 
           $body = $submission | ConvertTo-Json -Depth 100
-          $submission = Invoke-RestMethod -Method Put -Uri "$api/submissions/$($submission.id)" -Headers $headers -ContentType 'application/json; charset=utf-8' -Body ([Text.Encoding]::UTF8.GetBytes($body))
+          $submission = Invoke-Store Put "$api/submissions/$($submission.id)" ([Text.Encoding]::UTF8.GetBytes($body))
 
           # ZipFile writes forward slashes, so "en-us/01-home.png" matches the fileName above.
           Add-Type -AssemblyName System.IO.Compression.FileSystem
