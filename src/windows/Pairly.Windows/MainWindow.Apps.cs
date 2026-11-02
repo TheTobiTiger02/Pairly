@@ -30,6 +30,7 @@ public partial class MainWindow
 
     private async Task LoadAppsAsync(bool force)
     {
+        if (App.DemoMode) return;
         if (DevicesList.SelectedItem is not DeviceViewModel device)
         {
             AppsStatusText.Text = L.T("select_a_phone_to_see_its_apps");

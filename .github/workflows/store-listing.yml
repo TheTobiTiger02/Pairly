@@ -1,0 +1,192 @@
+name: Store listing
+
+# One click: Actions → Store listing → Run workflow.
+#
+# Renders the Windows app with demo content (--render-store-screenshots), frames each shot with the
+# headline from store/listing.json, and puts the text and screenshots for every language into a
+# Microsoft Store draft submission. By default the draft is left for you to review in Partner Center
+# and submit; tick "Submit for certification" to submit it straight away.
+on:
+  # Changes to the listing or the demo screens render a preview (no upload).
+  push:
+    branches: [main, 'claude/**']
+    paths: ['store/**', 'tools/store-listing/**', 'src/windows/Pairly.Windows/MainWindow.StoreScreenshots.cs', '.github/workflows/store-listing.yml']
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: Upload to Partner Center (untick to only render the screenshots)
+        type: boolean
+        default: true
+      submit:
+        description: Submit for certification right away (otherwise it stays a draft to review)
+        type: boolean
+        default: false
+
+concurrency:
+  group: microsoft-store
+  cancel-in-progress: false
+
+jobs:
+  screenshots:
+    name: Render screenshots
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - name: Build
+        run: dotnet build src/windows/Pairly.Windows/Pairly.Windows.csproj --configuration Release
+      - name: Render the demo screens
+        shell: pwsh
+        run: |
+          $out = Join-Path $PWD 'artifacts/store-raw'
+          $exe = 'src/windows/Pairly.Windows/bin/Release/net9.0-windows10.0.19041.0/Pairly.Windows.exe'
+          $process = Start-Process $exe -ArgumentList '--render-store-screenshots', "`"$out`"" -PassThru
+          if (-not $process.WaitForExit(600000)) { $process.Kill(); throw 'Rendering timed out.' }
+          $result = Join-Path $out 'result.txt'
+          if (Test-Path $result) { Get-Content $result }
+          if ($process.ExitCode -ne 0) { throw "Rendering failed with exit code $($process.ExitCode)." }
+      - name: Add the headlines
+        shell: pwsh
+        run: |
+          python -m pip install --quiet pillow
+          python tools/store-listing/compose.py --raw artifacts/store-raw --listing store/listing.json --out artifacts/store-screenshots
+      - uses: actions/upload-artifact@v4
+        with:
+          name: store-screenshots
+          path: artifacts/store-screenshots
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: store-raw
+          path: artifacts/store-raw
+          if-no-files-found: ignore
+
+  listing:
+    name: Update the Store listing
+    needs: screenshots
+    if: github.event_name == 'workflow_dispatch' && inputs.upload
+    runs-on: windows-latest
+    env:
+      STORE_PRODUCT_ID: ${{ vars.STORE_PRODUCT_ID }}
+      STORE_TENANT_ID: ${{ secrets.STORE_TENANT_ID }}
+      STORE_CLIENT_ID: ${{ secrets.STORE_CLIENT_ID }}
+      STORE_CLIENT_SECRET: ${{ secrets.STORE_CLIENT_SECRET }}
+      SUBMIT: ${{ inputs.submit }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: store-screenshots
+          path: shots
+
+      - name: Put text and screenshots into a draft submission
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $missing = @('STORE_PRODUCT_ID', 'STORE_TENANT_ID', 'STORE_CLIENT_ID', 'STORE_CLIENT_SECRET') | Where-Object { -not [Environment]::GetEnvironmentVariable($_) }
+          if ($missing) { throw "The Microsoft Store isn't set up (missing: $($missing -join ', ')). See docs/releasing.md." }
+
+          $token = (Invoke-RestMethod -Method Post -Uri "https://login.microsoftonline.com/$env:STORE_TENANT_ID/oauth2/token" -Body @{
+            grant_type = 'client_credentials'
+            client_id = $env:STORE_CLIENT_ID
+            client_secret = $env:STORE_CLIENT_SECRET
+            resource = 'https://manage.devcenter.microsoft.com'
+          }).access_token
+          $headers = @{ Authorization = "Bearer $token" }
+          $api = "https://manage.devcenter.microsoft.com/v1.0/my/applications/$env:STORE_PRODUCT_ID"
+
+          # Partner Center has one pending submission at a time: reuse a draft, wait if one is in certification.
+          $app = Invoke-RestMethod -Uri $api -Headers $headers
+          $busy = 'CommitStarted', 'PreProcessing', 'Certification', 'Release', 'PendingPublication', 'Publishing'
+          if ($app.pendingApplicationSubmission) {
+            $id = $app.pendingApplicationSubmission.id
+            $status = (Invoke-RestMethod -Uri "$api/submissions/$id/status" -Headers $headers).status
+            if ($status -in $busy) {
+              "### Store listing not updated`nThe current submission is still **$status**. Run this again once it's published (usually 1–3 business days). The screenshots are attached to this run as **store-screenshots**." >> $env:GITHUB_STEP_SUMMARY
+              throw "A Store submission is still in '$status'."
+            }
+            Write-Host "Reusing the draft submission $id ($status)."
+            $submission = Invoke-RestMethod -Uri "$api/submissions/$id" -Headers $headers
+          } else {
+            Write-Host 'Creating a draft from the published submission.'
+            $submission = Invoke-RestMethod -Method Post -Uri "$api/submissions" -Headers $headers
+          }
+
+          function Set-Field($object, $name, $value) { $object | Add-Member -NotePropertyName $name -NotePropertyValue $value -Force }
+
+          # Text and screenshots per language. Old screenshots are removed, the new ones uploaded.
+          $listing = Get-Content store/listing.json -Raw -Encoding utf8 | ConvertFrom-Json
+          $updated = @()
+          foreach ($language in $listing.listings.PSObject.Properties.Name) {
+            $source = $listing.listings.$language
+            $target = $submission.listings.PSObject.Properties | Where-Object { $_.Name -ieq $language } | Select-Object -First 1
+            if (-not $target) {
+              Write-Host "::warning::The submission has no '$language' listing; add the language in Partner Center first. Skipped."
+              continue
+            }
+            $base = $target.Value.baseListing
+            Set-Field $base 'description' $source.description
+            Set-Field $base 'shortDescription' $source.shortDescription
+            Set-Field $base 'features' @($source.features)
+            Set-Field $base 'keywords' @($source.keywords)
+            $images = @($base.images | Where-Object { $_ } | ForEach-Object {
+              if ($_.imageType -eq 'Screenshot') { $_.fileStatus = 'PendingDelete' }
+              $_
+            })
+            foreach ($shot in $source.screenshots) {
+              $file = "$language/$($shot.file).png"
+              if (-not (Test-Path "shots/$file")) { throw "Missing screenshot shots/$file." }
+              $images += [pscustomobject]@{ fileName = $file; fileStatus = 'PendingUpload'; imageType = 'Screenshot'; description = "$($shot.title). $($shot.subtitle)" }
+            }
+            Set-Field $base 'images' $images
+            $updated += $language
+          }
+          if (-not $updated) { throw 'No listing language matched store/listing.json.' }
+
+          $body = $submission | ConvertTo-Json -Depth 100
+          $submission = Invoke-RestMethod -Method Put -Uri "$api/submissions/$($submission.id)" -Headers $headers -ContentType 'application/json; charset=utf-8' -Body ([Text.Encoding]::UTF8.GetBytes($body))
+
+          # ZipFile writes forward slashes, so "en-us/01-home.png" matches the fileName above.
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          [IO.Compression.ZipFile]::CreateFromDirectory((Resolve-Path shots).Path, (Join-Path $PWD 'listing.zip'))
+          Invoke-WebRequest -Method Put -Uri $submission.fileUploadUrl -InFile listing.zip -Headers @{ 'x-ms-blob-type' = 'BlockBlob' } -UseBasicParsing | Out-Null
+
+          "submission=$($submission.id)" >> $env:GITHUB_ENV
+          "### Store listing updated`nLanguages: $($updated -join ', '). Text and screenshots are in submission ``$($submission.id)``." >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Leave it for review
+        if: env.SUBMIT != 'true'
+        shell: pwsh
+        run: |
+          @"
+          **Next:** open [Partner Center](https://partner.microsoft.com/dashboard/products/$env:STORE_PRODUCT_ID/overview), check the draft's **Store listings** (each language), then select **Submit for certification**.
+          Submit it before the next release, so the release doesn't run into an open draft.
+          "@ >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Submit for certification
+        if: env.SUBMIT == 'true'
+        shell: pwsh
+        run: |
+          $token = (Invoke-RestMethod -Method Post -Uri "https://login.microsoftonline.com/$env:STORE_TENANT_ID/oauth2/token" -Body @{
+            grant_type = 'client_credentials'; client_id = $env:STORE_CLIENT_ID; client_secret = $env:STORE_CLIENT_SECRET; resource = 'https://manage.devcenter.microsoft.com'
+          }).access_token
+          $headers = @{ Authorization = "Bearer $token" }
+          $api = "https://manage.devcenter.microsoft.com/v1.0/my/applications/$env:STORE_PRODUCT_ID"
+          Invoke-RestMethod -Method Post -Uri "$api/submissions/$env:submission/commit" -Headers $headers | Out-Null
+          $accepted = 'Certification', 'Release', 'PendingPublication', 'Publishing', 'Published'
+          $rejected = 'CommitFailed', 'PreProcessingFailed', 'CertificationFailed', 'ReleaseFailed', 'PendingCommit', 'Canceled'
+          $deadline = (Get-Date).AddMinutes(20)
+          do {
+            Start-Sleep -Seconds 30
+            $result = Invoke-RestMethod -Uri "$api/submissions/$env:submission/status" -Headers $headers
+            Write-Host "Partner Center: $($result.status)"
+          } while ($result.status -notin ($accepted + $rejected) -and (Get-Date) -lt $deadline)
+          if ($result.status -in $rejected) {
+            $errors = @($result.statusDetails.errors | ForEach-Object { "- **$($_.code)**: $($_.details)" })
+            "### Partner Center rejected the listing ($($result.status))" >> $env:GITHUB_STEP_SUMMARY
+            $errors >> $env:GITHUB_STEP_SUMMARY
+            throw "Partner Center rejected the submission: $($result.status)."
+          }
+          "Submitted for certification ($($result.status))." >> $env:GITHUB_STEP_SUMMARY

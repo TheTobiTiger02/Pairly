@@ -1,0 +1,137 @@
+{
+  "$comment": "Microsoft Store listing for Pairly. The 'Store listing' workflow uploads this text and the captioned screenshots into a draft submission. Edit here, then run Actions -> Store listing.",
+  "listings": {
+    "en-us": {
+      "shortDescription": "Use your Android phone from your Windows PC: texts, notifications, photos, files, calls and your phone's screen, all over your own Wi-Fi. No account, no cloud.",
+      "description": "Pairly brings your Android phone to your Windows PC, so you can stay focused on your work instead of reaching for your phone.\n\nPair once by scanning a QR code. From then on, Pairly reconnects on its own whenever your phone and PC are on the same Wi-Fi, even after a restart.\n\nEVERYTHING FROM YOUR PHONE, ON YOUR PC\n• Messages: read your text conversations and reply from your keyboard.\n• Notifications: see your phone's notifications as they arrive, reply right from the PC, dismiss them or mute apps you don't care about.\n• Photos: browse your phone's photos and videos and save the ones you want.\n• Files: send files from your PC to your phone, or share anything from your phone straight into Downloads\\Pairly on your PC.\n• One clipboard: copy on one device, paste on the other. Text and images.\n• Phone screen: mirror your phone in a window and control it with mouse and keyboard.\n• Calls: see who's calling and answer or decline from your PC.\n• Now playing: see and control the music playing on your phone.\n• Several phones: connect more than one Android phone and switch between them.\n\nEASY TO SET UP\nA short guided setup walks you through installing the free Android app, pairing, and turning on each feature, with a clear explanation of why each permission is needed. You choose what to turn on.\n\nPRIVATE BY DESIGN\n• No account, no cloud, no ads, no tracking.\n• Your data travels only between your own devices, over an encrypted connection that is pinned to your PC.\n• The source code is on GitHub: see exactly what Pairly does.\n\nIN ENGLISH AND GERMAN, LIGHT AND DARK\nPairly follows your Windows language and theme, or you pick them yourself.\n\nREQUIREMENTS\nWindows 10 version 2004 or later, and the free Pairly app for Android 8.0 or later (download link inside the app). Your phone and PC need to be on the same network.",
+      "features": [
+        "Read and reply to text messages from your PC",
+        "Your phone's notifications on your desktop, with replies",
+        "Browse and save your phone's photos and videos",
+        "Send files to your phone, or share files from it to your PC",
+        "One clipboard for text and images across your devices",
+        "Mirror and control your phone's screen",
+        "See who's calling and answer or decline",
+        "Control the music playing on your phone",
+        "Connect several Android phones",
+        "Guided setup in a few minutes",
+        "No account and no cloud: everything stays on your network",
+        "Encrypted connection pinned to your PC",
+        "English and German, light and dark theme",
+        "Free, with no ads"
+      ],
+      "keywords": [
+        "android",
+        "phone to pc",
+        "sms",
+        "notifications",
+        "file transfer",
+        "screen mirroring",
+        "clipboard"
+      ],
+      "screenshots": [
+        {
+          "file": "01-home",
+          "title": "Your phone, on your PC",
+          "subtitle": "Texts, notifications, photos and files, one click away"
+        },
+        {
+          "file": "02-messages",
+          "title": "Text from your keyboard",
+          "subtitle": "Read and reply to messages without picking up your phone"
+        },
+        {
+          "file": "03-notifications",
+          "title": "Never miss a notification",
+          "subtitle": "See them as they arrive, reply or dismiss them on your PC"
+        },
+        {
+          "file": "04-photos",
+          "title": "Your photos, right away",
+          "subtitle": "Browse your phone's photos and save the ones you want"
+        },
+        {
+          "file": "05-files",
+          "title": "Files in both directions",
+          "subtitle": "Send to your phone, or share from it straight to your PC"
+        },
+        {
+          "file": "06-home-dark",
+          "title": "Light or dark",
+          "subtitle": "Follows your Windows theme, or pick your own"
+        },
+        {
+          "file": "07-messages-dark",
+          "title": "Private by design",
+          "subtitle": "No account, no cloud: everything stays on your Wi-Fi"
+        }
+      ]
+    },
+    "de-de": {
+      "shortDescription": "Nutze dein Android-Handy am Windows-PC: SMS, Benachrichtigungen, Fotos, Dateien, Anrufe und den Bildschirm deines Handys, alles über dein eigenes WLAN. Ohne Konto, ohne Cloud.",
+      "description": "Pairly bringt dein Android-Handy auf deinen Windows-PC, damit du bei der Arbeit bleiben kannst, statt zum Handy zu greifen.\n\nDu koppelst einmal per QR-Code. Danach verbindet sich Pairly von selbst, sobald Handy und PC im selben WLAN sind, auch nach einem Neustart.\n\nALLES VOM HANDY, AM PC\n• Nachrichten: Lies deine SMS-Unterhaltungen und antworte über die Tastatur.\n• Benachrichtigungen: Sieh die Benachrichtigungen deines Handys, sobald sie ankommen, antworte direkt am PC, entferne sie oder schalte Apps stumm.\n• Fotos: Durchsuche die Fotos und Videos deines Handys und speichere die, die du willst.\n• Dateien: Schick Dateien vom PC aufs Handy oder teile alles vom Handy direkt nach Downloads\\Pairly auf deinem PC.\n• Eine Zwischenablage: Auf einem Gerät kopieren, auf dem anderen einfügen. Text und Bilder.\n• Handybildschirm: Spiegle dein Handy in einem Fenster und steuere es mit Maus und Tastatur.\n• Anrufe: Sieh, wer anruft, und nimm am PC an oder lehne ab.\n• Medienwiedergabe: Sieh und steuere die Musik, die auf deinem Handy läuft.\n• Mehrere Handys: Verbinde mehr als ein Android-Handy und wechsle zwischen ihnen.\n\nSCHNELL EINGERICHTET\nEine kurze geführte Einrichtung hilft dir beim Installieren der kostenlosen Android-App, beim Koppeln und beim Einschalten jeder Funktion, und erklärt jeweils, wofür die Berechtigung gebraucht wird. Du entscheidest, was du einschaltest.\n\nPRIVAT VON ANFANG AN\n• Kein Konto, keine Cloud, keine Werbung, kein Tracking.\n• Deine Daten gehen nur zwischen deinen eigenen Geräten hin und her, über eine verschlüsselte Verbindung, die an deinen PC gebunden ist.\n• Der Quellcode liegt auf GitHub: Du kannst genau nachsehen, was Pairly tut.\n\nAUF DEUTSCH UND ENGLISCH, HELL UND DUNKEL\nPairly folgt der Sprache und dem Design von Windows, oder du wählst selbst.\n\nVORAUSSETZUNGEN\nWindows 10 Version 2004 oder neuer und die kostenlose Pairly-App für Android 8.0 oder neuer (Download-Link in der App). Handy und PC müssen im selben Netzwerk sein.",
+      "features": [
+        "SMS am PC lesen und beantworten",
+        "Handy-Benachrichtigungen auf dem Desktop, mit Antworten",
+        "Fotos und Videos vom Handy ansehen und speichern",
+        "Dateien aufs Handy schicken oder vom Handy an den PC teilen",
+        "Eine Zwischenablage für Text und Bilder auf allen Geräten",
+        "Handybildschirm spiegeln und steuern",
+        "Sehen, wer anruft, und annehmen oder ablehnen",
+        "Musik auf dem Handy steuern",
+        "Mehrere Android-Handys verbinden",
+        "Geführte Einrichtung in wenigen Minuten",
+        "Kein Konto, keine Cloud: alles bleibt in deinem Netzwerk",
+        "Verschlüsselte, an deinen PC gebundene Verbindung",
+        "Deutsch und Englisch, helles und dunkles Design",
+        "Kostenlos und ohne Werbung"
+      ],
+      "keywords": [
+        "android",
+        "handy",
+        "sms",
+        "benachrichtigungen",
+        "dateien",
+        "bildschirm spiegeln",
+        "zwischenablage"
+      ],
+      "screenshots": [
+        {
+          "file": "01-home",
+          "title": "Dein Handy, am PC",
+          "subtitle": "SMS, Benachrichtigungen, Fotos und Dateien mit einem Klick"
+        },
+        {
+          "file": "02-messages",
+          "title": "SMS über die Tastatur",
+          "subtitle": "Nachrichten lesen und beantworten, ohne zum Handy zu greifen"
+        },
+        {
+          "file": "03-notifications",
+          "title": "Keine Benachrichtigung verpassen",
+          "subtitle": "Sofort sehen, am PC antworten oder entfernen"
+        },
+        {
+          "file": "04-photos",
+          "title": "Deine Fotos, sofort da",
+          "subtitle": "Die Fotos deines Handys durchsuchen und speichern"
+        },
+        {
+          "file": "05-files",
+          "title": "Dateien in beide Richtungen",
+          "subtitle": "Aufs Handy schicken oder vom Handy direkt an den PC teilen"
+        },
+        {
+          "file": "06-home-dark",
+          "title": "Hell oder dunkel",
+          "subtitle": "Folgt dem Windows-Design, oder du wählst selbst"
+        },
+        {
+          "file": "07-messages-dark",
+          "title": "Privat von Anfang an",
+          "subtitle": "Kein Konto, keine Cloud: alles bleibt in deinem WLAN"
+        }
+      ]
+    }
+  }
+}

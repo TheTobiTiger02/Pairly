@@ -51,7 +51,7 @@ public partial class MainWindow
     private async Task LoadNowPlayingAsync()
     {
         var deviceId = (DevicesList.SelectedItem as DeviceViewModel)?.DeviceId;
-        if (string.IsNullOrWhiteSpace(deviceId) || _mediaStates.ContainsKey(deviceId))
+        if (App.DemoMode || string.IsNullOrWhiteSpace(deviceId) || _mediaStates.ContainsKey(deviceId))
         {
             UpdateNowPlaying();
             return;

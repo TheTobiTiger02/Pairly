@@ -18,8 +18,21 @@ public partial class App : System.Windows.Application
     /// <summary>Set by --render-screenshots &lt;folder&gt;: render every page to PNG and exit (CI).</summary>
     internal static string? ScreenshotDirectory { get; private set; }
 
+    /// <summary>Set by --render-store-screenshots &lt;folder&gt;: demo content for the Store listing, then exit.</summary>
+    internal static string? StoreScreenshotDirectory { get; private set; }
+
+    /// <summary>Demo content only: no host, no phone, nothing saved.</summary>
+    internal static bool DemoMode => StoreScreenshotDirectory is not null;
+
     protected override void OnStartup(StartupEventArgs e)
     {
+        var storeIndex = Array.FindIndex(e.Args, argument => string.Equals(argument, "--render-store-screenshots", StringComparison.OrdinalIgnoreCase));
+        if (storeIndex >= 0 && storeIndex + 1 < e.Args.Length)
+        {
+            // Store renders behave like the CI renders (no setup, own instance) plus demo content.
+            StoreScreenshotDirectory = System.IO.Path.GetFullPath(e.Args[storeIndex + 1]);
+            ScreenshotDirectory = StoreScreenshotDirectory;
+        }
         var screenshotIndex = Array.FindIndex(e.Args, argument => string.Equals(argument, "--render-screenshots", StringComparison.OrdinalIgnoreCase));
         if (screenshotIndex >= 0 && screenshotIndex + 1 < e.Args.Length)
         {
