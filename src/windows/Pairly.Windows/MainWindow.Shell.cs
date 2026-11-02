@@ -99,19 +99,34 @@ public partial class MainWindow
     /// <summary>Shows a page and checks its navigation item in whichever layout is active.</summary>
     private void SelectPage(int index)
     {
-        var item = FindVisualChildren<RadioButton>(this)
-            .FirstOrDefault(button => button.GroupName == "MainNavigation" && button.IsVisible && button.Tag?.ToString() == index.ToString());
-        if (item is not null)
-        {
-            if (item.IsChecked == true)
-            {
-                MainTabs.SelectedIndex = index;
-            }
-            item.IsChecked = true;
-        }
-        else
+        var tabs = TopTabsPanel.Visibility == Visibility.Visible;
+        var roots = tabs ? new FrameworkElement[] { TopTabsPanel, TopTabsActions } : new FrameworkElement[] { NavPane };
+        // The logical tree exists from the constructor on; the visual tree only after the window loads.
+        var item = roots.SelectMany(LogicalDescendants).OfType<RadioButton>()
+            .FirstOrDefault(button => button.GroupName.StartsWith("MainNavigation", StringComparison.Ordinal) && button.Tag?.ToString() == index.ToString());
+        if (item is null || item.IsChecked == true)
         {
             MainTabs.SelectedIndex = index;
+        }
+        if (item is not null)
+        {
+            item.IsChecked = true;
+        }
+    }
+
+    private static IEnumerable<object> LogicalDescendants(object root)
+    {
+        if (root is not DependencyObject node)
+        {
+            yield break;
+        }
+        foreach (var child in LogicalTreeHelper.GetChildren(node))
+        {
+            yield return child;
+            foreach (var descendant in LogicalDescendants(child))
+            {
+                yield return descendant;
+            }
         }
     }
 

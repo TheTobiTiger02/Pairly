@@ -150,35 +150,35 @@
 
             <StackPanel x:Name="TopTabsPanel" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center"
                         KeyboardNavigation.TabNavigation="Once" KeyboardNavigation.DirectionalNavigation="Cycle" Visibility="Collapsed">
-                <RadioButton x:Name="HomeTab" GroupName="MainNavigation" Tag="5" Style="{StaticResource TopTabButton}"
+                <RadioButton x:Name="HomeTab" GroupName="MainNavigationTabs" Tag="5" Style="{StaticResource TopTabButton}"
                              Checked="Navigate_Click" AutomationProperties.Name="{l:Loc home}" ToolTip="{l:Loc home}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE80F;" Style="{StaticResource TabGlyph}" />
                         <TextBlock x:Name="HomeTabLabel" Text="{l:Loc home}" Style="{StaticResource TabLabel}" />
                     </StackPanel>
                 </RadioButton>
-                <RadioButton x:Name="MessagesNav" GroupName="MainNavigation" Tag="0" Style="{StaticResource TopTabButton}"
+                <RadioButton x:Name="MessagesNav" GroupName="MainNavigationTabs" Tag="0" Style="{StaticResource TopTabButton}"
                              Checked="Navigate_Click" AutomationProperties.Name="{l:Loc messages}" ToolTip="{l:Loc messages}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE8BD;" Style="{StaticResource TabGlyph}" />
                         <TextBlock x:Name="MessagesTabLabel" Text="{l:Loc messages}" Style="{StaticResource TabLabel}" />
                     </StackPanel>
                 </RadioButton>
-                <RadioButton GroupName="MainNavigation" Tag="1" Style="{StaticResource TopTabButton}"
+                <RadioButton GroupName="MainNavigationTabs" Tag="1" Style="{StaticResource TopTabButton}"
                              Checked="Navigate_Click" AutomationProperties.Name="{l:Loc photos}" ToolTip="{l:Loc photos}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xEB9F;" Style="{StaticResource TabGlyph}" />
                         <TextBlock x:Name="PhotosTabLabel" Text="{l:Loc photos}" Style="{StaticResource TabLabel}" />
                     </StackPanel>
                 </RadioButton>
-                <RadioButton GroupName="MainNavigation" Tag="2" Style="{StaticResource TopTabButton}"
+                <RadioButton GroupName="MainNavigationTabs" Tag="2" Style="{StaticResource TopTabButton}"
                              Checked="Navigate_Click" AutomationProperties.Name="{l:Loc files}" ToolTip="{l:Loc files}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE8B7;" Style="{StaticResource TabGlyph}" />
                         <TextBlock x:Name="FilesTabLabel" Text="{l:Loc files}" Style="{StaticResource TabLabel}" />
                     </StackPanel>
                 </RadioButton>
-                <RadioButton GroupName="MainNavigation" Tag="3" Style="{StaticResource TopTabButton}"
+                <RadioButton GroupName="MainNavigationTabs" Tag="3" Style="{StaticResource TopTabButton}"
                              Checked="Navigate_Click" AutomationProperties.Name="{l:Loc apps}" ToolTip="{l:Loc apps}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE71D;" Style="{StaticResource TabGlyph}" />
@@ -198,12 +198,12 @@
                     </StackPanel>
                 </Border>
                 <StackPanel x:Name="TopTabsActions" Orientation="Horizontal" Visibility="Collapsed">
-                    <RadioButton x:Name="HelpTab" GroupName="MainNavigation" Tag="7" Style="{StaticResource TopTabButton}"
+                    <RadioButton x:Name="HelpTab" GroupName="MainNavigationTabs" Tag="7" Style="{StaticResource TopTabButton}"
                                  Width="40" Padding="0" Margin="0,6,2,0" VerticalAlignment="Top" Checked="Navigate_Click"
                                  AutomationProperties.Name="{l:Loc help}" ToolTip="{l:Loc help}">
                         <TextBlock Text="&#xE897;" Style="{StaticResource TabGlyph}" />
                     </RadioButton>
-                    <RadioButton x:Name="SettingsNav" GroupName="MainNavigation" Tag="4" Style="{StaticResource TopTabButton}"
+                    <RadioButton x:Name="SettingsNav" GroupName="MainNavigationTabs" Tag="4" Style="{StaticResource TopTabButton}"
                                  Width="40" Padding="0" Margin="0,6,6,0" VerticalAlignment="Top" Checked="Navigate_Click"
                                  AutomationProperties.Name="{l:Loc settings}" ToolTip="{l:Loc settings}">
                         <TextBlock Text="&#xE713;" Style="{StaticResource TabGlyph}" />

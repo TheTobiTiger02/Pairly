@@ -186,7 +186,7 @@ public partial class MainWindow : Window
 
         MainTabs.SelectedIndex = pageIndex;
         foreach (var navigationButton in FindVisualChildren<System.Windows.Controls.RadioButton>(this)
-                     .Where(button => string.Equals(button.GroupName, "MainNavigation", StringComparison.Ordinal)))
+                     .Where(button => button.GroupName.StartsWith("MainNavigation", StringComparison.Ordinal)))
         {
             navigationButton.IsChecked = int.TryParse(navigationButton.Tag?.ToString(), out var index) && index == pageIndex;
         }
@@ -364,7 +364,7 @@ public partial class MainWindow : Window
     private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
     {
         // Narrow windows keep every feature: panes slim down and the tabs drop their labels.
-        NavPane.Width = ActualWidth < 1120 ? 256 : 292;
+        NavPane.Width = ActualWidth < 1000 ? 272 : 292;
         SidePanel.Width = ActualWidth < 1180 ? 312 : 340;
         var labelVisibility = ActualWidth < 1120 ? Visibility.Collapsed : Visibility.Visible;
         HomeTabLabel.Visibility = labelVisibility;
