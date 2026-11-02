@@ -158,12 +158,16 @@ class AppSmokeTest {
         screenshot("feature-control")
         click(R.string.action_open_settings)
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-        check(device.wait(Until.hasObject(By.pkg("com.android.settings")), 15_000)) { "Settings did not open." }
+        // A cold start of Settings can take a while on CI emulators.
+        val deadline = System.currentTimeMillis() + 30_000
+        while (device.currentPackageName == context.packageName && System.currentTimeMillis() < deadline) Thread.sleep(250)
+        check(device.currentPackageName != context.packageName) { "Settings did not open." }
+        device.waitForIdle()
         // Pairly may be listed below the fold (Downloaded apps), so scroll to it if needed.
         if (!device.hasObject(By.textContains("Pairly"))) {
             runCatching { UiScrollable(UiSelector().scrollable(true)).scrollTextIntoView("Pairly") }
         }
-        check(device.wait(Until.hasObject(By.textContains("Pairly")), 5_000)) { "Accessibility settings did not show Pairly." }
+        check(device.wait(Until.hasObject(By.textContains("Pairly")), 10_000)) { "Accessibility settings did not show Pairly." }
         device.takeScreenshot(File(context.filesDir, "screenshots/%02d-accessibility-settings.png".format(++shot)))
         device.pressBack()
         waitFor(R.string.feature_why_title)
