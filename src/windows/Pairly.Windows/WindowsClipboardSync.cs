@@ -15,6 +15,8 @@ using Pairly.Protocol;
 using Pairly.Server;
 using Clipboard = System.Windows.Clipboard;
 
+using Pairly.Windows.Localization;
+
 namespace Pairly.Windows;
 
 /// <summary>Owns the clipboard for the app lifetime, including a hidden/tray-only window.</summary>
@@ -111,9 +113,9 @@ internal sealed class WindowsClipboardSync(Dispatcher dispatcher, HttpClient? ho
             catch (ExternalException) { await Task.Delay(50, _stop.Token).ConfigureAwait(true); }
             catch (OperationCanceledException) when (_disposed) { return; }
             catch (Exception failure) when (failure is ArgumentException or NotSupportedException or IOException)
-            { StatusChanged?.Invoke("Clipboard could not be read: " + failure.Message); return; }
+            { StatusChanged?.Invoke(L.T("clipboard_could_not_be_read") + failure.Message); return; }
         }
-        StatusChanged?.Invoke("Clipboard is busy. Automatic sync will retry on the next copy.");
+        StatusChanged?.Invoke(L.T("clipboard_is_busy_automatic_sync_will_retry"));
         _ = RetryCaptureAsync();
     }
 
@@ -158,14 +160,14 @@ internal sealed class WindowsClipboardSync(Dispatcher dispatcher, HttpClient? ho
                     if (session == _ordering.Session) _ordering.Published(result.RootElement.GetProperty("relaySequence").GetInt64());
                     _lastContent = (copy.Fingerprint, DateTimeOffset.UtcNow);
                     if (ReferenceEquals(copy, _pending)) _pending = null;
-                    StatusChanged?.Invoke("Clipboard sent to all connected devices.");
+                    StatusChanged?.Invoke(L.T("clipboard_sent_to_all_connected_devices"));
                 }
                 catch (Exception failure) when (failure is InvalidDataException or IOException or NotSupportedException or ArgumentException or JsonException)
                 { if (ReferenceEquals(copy, _pending)) _pending = null; StatusChanged?.Invoke(failure.Message); }
                 catch (Exception failure) when (failure is HttpRequestException or TaskCanceledException)
                 {
                     if (_disposed) break;
-                    StatusChanged?.Invoke("Clipboard queued. Waiting for your PC connection.");
+                    StatusChanged?.Invoke(L.T("clipboard_queued_waiting_for_your_pc_connect"));
                     await Task.Delay(1_000, _stop.Token);
                 }
             }
@@ -246,10 +248,10 @@ internal sealed class WindowsClipboardSync(Dispatcher dispatcher, HttpClient? ho
             _lastContent = (fingerprint, DateTimeOffset.UtcNow);
             _pending = null;
             status = "applied";
-            StatusChanged?.Invoke(item.ContentType == "image/png" ? "Phone clipboard image copied to this PC." : "Phone clipboard text copied to this PC.");
+            StatusChanged?.Invoke(item.ContentType == "image/png" ? L.T("phone_clipboard_image_copied_to_this_pc") : L.T("phone_clipboard_text_copied_to_this_pc"));
         }
         catch (Exception failure) when (failure is HttpRequestException or InvalidDataException or IOException or ExternalException or FormatException or NotSupportedException or ArgumentException or OperationCanceledException)
-        { if (!_disposed) StatusChanged?.Invoke("Phone clipboard could not be applied: " + failure.Message); }
+        { if (!_disposed) StatusChanged?.Invoke(L.T("phone_clipboard_could_not_be_applied") + failure.Message); }
         if (!_disposed && _ordering.InSession(delivery.Value))
         {
             try { using var response = await _host.PostAsJsonAsync($"v1/clipboard/{Uri.EscapeDataString(item.ItemId)}/ack", new ClipboardAckPayload(item.ItemId, sequence, status, status == "applied" ? "Applied on Windows." : "Clipboard item was unavailable, superseded or invalid.", DateTimeOffset.UtcNow), JsonOptions, _stop.Token); }

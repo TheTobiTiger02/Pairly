@@ -1,0 +1,529 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- German, informal "du". Same keys as Strings.resx. -->
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="0_selected" xml:space="preserve"><value>0 ausgewählt</value></data>
+  <data name="a_quick_walk_through_where_everything_is" xml:space="preserve"><value>Ein kurzer Rundgang, wo du was findest.</value></data>
+  <data name="about" xml:space="preserve"><value>Info</value></data>
+  <data name="accept_the_screen_sharing_prompt_on_the_phon" xml:space="preserve"><value>Bestätige die Freigabe-Abfrage auf dem Handy. Um Maus und Tastatur auf dem Handy zu nutzen, schalte in Pairly auf Android Handy steuern ein.</value></data>
+  <data name="action_back" xml:space="preserve"><value>Zurück</value></data>
+  <data name="action_close" xml:space="preserve"><value>Schließen</value></data>
+  <data name="action_done" xml:space="preserve"><value>Fertig</value></data>
+  <data name="action_get_started" xml:space="preserve"><value>Los geht’s</value></data>
+  <data name="action_have_app" xml:space="preserve"><value>Ich habe die App</value></data>
+  <data name="action_next" xml:space="preserve"><value>Weiter</value></data>
+  <data name="action_show_me_around" xml:space="preserve"><value>Zeig mir alles</value></data>
+  <data name="action_skip_for_now" xml:space="preserve"><value>Erst mal überspringen</value></data>
+  <data name="action_skip_tour" xml:space="preserve"><value>Tour überspringen</value></data>
+  <data name="add_a_device" xml:space="preserve"><value>Gerät hinzufügen</value></data>
+  <data name="add_a_device_to_get_started" xml:space="preserve"><value>Füge ein Gerät hinzu, um loszulegen</value></data>
+  <data name="add_device" xml:space="preserve"><value>Gerät hinzufügen</value></data>
+  <data name="all_albums" xml:space="preserve"><value>Alle Alben</value></data>
+  <data name="all_apps" xml:space="preserve"><value>Alle Apps</value></data>
+  <data name="allow_screen_capture_on_the_phone_if_it_asks" xml:space="preserve"><value>Erlaube die Bildschirmaufnahme auf dem Handy, wenn es fragt.</value></data>
+  <data name="android_blocked_opening_turn_on_remote_contr" xml:space="preserve"><value>Android hat das Öffnen von {0} blockiert. Schalte auf dem Handy die Fernsteuerung ein (die Pairly-Bedienungshilfe) und versuche es erneut.</value></data>
+  <data name="android_may_request_screen_capture_approval" xml:space="preserve"><value>Android kann beim Start einer neuen Übertragung nach der Erlaubnis zur Bildschirmaufnahme fragen. Beim erneuten Verbinden mit einer laufenden Übertragung musst du nicht neu koppeln.</value></data>
+  <data name="android_only_lets_the_app_on_screen_read_the" xml:space="preserve"><value>Android lässt nur die App im Vordergrund die Zwischenablage lesen. Richte in Pairly auf dem Handy unter Funktionen &gt; Gemeinsame Zwischenablage die Synchronisierung im Hintergrund ein. Sie nutzt die kostenlose App Shizuku.</value></data>
+  <data name="answer" xml:space="preserve"><value>Annehmen</value></data>
+  <data name="answer_messages_right_where_the_notification" xml:space="preserve"><value>Beantworte Nachrichten direkt dort, wo die Benachrichtigung erscheint.</value></data>
+  <data name="answers_to_common_questions_and_ways_to_get" xml:space="preserve"><value>Antworten auf häufige Fragen und Wege, Pairly noch einmal kennenzulernen.</value></data>
+  <data name="app_behavior" xml:space="preserve"><value>App-Verhalten</value></data>
+  <data name="app_window" xml:space="preserve"><value>App-Fenster: {0}</value></data>
+  <data name="app_windows_need_wireless_debugging_turn_it" xml:space="preserve"><value>App-Fenster brauchen Debugging über WLAN. Schalte es in den Entwickleroptionen des Handys ein und kopple es einmal mit diesem PC.</value></data>
+  <data name="appearance" xml:space="preserve"><value>Darstellung</value></data>
+  <data name="apps" xml:space="preserve"><value>Apps</value></data>
+  <data name="apps_on_double_click_one_to_open_it" xml:space="preserve"><value>{0} Apps auf {1}. Doppelklicke eine, um sie zu öffnen.</value></data>
+  <data name="are_you_sure_you_want_to_delete" xml:space="preserve"><value>Möchtest du {0} wirklich löschen?</value></data>
+  <data name="ask_phone" xml:space="preserve"><value>Handy fragen</value></data>
+  <data name="audio" xml:space="preserve"><value>Audio</value></data>
+  <data name="audio_is_optional_and_never_reduces_video_re" xml:space="preserve"><value>Ton ist optional und verlangsamt das Bild nie.</value></data>
+  <data name="auto_recommended" xml:space="preserve"><value>Automatisch (empfohlen)</value></data>
+  <data name="automatic_startup_is_off_your_trusted_pairin" xml:space="preserve"><value>Der Autostart ist aus. Deine Kopplung bleibt unverändert.</value></data>
+  <data name="backup_restored" xml:space="preserve"><value>aus Sicherung wiederhergestellt</value></data>
+  <data name="balanced" xml:space="preserve"><value>Ausgewogen</value></data>
+  <data name="battery" xml:space="preserve"><value>Akku</value></data>
+  <data name="battery_2" xml:space="preserve"><value> · Akku </value></data>
+  <data name="battery_is_at_please_plug_in_a_charger" xml:space="preserve"><value>Der Akku von {0} ist bei {1} %. Bitte schließe ein Ladegerät an.</value></data>
+  <data name="browse_your_phone_and_send_files_both_ways" xml:space="preserve"><value>Durchsuche dein Handy und sende Dateien in beide Richtungen.</value></data>
+  <data name="call_audio_stays_on_the_phone_or_its_bluetoo" xml:space="preserve"><value>Der Ton des Anrufs bleibt auf dem Handy oder seinem Bluetooth-Headset.</value></data>
+  <data name="call_in_progress" xml:space="preserve"><value>Anruf läuft</value></data>
+  <data name="calls" xml:space="preserve"><value>Anrufe</value></data>
+  <data name="cannot_download_a_directory_double_click_to" xml:space="preserve"><value>Ordner können nicht heruntergeladen werden. Doppelklicke zum Öffnen.</value></data>
+  <data name="changes_apply_right_away" xml:space="preserve"><value>Änderungen gelten sofort.</value></data>
+  <data name="checking_trusted_devices" xml:space="preserve"><value>Vertrauenswürdige Geräte werden geprüft …</value></data>
+  <data name="choose_phone" xml:space="preserve"><value>Handy auswählen</value></data>
+  <data name="choose_which_phone_to_use" xml:space="preserve"><value>Wähle, welches Handy du nutzen willst</value></data>
+  <data name="clear_all" xml:space="preserve"><value>Alle löschen</value></data>
+  <data name="clear_failed" xml:space="preserve"><value>Löschen fehlgeschlagen: {0}.</value></data>
+  <data name="clear_notifications_from_this_pc" xml:space="preserve"><value>Benachrichtigungen von diesem PC löschen</value></data>
+  <data name="cleared_the_local_notification_list" xml:space="preserve"><value>Benachrichtigungsliste auf diesem PC geleert.</value></data>
+  <data name="clipboard" xml:space="preserve"><value>Zwischenablage</value></data>
+  <data name="clipboard_contents_are_held_only_for_deliver" xml:space="preserve"><value>Inhalte der Zwischenablage werden nur für die Übertragung gehalten. Fotos, Nachrichten und Benachrichtigungen bleiben dem ausgewählten Handy zugeordnet.</value></data>
+  <data name="clipboard_could_not_be_read" xml:space="preserve"><value>Zwischenablage konnte nicht gelesen werden: </value></data>
+  <data name="clipboard_is_busy_automatic_sync_will_retry" xml:space="preserve"><value>Die Zwischenablage ist belegt. Die Synchronisierung versucht es beim nächsten Kopieren erneut.</value></data>
+  <data name="clipboard_queued_waiting_for_your_pc_connect" xml:space="preserve"><value>Zwischenablage wartet auf die Verbindung.</value></data>
+  <data name="clipboard_sent_to_all_connected_devices" xml:space="preserve"><value>Zwischenablage an alle verbundenen Geräte gesendet.</value></data>
+  <data name="clipboard_settings" xml:space="preserve"><value>Einstellungen der Zwischenablage</value></data>
+  <data name="clipboard_text" xml:space="preserve"><value>Text der Zwischenablage</value></data>
+  <data name="closing_the_window_keeps_your_phone_connecte" xml:space="preserve"><value>Nach dem Schließen des Fensters bleibt dein Handy verbunden.</value></data>
+  <data name="collecting" xml:space="preserve"><value>Wird gesammelt …</value></data>
+  <data name="confirm_delete" xml:space="preserve"><value>Löschen bestätigen</value></data>
+  <data name="connect_your_android_phone" xml:space="preserve"><value>Verbinde dein Android-Handy</value></data>
+  <data name="connected" xml:space="preserve"><value>Verbunden</value></data>
+  <data name="connected_for" xml:space="preserve"><value>{0}: verbunden seit {1}, </value></data>
+  <data name="connected_mirror_permission" xml:space="preserve"><value>Verbunden: {0}. Berechtigung zur Spiegelung: {1}.</value></data>
+  <data name="connecting" xml:space="preserve"><value>Verbinde</value></data>
+  <data name="connecting_to_your_phone" xml:space="preserve"><value>Verbinde mit deinem Handy</value></data>
+  <data name="connection" xml:space="preserve"><value>Verbindung</value></data>
+  <data name="connection_between_this_window_and_the_pairl" xml:space="preserve"><value>Verbindung zwischen diesem Fenster und dem Pairly-Dienst</value></data>
+  <data name="connection_health_and_recent_events_for_trou" xml:space="preserve"><value>Verbindungszustand und letzte Ereignisse, zur Fehlersuche.</value></data>
+  <data name="conversations" xml:space="preserve"><value>Unterhaltungen</value></data>
+  <data name="copy_link" xml:space="preserve"><value>Link kopieren</value></data>
+  <data name="copy_on_one_device_paste_on_the_other" xml:space="preserve"><value>Auf einem Gerät kopieren, auf dem anderen einfügen.</value></data>
+  <data name="copy_on_your_pc_and_paste_on_your_phone_it_s" xml:space="preserve"><value>Am PC kopieren und auf dem Handy einfügen. Das synchronisiert sich von selbst.</value></data>
+  <data name="copy_once_paste_on_every_connected_device_pc" xml:space="preserve"><value>Einmal kopieren, auf jedem verbundenen Gerät einfügen. Änderungen der PC-Zwischenablage werden sofort erkannt und an alle verbundenen Handys weitergegeben.</value></data>
+  <data name="copying_on_the_phone_doesn_t_reach_the_pc" xml:space="preserve"><value>Kopiertes vom Handy kommt nicht am PC an</value></data>
+  <data name="could_not_be_opened" xml:space="preserve"><value>{0} konnte nicht geöffnet werden.</value></data>
+  <data name="could_not_check_for_updates_pairly_tries_aga" xml:space="preserve"><value>Updates konnten nicht geprüft werden. Pairly versucht es später erneut.</value></data>
+  <data name="could_not_create_a_code" xml:space="preserve"><value>Code konnte nicht erstellt werden</value></data>
+  <data name="could_not_create_a_pairing_code_retrying_in" xml:space="preserve"><value>Kopplungscode konnte nicht erstellt werden. Neuer Versuch gleich.</value></data>
+  <data name="could_not_read_phone_diagnostics" xml:space="preserve"><value>Diagnose des Handys konnte nicht gelesen werden: {0}</value></data>
+  <data name="creating_a_pairing_code" xml:space="preserve"><value>Kopplungscode wird erstellt …</value></data>
+  <data name="creating_code" xml:space="preserve"><value>Code wird erstellt …</value></data>
+  <data name="dark" xml:space="preserve"><value>Dunkel</value></data>
+  <data name="decline" xml:space="preserve"><value>Ablehnen</value></data>
+  <data name="delete" xml:space="preserve"><value>Löschen</value></data>
+  <data name="delete_failed" xml:space="preserve"><value>Löschen fehlgeschlagen: {0}</value></data>
+  <data name="design_preview_taps_left" xml:space="preserve"><value>Noch {0} Klicks bis zur Design-Vorschau.</value></data>
+  <data name="design_preview_unlocked" xml:space="preserve"><value>Design-Vorschau freigeschaltet. Du findest sie unter Einstellungen &gt; Allgemein &gt; Info.</value></data>
+  <data name="design_preview_window_layout" xml:space="preserve"><value>Design-Vorschau: Fensteraufbau</value></data>
+  <data name="desktop_socket_connected" xml:space="preserve"><value>Desktop-Verbindung steht.</value></data>
+  <data name="desktop_socket_reconnecting" xml:space="preserve"><value>Desktop-Verbindung wird neu aufgebaut.</value></data>
+  <data name="details" xml:space="preserve"><value>Details</value></data>
+  <data name="development_build_automatic_updates_are_off" xml:space="preserve"><value>Entwicklungsversion: automatische Updates sind aus.</value></data>
+  <data name="device" xml:space="preserve"><value>Gerät</value></data>
+  <data name="devices" xml:space="preserve"><value>Geräte</value></data>
+  <data name="devices_settings" xml:space="preserve"><value>Geräteeinstellungen</value></data>
+  <data name="diagnostics" xml:space="preserve"><value>Diagnose</value></data>
+  <data name="diagnostics_settings" xml:space="preserve"><value>Diagnose-Einstellungen</value></data>
+  <data name="did_not_answer_the_diagnostics_request" xml:space="preserve"><value>{0} hat auf die Diagnoseanfrage nicht geantwortet ({1}).</value></data>
+  <data name="dismiss" xml:space="preserve"><value>Schließen</value></data>
+  <data name="dismiss_failed" xml:space="preserve"><value>Schließen fehlgeschlagen: {0}. {1}</value></data>
+  <data name="dismiss_notification" xml:space="preserve"><value>Benachrichtigung schließen</value></data>
+  <data name="dismissed_notification_from" xml:space="preserve"><value>Benachrichtigung von {0} geschlossen.</value></data>
+  <data name="dismissing_notification" xml:space="preserve"><value>Benachrichtigung von {0} wird geschlossen …</value></data>
+  <data name="document" xml:space="preserve"><value>Dokument</value></data>
+  <data name="download" xml:space="preserve"><value>Herunterladen</value></data>
+  <data name="download_cancelled" xml:space="preserve"><value>Download abgebrochen.</value></data>
+  <data name="download_failed" xml:space="preserve"><value>Download fehlgeschlagen: {0}</value></data>
+  <data name="download_link_copied" xml:space="preserve"><value>Download-Link kopiert.</value></data>
+  <data name="download_to" xml:space="preserve"><value>Herunterladen nach …</value></data>
+  <data name="drag_files_onto_this_window_and_they_land_in" xml:space="preserve"><value>Zieh Dateien auf dieses Fenster, und sie landen im Download-Ordner deines Handys.</value></data>
+  <data name="drop_files_to_send_them" xml:space="preserve"><value>Dateien zum Senden hierher ziehen</value></data>
+  <data name="embedded_host_started_on_port_7816_allow_win" xml:space="preserve"><value>Dienst auf Port 7816 gestartet. Erlaube die Windows-Firewall, wenn du gefragt wirst.</value></data>
+  <data name="embedded_host_started_phone_host_ip" xml:space="preserve"><value>Dienst gestartet. IP für das Handy: {0}</value></data>
+  <data name="empty_response" xml:space="preserve"><value>Leere Antwort</value></data>
+  <data name="enter_a_message" xml:space="preserve"><value>Nachricht eingeben</value></data>
+  <data name="enter_full_screen" xml:space="preserve"><value>Vollbild</value></data>
+  <data name="everything_from_your_phone_right_here_on_you" xml:space="preserve"><value>Alles von deinem Handy, direkt hier auf deinem PC.</value></data>
+  <data name="everything_stays_between_your_phone_and_this" xml:space="preserve"><value>Alles bleibt zwischen deinem Handy und diesem PC. Kein Konto, keine Cloud.</value></data>
+  <data name="exit" xml:space="preserve"><value>Beenden</value></data>
+  <data name="exit_full_screen" xml:space="preserve"><value>Vollbild beenden</value></data>
+  <data name="failed_empty_response" xml:space="preserve"><value>Fehlgeschlagen: leere Antwort</value></data>
+  <data name="failed_to_load_folder" xml:space="preserve"><value>Ordner konnte nicht geladen werden: {0}</value></data>
+  <data name="fetch_the_latest_from_your_phone" xml:space="preserve"><value>Das Neueste vom Handy holen</value></data>
+  <data name="file" xml:space="preserve"><value>Datei</value></data>
+  <data name="file_name" xml:space="preserve"><value>Dateiname</value></data>
+  <data name="files" xml:space="preserve"><value>Dateien</value></data>
+  <data name="files_are_already_being_sent_wait_for_them_t" xml:space="preserve"><value>Es werden bereits Dateien gesendet. Warte, bis sie fertig sind, und versuche es dann erneut.</value></data>
+  <data name="filter_by_album" xml:space="preserve"><value>Nach Album filtern</value></data>
+  <data name="filter_by_app" xml:space="preserve"><value>Nach App filtern</value></data>
+  <data name="filter_notifications" xml:space="preserve"><value>Benachrichtigungen filtern</value></data>
+  <data name="fit_window_to_phone_screen" xml:space="preserve"><value>Fenster an Handybildschirm anpassen</value></data>
+  <data name="folder" xml:space="preserve"><value>Ordner</value></data>
+  <data name="forget_failed" xml:space="preserve"><value>Vergessen fehlgeschlagen: {0}.</value></data>
+  <data name="forget_phone" xml:space="preserve"><value>Handy vergessen</value></data>
+  <data name="forgot_pair_it_again_from_android_to_create" xml:space="preserve"><value>{0} vergessen. Kopple es auf Android erneut, um eine neue Kopplung zu erstellen.</value></data>
+  <data name="frame_rate" xml:space="preserve"><value>Bildrate</value></data>
+  <data name="frequently_asked_questions" xml:space="preserve"><value>Häufige Fragen</value></data>
+  <data name="full_screen" xml:space="preserve"><value>Vollbild</value></data>
+  <data name="general" xml:space="preserve"><value>Allgemein</value></data>
+  <data name="general_settings" xml:space="preserve"><value>Allgemeine Einstellungen</value></data>
+  <data name="get_the_android_app" xml:space="preserve"><value>Android-App holen</value></data>
+  <data name="get_to_know_pairly" xml:space="preserve"><value>Pairly kennenlernen</value></data>
+  <data name="go_back" xml:space="preserve"><value>Zurück</value></data>
+  <data name="good_to_know" xml:space="preserve"><value>Gut zu wissen</value></data>
+  <data name="got_it" xml:space="preserve"><value>Verstanden</value></data>
+  <data name="greeting_afternoon" xml:space="preserve"><value>Guten Tag</value></data>
+  <data name="greeting_evening" xml:space="preserve"><value>Guten Abend</value></data>
+  <data name="greeting_morning" xml:space="preserve"><value>Guten Morgen</value></data>
+  <data name="hang_up" xml:space="preserve"><value>Auflegen</value></data>
+  <data name="having_trouble" xml:space="preserve"><value>Probleme?</value></data>
+  <data name="help" xml:space="preserve"><value>Hilfe</value></data>
+  <data name="help_has_answers_to_common_questions_and_rep" xml:space="preserve"><value>Die Hilfe beantwortet häufige Fragen und spielt die Tour erneut ab.</value></data>
+  <data name="hide_muted_apps" xml:space="preserve"><value>Stummgeschaltete Apps ausblenden</value></data>
+  <data name="higher_is_sharper_but_needs_a_faster_network" xml:space="preserve"><value>Höher ist schärfer, braucht aber ein schnelleres Netzwerk.</value></data>
+  <data name="home" xml:space="preserve"><value>Start</value></data>
+  <data name="host_link_is_not_currently_connected" xml:space="preserve"><value>Die Verbindung zum Dienst besteht gerade nicht.</value></data>
+  <data name="host_link_live_for" xml:space="preserve"><value>Verbindung zum Dienst seit {0}. {1}</value></data>
+  <data name="how_do_i_add_another_phone" xml:space="preserve"><value>Wie füge ich ein weiteres Handy hinzu?</value></data>
+  <data name="hr_ago" xml:space="preserve"><value>vor {0} Std.</value></data>
+  <data name="image" xml:space="preserve"><value>Bild</value></data>
+  <data name="in_pairly_on_your_phone_tap_scan_qr_code_or" xml:space="preserve"><value>Tippe in Pairly auf deinem Handy auf QR-Code scannen. Oder gib diesen Code ein:</value></data>
+  <data name="incoming_call" xml:space="preserve"><value>Eingehender Anruf</value></data>
+  <data name="incoming_call_silenced" xml:space="preserve"><value>Eingehender Anruf (stumm)</value></data>
+  <data name="install_pairly_on_your_phone" xml:space="preserve"><value>Installiere Pairly auf deinem Handy</value></data>
+  <data name="install_pairly_on_your_phone_then_scan_the_c" xml:space="preserve"><value>Installiere Pairly auf deinem Handy und scanne dann den Code, den dieser PC anzeigt. Das dauert etwa eine Minute, und du machst es nur einmal.</value></data>
+  <data name="is_my_data_private" xml:space="preserve"><value>Sind meine Daten privat?</value></data>
+  <data name="is_not_connected" xml:space="preserve"><value>{0} ist nicht verbunden.</value></data>
+  <data name="is_not_reachable_over_wireless_debugging_usi" xml:space="preserve"><value>{0} ist über Debugging über WLAN nicht erreichbar; die App wird stattdessen genutzt.</value></data>
+  <data name="is_paired_but_offline" xml:space="preserve"><value>{0} ist gekoppelt, aber offline.</value></data>
+  <data name="just_now" xml:space="preserve"><value>Gerade eben</value></data>
+  <data name="keep_both_on_the_same_wi_fi_network_not_a_gu" xml:space="preserve"><value>Beide müssen im selben WLAN sein, nicht in einem Gastnetz. Wenn Windows fragt, erlaube Pairly in der Firewall für private Netzwerke. Wenn Windows dein Netzwerk als öffentlich einstuft, stelle es unter Einstellungen &gt; Netzwerk und Internet auf privat.</value></data>
+  <data name="keep_running_in_the_notification_area" xml:space="preserve"><value>Im Infobereich weiterlaufen</value></data>
+  <data name="keep_your_phone_and_this_pc_on_the_same_wi_f" xml:space="preserve"><value>• Handy und PC müssen im selben WLAN sein.
+• Wenn Windows fragt, erlaube Pairly in der Windows-Firewall für private Netzwerke.
+• Scannen funktioniert auch, wenn dein Handy diesen PC nicht von selbst findet.</value></data>
+  <data name="keeps_paired_phones_connected_after_this_win" xml:space="preserve"><value>Hält gekoppelte Handys verbunden, nachdem dieses Fenster geschlossen wurde.</value></data>
+  <data name="language" xml:space="preserve"><value>Sprache</value></data>
+  <data name="large" xml:space="preserve"><value>Groß</value></data>
+  <data name="largest_first" xml:space="preserve"><value>Größte zuerst</value></data>
+  <data name="last_sync" xml:space="preserve"><value>Zuletzt synchronisiert</value></data>
+  <data name="last_sync_2" xml:space="preserve"><value> · Zuletzt synchronisiert </value></data>
+  <data name="less" xml:space="preserve"><value>Weniger</value></data>
+  <data name="light" xml:space="preserve"><value>Hell</value></data>
+  <data name="light_dark_or_the_same_as_windows" xml:space="preserve"><value>Hell, dunkel oder wie Windows.</value></data>
+  <data name="link_health" xml:space="preserve"><value>Verbindungszustand</value></data>
+  <data name="live" xml:space="preserve"><value>Live</value></data>
+  <data name="loading_apps_from" xml:space="preserve"><value>Apps von {0} werden geladen …</value></data>
+  <data name="low_battery_warning" xml:space="preserve"><value>Akku fast leer</value></data>
+  <data name="low_latency" xml:space="preserve"><value>Geringe Verzögerung</value></data>
+  <data name="make_it_yours" xml:space="preserve"><value>Mach es zu deinem</value></data>
+  <data name="maximize" xml:space="preserve"><value>Maximieren</value></data>
+  <data name="mb_s_decode_ms" xml:space="preserve"><value>{0:F1} Mbit/s, Dekodierung {1:F2} ms, </value></data>
+  <data name="mb_s_decode_ms_2" xml:space="preserve"><value>{0:F1} Mbit/s | Dekodierung {1:F1} ms</value></data>
+  <data name="medium" xml:space="preserve"><value>Mittel</value></data>
+  <data name="message_text" xml:space="preserve"><value>Nachrichtentext</value></data>
+  <data name="messages" xml:space="preserve"><value>Nachrichten</value></data>
+  <data name="messages_could_not_be_loaded_check_the_phone" xml:space="preserve"><value>Nachrichten konnten nicht geladen werden. Prüfe die Verbindung zum Handy und versuche es erneut.</value></data>
+  <data name="messages_in_conversation" xml:space="preserve"><value>Nachrichten in der Unterhaltung</value></data>
+  <data name="min_ago" xml:space="preserve"><value>vor {0} Min.</value></data>
+  <data name="mirror_and_control_your_phone_in_a_window" xml:space="preserve"><value>Spiegle und steuere dein Handy in einem Fenster.</value></data>
+  <data name="mirror_stopped" xml:space="preserve"><value>Spiegelung beendet.</value></data>
+  <data name="mirroring_active_in_a_separate_window" xml:space="preserve"><value>Spiegelung läuft in einem eigenen Fenster.</value></data>
+  <data name="mirroring_over_wireless_debugging" xml:space="preserve"><value>{0} wird über Debugging über WLAN gespiegelt.</value></data>
+  <data name="more" xml:space="preserve"><value>Mehr</value></data>
+  <data name="mute_app" xml:space="preserve"><value>App stummschalten</value></data>
+  <data name="mute_phone_sound_on_this_pc" xml:space="preserve"><value>Handyton auf diesem PC stummschalten</value></data>
+  <data name="mute_this_app_on_this_pc" xml:space="preserve"><value>Diese App auf diesem PC stummschalten</value></data>
+  <data name="muted_locally_on_this_pc" xml:space="preserve"><value>{0} auf diesem PC stummgeschaltet.</value></data>
+  <data name="muted_notification_apps" xml:space="preserve"><value>Stummgeschaltete Apps</value></data>
+  <data name="my_phone_can_t_find_this_pc" xml:space="preserve"><value>Mein Handy findet diesen PC nicht</value></data>
+  <data name="name" xml:space="preserve"><value>Name</value></data>
+  <data name="native" xml:space="preserve"><value>Nativ</value></data>
+  <data name="navigation_pane" xml:space="preserve"><value>Navigationsleiste</value></data>
+  <data name="need_a_hand" xml:space="preserve"><value>Brauchst du Hilfe?</value></data>
+  <data name="need_the_app" xml:space="preserve"><value>Brauchst du die App?</value></data>
+  <data name="needs_attention" xml:space="preserve"><value>braucht Aufmerksamkeit</value></data>
+  <data name="needs_user_action" xml:space="preserve"><value>braucht deine Bestätigung</value></data>
+  <data name="new_code_in" xml:space="preserve"><value>Neuer Code in {0}:{1:00}</value></data>
+  <data name="new_notifications_from_your_phone_appear_her" xml:space="preserve"><value>Neue Benachrichtigungen von deinem Handy erscheinen hier.</value></data>
+  <data name="newest_first" xml:space="preserve"><value>Neueste zuerst</value></data>
+  <data name="next_track" xml:space="preserve"><value>Nächster Titel</value></data>
+  <data name="no_account_no_cloud_your_data_stays_on_your" xml:space="preserve"><value>Kein Konto, keine Cloud. Deine Daten bleiben auf deinen Geräten.</value></data>
+  <data name="no_active_mirror_session" xml:space="preserve"><value>Keine aktive Spiegelung</value></data>
+  <data name="no_active_sessions" xml:space="preserve"><value>Keine aktiven Sitzungen.</value></data>
+  <data name="no_conversations_yet" xml:space="preserve"><value>Noch keine Unterhaltungen</value></data>
+  <data name="no_phone_linked" xml:space="preserve"><value>Kein Handy verbunden</value></data>
+  <data name="no_phone_selected" xml:space="preserve"><value>Kein Handy ausgewählt</value></data>
+  <data name="no_pong_for_s" xml:space="preserve"><value>Seit {0:F0} s keine Antwort.</value></data>
+  <data name="no_reconnects_recorded_since_this_app_starte" xml:space="preserve"><value>Seit dem Start keine Neuverbindungen.</value></data>
+  <data name="no_screen_capture_prompt_exact_touch_and_key" xml:space="preserve"><value>Keine Abfrage zur Bildschirmaufnahme, genaue Touch- und Tastatureingabe, und es funktioniert auch bei ausgeschaltetem Handybildschirm. Wechselt bei Bedarf automatisch zur App.</value></data>
+  <data name="not_connected" xml:space="preserve"><value>nicht verbunden</value></data>
+  <data name="notification_access" xml:space="preserve"><value>Benachrichtigungszugriff: {0}. {1} von {2} werden angezeigt.</value></data>
+  <data name="notification_reply" xml:space="preserve"><value>Antwort auf Benachrichtigung</value></data>
+  <data name="notification_reply_failed" xml:space="preserve"><value>Antwort fehlgeschlagen: {0}. {1}</value></data>
+  <data name="notifications_could_not_be_cleared_from_this" xml:space="preserve"><value>Benachrichtigungen konnten nicht von diesem PC gelöscht werden. Versuche es erneut.</value></data>
+  <data name="notifications_or_messages_don_t_show_up" xml:space="preserve"><value>Benachrichtigungen oder Nachrichten erscheinen nicht</value></data>
+  <data name="offline" xml:space="preserve"><value>Offline</value></data>
+  <data name="oldest_first" xml:space="preserve"><value>Älteste zuerst</value></data>
+  <data name="on_the_phone_let_pairly_run_in_the_backgroun" xml:space="preserve"><value>Erlaube Pairly auf dem Handy unter Funktionen &gt; Verbunden bleiben, im Hintergrund zu laufen. Lass Pairly auf diesem PC unter Einstellungen &gt; Allgemein im Infobereich weiterlaufen.</value></data>
+  <data name="onboarding_done_no_phone_body" xml:space="preserve"><value>Du kannst dein Handy jederzeit auf der Startseite hinzufügen. Das dauert etwa eine Minute.</value></data>
+  <data name="onboarding_done_no_phone_title" xml:space="preserve"><value>Alles bereit</value></data>
+  <data name="onboarding_step_counter" xml:space="preserve"><value>Schritt {0} von {1}</value></data>
+  <data name="onboarding_title" xml:space="preserve"><value>Willkommen bei Pairly</value></data>
+  <data name="one_clipboard" xml:space="preserve"><value>Eine Zwischenablage</value></data>
+  <data name="only_files_can_be_sent_not_folders" xml:space="preserve"><value>Es können nur Dateien gesendet werden, keine Ordner.</value></data>
+  <data name="open" xml:space="preserve"><value>Öffnen</value></data>
+  <data name="open_dashboard" xml:space="preserve"><value>Pairly öffnen</value></data>
+  <data name="open_in_window" xml:space="preserve"><value>Im Fenster öffnen</value></data>
+  <data name="open_pairly_on_the_phone_go_to_features_and" xml:space="preserve"><value>Öffne Pairly auf dem Handy, geh zu Funktionen und schalte Benachrichtigungen am PC und SMS ein. Wähle dann hier Synchronisieren.</value></data>
+  <data name="open_phone_screen" xml:space="preserve"><value>Handybildschirm öffnen</value></data>
+  <data name="open_release_page" xml:space="preserve"><value>Release-Seite öffnen</value></data>
+  <data name="open_the_phone_menu_at_the_top_left_and_choo" xml:space="preserve"><value>Öffne oben links das Handy-Menü und wähle Gerät hinzufügen. Jedes Handy wird einmal gekoppelt und verbindet sich danach von selbst.</value></data>
+  <data name="open_your_phone_s_screen_in_a_window" xml:space="preserve"><value>Den Bildschirm deines Handys in einem Fenster öffnen</value></data>
+  <data name="opened_in_its_own_window" xml:space="preserve"><value>{0} in einem eigenen Fenster geöffnet.</value></data>
+  <data name="opened_on_the_phone" xml:space="preserve"><value>{0} auf dem Handy geöffnet.</value></data>
+  <data name="opens_the_issue_tracker_on_github" xml:space="preserve"><value>Öffnet die Fehlerliste auf GitHub.</value></data>
+  <data name="pair_an_android_phone_once_with_a_short_code" xml:space="preserve"><value>Kopple ein Android-Handy einmal mit einem kurzen Code. Danach verbindet es sich automatisch.</value></data>
+  <data name="paired_devices" xml:space="preserve"><value>Gekoppelte Geräte</value></data>
+  <data name="paired_with" xml:space="preserve"><value>Gekoppelt mit {0}</value></data>
+  <data name="pairing" xml:space="preserve"><value>Kopplung</value></data>
+  <data name="pairing_addresses" xml:space="preserve"><value>Adressen dieses PCs: {0}</value></data>
+  <data name="pairing_code" xml:space="preserve"><value>Kopplungscode</value></data>
+  <data name="pairing_done_body" xml:space="preserve"><value>Ab jetzt verbindet es sich von selbst. Schalte in Pairly auf deinem Handy die Funktionen ein, die du willst: Benachrichtigungen, Nachrichten, Fotos und Dateien.</value></data>
+  <data name="pairing_done_title" xml:space="preserve"><value>Dein Handy ist gekoppelt</value></data>
+  <data name="pairing_is_disabled_until_the_port_conflict" xml:space="preserve"><value>Die Kopplung ist deaktiviert, bis der Portkonflikt behoben ist.</value></data>
+  <data name="pairing_no_address" xml:space="preserve"><value>Dieser PC hat gerade keine Netzwerkadresse.</value></data>
+  <data name="pairing_title" xml:space="preserve"><value>Handy hinzufügen</value></data>
+  <data name="pairing_unavailable" xml:space="preserve"><value>Kopplung nicht verfügbar</value></data>
+  <data name="pairly" xml:space="preserve"><value>Pairly · </value></data>
+  <data name="pairly_checks_github_for_updates_and_install" xml:space="preserve"><value>Pairly sucht auf GitHub nach Updates und installiert sie beim nächsten Start.</value></data>
+  <data name="pairly_connects_your_android_phone_to_this_p" xml:space="preserve"><value>Pairly verbindet dein Android-Handy über dein eigenes WLAN mit diesem PC. Lass es uns zusammen einrichten. Das dauert etwa zwei Minuten.</value></data>
+  <data name="pairly_could_not_start_all_required_services" xml:space="preserve"><value>Pairly konnte nicht alle nötigen Dienste starten. Schließe eine andere laufende Instanz und versuche es erneut.</value></data>
+  <data name="pairly_for_windows" xml:space="preserve"><value>Pairly für Windows</value></data>
+  <data name="pairly_is_already_running" xml:space="preserve"><value>Pairly läuft bereits</value></data>
+  <data name="pairly_is_already_running_for_this_windows_u" xml:space="preserve"><value>Pairly läuft für diesen Windows-Benutzer bereits. Schließe das vorhandene Fenster oder sein Symbol im Infobereich, bevor du eine weitere Kopie startest.</value></data>
+  <data name="pairly_is_ready_add_a_phone_to_get_started" xml:space="preserve"><value>Pairly ist bereit. Füge ein Handy hinzu, um loszulegen.</value></data>
+  <data name="pairly_is_reconnecting_to_its_local_service" xml:space="preserve"><value>Pairly verbindet sich wieder mit seinem lokalen Dienst.</value></data>
+  <data name="pairly_is_up_to_date" xml:space="preserve"><value>Pairly ist auf dem neuesten Stand.</value></data>
+  <data name="pairly_keeps_disconnecting" xml:space="preserve"><value>Pairly trennt immer wieder die Verbindung</value></data>
+  <data name="pairly_will_reconnect_after_you_sign_in" xml:space="preserve"><value>Pairly verbindet sich nach deiner Anmeldung wieder.</value></data>
+  <data name="pc_clipboard_did_not_contain_text" xml:space="preserve"><value>Die PC-Zwischenablage enthielt keinen Text.</value></data>
+  <data name="pc_clipboard_text_loaded" xml:space="preserve"><value>Text aus der PC-Zwischenablage geladen.</value></data>
+  <data name="performance" xml:space="preserve"><value>Leistung</value></data>
+  <data name="phone_apps" xml:space="preserve"><value>Apps auf dem Handy</value></data>
+  <data name="phone_back" xml:space="preserve"><value>Zurück am Handy</value></data>
+  <data name="phone_call" xml:space="preserve"><value>Anruf</value></data>
+  <data name="phone_clipboard_could_not_be_applied" xml:space="preserve"><value>Handy-Zwischenablage konnte nicht übernommen werden: </value></data>
+  <data name="phone_clipboard_image_copied_to_this_pc" xml:space="preserve"><value>Bild aus der Handy-Zwischenablage auf diesen PC kopiert.</value></data>
+  <data name="phone_clipboard_text_copied_to_this_pc" xml:space="preserve"><value>Text aus der Handy-Zwischenablage auf diesen PC kopiert.</value></data>
+  <data name="phone_controls_are_unavailable_right_now" xml:space="preserve"><value>Die Handysteuerung ist gerade nicht verfügbar.</value></data>
+  <data name="phone_data_could_not_be_refreshed_check_the" xml:space="preserve"><value>Die Handydaten konnten nicht aktualisiert werden. Prüfe die Verbindung und versuche es erneut.</value></data>
+  <data name="phone_data_refresh_failed" xml:space="preserve"><value>Aktualisierung der Handydaten fehlgeschlagen: {0}. {1}</value></data>
+  <data name="phone_home" xml:space="preserve"><value>Startbildschirm am Handy</value></data>
+  <data name="phone_not_connected" xml:space="preserve"><value>Handy nicht verbunden</value></data>
+  <data name="phone_screen" xml:space="preserve"><value>Handybildschirm</value></data>
+  <data name="phone_screen_2" xml:space="preserve"><value>{0} | Handybildschirm</value></data>
+  <data name="phone_screen_needs_attention" xml:space="preserve"><value>Handybildschirm braucht Aufmerksamkeit</value></data>
+  <data name="phone_screen_settings" xml:space="preserve"><value>Einstellungen für den Handybildschirm</value></data>
+  <data name="phone_sound_on_this_pc" xml:space="preserve"><value>Handyton auf diesem PC</value></data>
+  <data name="photo_download_failed" xml:space="preserve"><value>Foto konnte nicht heruntergeladen werden: {0}. {1}</value></data>
+  <data name="photo_sort_order" xml:space="preserve"><value>Sortierung der Fotos</value></data>
+  <data name="photo_tile_size" xml:space="preserve"><value>Größe der Fotokacheln</value></data>
+  <data name="photos" xml:space="preserve"><value>Fotos</value></data>
+  <data name="photos_and_files" xml:space="preserve"><value>Fotos und Dateien</value></data>
+  <data name="photos_permission_granted_no_photo_metadata" xml:space="preserve"><value>Fotoberechtigung erteilt. Von diesem Gerät sind noch keine Fotos da.</value></data>
+  <data name="photos_permission_granted_showing_of_photo_s" xml:space="preserve"><value>Fotoberechtigung erteilt. {0} von {1} Fotos werden angezeigt.</value></data>
+  <data name="photos_permission_open_the_android_app_and_g" xml:space="preserve"><value>Fotoberechtigung: {0}. Öffne die Android-App, erlaube Fotos und aktualisiere dann die Handydaten.</value></data>
+  <data name="pick_a_conversation" xml:space="preserve"><value>Wähle eine Unterhaltung</value></data>
+  <data name="pick_a_phone_from_the_phone_card_or_add_one" xml:space="preserve"><value>Wähle ein Handy auf der Handykarte oder füge unten eines hinzu.</value></data>
+  <data name="play_or_pause" xml:space="preserve"><value>Wiedergabe oder Pause</value></data>
+  <data name="play_phone_sound_on_this_pc" xml:space="preserve"><value>Handyton auf diesem PC abspielen</value></data>
+  <data name="playback_position" xml:space="preserve"><value>Wiedergabeposition</value></data>
+  <data name="please_select_a_device_in_the_sidebar_first" xml:space="preserve"><value>Bitte wähle zuerst links ein Gerät.</value></data>
+  <data name="please_select_a_file_to_download" xml:space="preserve"><value>Bitte wähle eine Datei zum Herunterladen.</value></data>
+  <data name="please_select_an_item_to_delete" xml:space="preserve"><value>Bitte wähle ein Element zum Löschen.</value></data>
+  <data name="point_your_android_phone_s_camera_at_the_cod" xml:space="preserve"><value>Richte die Kamera deines Android-Handys auf den Code und öffne den Link. Wenn Android fragt, erlaube deinem Browser, Apps zu installieren.</value></data>
+  <data name="present_ms" xml:space="preserve"><value>Anzeige {0:F2} ms, {1}</value></data>
+  <data name="present_ms_average" xml:space="preserve"><value>{0}Anzeige im Schnitt {1:F2} ms</value></data>
+  <data name="presets_for_resolution_and_frame_rate" xml:space="preserve"><value>Voreinstellungen für Auflösung und Bildrate.</value></data>
+  <data name="previous" xml:space="preserve"><value>Zurück</value></data>
+  <data name="previous_track" xml:space="preserve"><value>Vorheriger Titel</value></data>
+  <data name="primary_file" xml:space="preserve"><value>Hauptdatei</value></data>
+  <data name="privacy" xml:space="preserve"><value>Datenschutz</value></data>
+  <data name="privacy_policy" xml:space="preserve"><value>Datenschutzerklärung</value></data>
+  <data name="qr_code_that_downloads_pairly_for_android" xml:space="preserve"><value>QR-Code zum Herunterladen von Pairly für Android</value></data>
+  <data name="qr_code_that_pairs_your_phone_with_this_pc" xml:space="preserve"><value>QR-Code, der dein Handy mit diesem PC koppelt</value></data>
+  <data name="quality" xml:space="preserve"><value>Qualität</value></data>
+  <data name="queued_dropped_telemetry_dropped" xml:space="preserve"><value>{0}: wartend {1}, verworfen {2}, Telemetrie verworfen {3}</value></data>
+  <data name="read_and_reply_to_texts" xml:space="preserve"><value>SMS lesen und beantworten</value></data>
+  <data name="read_and_reply_to_texts_with_your_keyboard" xml:space="preserve"><value>SMS lesen und mit der Tastatur beantworten.</value></data>
+  <data name="read_pc_clipboard" xml:space="preserve"><value>PC-Zwischenablage lesen</value></data>
+  <data name="recent_apps" xml:space="preserve"><value>Zuletzt verwendete Apps</value></data>
+  <data name="recent_transport_events" xml:space="preserve"><value>Letzte Verbindungsereignisse</value></data>
+  <data name="reconnect_s_since_the_phone_app_started" xml:space="preserve"><value>{0} Neuverbindung(en) seit dem Start der Handy-App.</value></data>
+  <data name="reconnecting" xml:space="preserve"><value>Verbinde neu</value></data>
+  <data name="refresh" xml:space="preserve"><value>Aktualisieren</value></data>
+  <data name="refresh_apps" xml:space="preserve"><value>Apps aktualisieren</value></data>
+  <data name="refresh_device_list" xml:space="preserve"><value>Geräteliste aktualisieren</value></data>
+  <data name="refresh_messages" xml:space="preserve"><value>Nachrichten aktualisieren</value></data>
+  <data name="refresh_phone_data" xml:space="preserve"><value>Handydaten aktualisieren</value></data>
+  <data name="repair" xml:space="preserve"><value>Reparieren</value></data>
+  <data name="repair_from_backup" xml:space="preserve"><value>Aus Sicherung reparieren</value></data>
+  <data name="replay_setup" xml:space="preserve"><value>Einrichtung wiederholen</value></data>
+  <data name="replay_the_setup" xml:space="preserve"><value>Einrichtung erneut durchlaufen</value></data>
+  <data name="reply" xml:space="preserve"><value>Antworten</value></data>
+  <data name="reply_from_notifications" xml:space="preserve"><value>Aus Benachrichtigungen antworten</value></data>
+  <data name="reply_sent_to" xml:space="preserve"><value>Antwort an {0} gesendet.</value></data>
+  <data name="report_a_problem" xml:space="preserve"><value>Problem melden</value></data>
+  <data name="requested_fresh_data_from" xml:space="preserve"><value>Neue Daten von {0} angefordert.</value></data>
+  <data name="resolution" xml:space="preserve"><value>Auflösung</value></data>
+  <data name="restart_to_update" xml:space="preserve"><value>Neu starten und aktualisieren</value></data>
+  <data name="restore" xml:space="preserve"><value>Wiederherstellen</value></data>
+  <data name="restored_notifications_from_all_locally_mute" xml:space="preserve"><value>Benachrichtigungen aller stummgeschalteten Apps wiederhergestellt.</value></data>
+  <data name="run_the_selected_app_in_its_own_pc_window_se" xml:space="preserve"><value>Die ausgewählte App in einem eigenen PC-Fenster ausführen, getrennt vom Handybildschirm. Benötigt Debugging über WLAN.</value></data>
+  <data name="save" xml:space="preserve"><value>Speichern</value></data>
+  <data name="save_selected_pairly_photos" xml:space="preserve"><value>Ausgewählte Fotos speichern</value></data>
+  <data name="save_to_pc" xml:space="preserve"><value>Auf dem PC speichern …</value></data>
+  <data name="saved_of_selected_photo_s_to" xml:space="preserve"><value>{0} von {1} ausgewählten Fotos in {2} gespeichert.</value></data>
+  <data name="saved_to" xml:space="preserve"><value>Gespeichert unter {0}</value></data>
+  <data name="scan_with_pairly" xml:space="preserve"><value>Mit Pairly scannen</value></data>
+  <data name="screen" xml:space="preserve"><value>Bildschirm</value></data>
+  <data name="search_and_filter_notifications" xml:space="preserve"><value>Benachrichtigungen durchsuchen und filtern</value></data>
+  <data name="search_apps" xml:space="preserve"><value>Apps durchsuchen</value></data>
+  <data name="search_conversations" xml:space="preserve"><value>Unterhaltungen durchsuchen</value></data>
+  <data name="search_files" xml:space="preserve"><value>Dateien durchsuchen</value></data>
+  <data name="search_notifications" xml:space="preserve"><value>Benachrichtigungen durchsuchen</value></data>
+  <data name="search_photos" xml:space="preserve"><value>Fotos durchsuchen</value></data>
+  <data name="search_this_folder" xml:space="preserve"><value>Diesen Ordner durchsuchen</value></data>
+  <data name="see_and_control_your_phone" xml:space="preserve"><value>Handy sehen und steuern</value></data>
+  <data name="see_answer_and_dismiss_them_here" xml:space="preserve"><value>Hier ansehen, beantworten und schließen.</value></data>
+  <data name="see_who_s_calling_and_answer_from_your_pc" xml:space="preserve"><value>Sieh, wer anruft, und nimm am PC ab.</value></data>
+  <data name="select_a_connected_phone_before_refreshing_p" xml:space="preserve"><value>Wähle ein verbundenes Handy, bevor du die Daten aktualisierst.</value></data>
+  <data name="select_a_connected_phone_before_starting_mir" xml:space="preserve"><value>Wähle ein verbundenes Handy, bevor du die Spiegelung startest.</value></data>
+  <data name="select_a_connected_phone_first" xml:space="preserve"><value>Wähle zuerst ein verbundenes Handy.</value></data>
+  <data name="select_a_connected_phone_to_start" xml:space="preserve"><value>Wähle ein verbundenes Handy, um zu starten.</value></data>
+  <data name="select_a_device_to_forget" xml:space="preserve"><value>Wähle ein Gerät zum Vergessen.</value></data>
+  <data name="select_a_paired_device_to_browse_photos" xml:space="preserve"><value>Wähle ein gekoppeltes Gerät, um Fotos zu durchsuchen.</value></data>
+  <data name="select_a_paired_device_to_clear_notification" xml:space="preserve"><value>Wähle ein gekoppeltes Gerät, um Benachrichtigungen zu löschen.</value></data>
+  <data name="select_a_paired_device_to_view_notifications" xml:space="preserve"><value>Wähle ein gekoppeltes Gerät, um Benachrichtigungen zu sehen.</value></data>
+  <data name="select_a_paired_device_to_view_sms" xml:space="preserve"><value>Wähle ein gekoppeltes Gerät, um SMS zu sehen.</value></data>
+  <data name="select_a_phone_before_stopping_mirror" xml:space="preserve"><value>Wähle ein Handy, bevor du die Spiegelung beendest.</value></data>
+  <data name="select_a_phone_first" xml:space="preserve"><value>Wähle zuerst ein Handy.</value></data>
+  <data name="select_a_phone_first_to_ask_it_for_its_conne" xml:space="preserve"><value>Wähle zuerst ein Handy, um nach seinem Verbindungsverlauf zu fragen.</value></data>
+  <data name="select_a_phone_to_browse_its_files" xml:space="preserve"><value>Wähle ein Handy, um seine Dateien zu durchsuchen.</value></data>
+  <data name="select_a_phone_to_browse_photos" xml:space="preserve"><value>Wähle ein Handy, um Fotos zu durchsuchen.</value></data>
+  <data name="select_a_phone_to_see_its_apps" xml:space="preserve"><value>Wähle ein Handy, um seine Apps zu sehen.</value></data>
+  <data name="select_a_phone_to_view_messages" xml:space="preserve"><value>Wähle ein Handy, um Nachrichten zu sehen.</value></data>
+  <data name="select_a_phone_to_view_notifications" xml:space="preserve"><value>Wähle ein Handy, um Benachrichtigungen zu sehen.</value></data>
+  <data name="select_a_photo_first" xml:space="preserve"><value>Wähle zuerst ein Foto.</value></data>
+  <data name="select_an_app_first" xml:space="preserve"><value>Wähle zuerst eine App.</value></data>
+  <data name="select_an_sms_thread_first" xml:space="preserve"><value>Wähle zuerst eine Unterhaltung.</value></data>
+  <data name="select_one_or_more_photos_first" xml:space="preserve"><value>Wähle zuerst ein oder mehrere Fotos.</value></data>
+  <data name="select_the_phone_that_should_send_the_sms" xml:space="preserve"><value>Wähle das Handy, das die SMS senden soll.</value></data>
+  <data name="selected_phone" xml:space="preserve"><value>Ausgewähltes Handy</value></data>
+  <data name="send" xml:space="preserve"><value>Senden</value></data>
+  <data name="send_clipboard" xml:space="preserve"><value>Zwischenablage senden</value></data>
+  <data name="send_files" xml:space="preserve"><value>Dateien senden</value></data>
+  <data name="send_files_to" xml:space="preserve"><value>Dateien an {0} senden</value></data>
+  <data name="send_files_to_this_phone_s_downloads_folder" xml:space="preserve"><value>Dateien in den Download-Ordner dieses Handys senden. Du kannst Dateien auch auf dieses Fenster ziehen.</value></data>
+  <data name="send_message" xml:space="preserve"><value>Nachricht senden</value></data>
+  <data name="send_reply" xml:space="preserve"><value>Antwort senden</value></data>
+  <data name="send_the_text_from_settings_clipboard_to_all" xml:space="preserve"><value>Den Text aus Einstellungen &gt; Zwischenablage an alle Handys senden</value></data>
+  <data name="send_to_all_devices" xml:space="preserve"><value>An alle Geräte senden</value></data>
+  <data name="sending_reply_to" xml:space="preserve"><value>Antwort an {0} wird gesendet …</value></data>
+  <data name="sending_to" xml:space="preserve"><value>Sende {0}{1} an {2}: {3} %</value></data>
+  <data name="sending_to_2" xml:space="preserve"><value>Sende {0}{1} an {2} …</value></data>
+  <data name="sent_files_to_s_downloads_folder" xml:space="preserve"><value>{0} Dateien in den Download-Ordner von {1} gesendet.</value></data>
+  <data name="sent_of_files" xml:space="preserve"><value>{0} von {1} Dateien gesendet. {2}</value></data>
+  <data name="session_statistics_unavailable" xml:space="preserve"><value>Sitzungsstatistik nicht verfügbar: {0}</value></data>
+  <data name="set_up_pairly" xml:space="preserve"><value>Pairly einrichten</value></data>
+  <data name="settings" xml:space="preserve"><value>Einstellungen</value></data>
+  <data name="share_text" xml:space="preserve"><value>Text teilen</value></data>
+  <data name="shared_clipboard" xml:space="preserve"><value>Gemeinsame Zwischenablage</value></data>
+  <data name="sharpness" xml:space="preserve"><value>Schärfe</value></data>
+  <data name="show_notifications_again_from_every_app_you" xml:space="preserve"><value>Benachrichtigungen aller Apps, die du auf diesem PC stummgeschaltet hast, wieder anzeigen.</value></data>
+  <data name="showing_of_photo_s" xml:space="preserve"><value>{0} von {1} Fotos werden angezeigt.</value></data>
+  <data name="silence" xml:space="preserve"><value>Stumm</value></data>
+  <data name="skipped_folder_s" xml:space="preserve"><value> {0} Ordner übersprungen.</value></data>
+  <data name="small" xml:space="preserve"><value>Klein</value></data>
+  <data name="sms_permission" xml:space="preserve"><value>SMS-Berechtigung: {0}.</value></data>
+  <data name="sms_send_failed" xml:space="preserve"><value>SMS konnte nicht gesendet werden: {0}. {1}</value></data>
+  <data name="sms_sent_by" xml:space="preserve"><value>SMS von {0} gesendet.</value></data>
+  <data name="start_pairly_when_i_sign_in_to_windows" xml:space="preserve"><value>Pairly beim Anmelden bei Windows starten</value></data>
+  <data name="start_when_i_sign_in_to_windows" xml:space="preserve"><value>Beim Anmelden bei Windows starten</value></data>
+  <data name="starting" xml:space="preserve"><value>Startet</value></data>
+  <data name="starting_mirror_for" xml:space="preserve"><value>Spiegelung von {0} wird gestartet …</value></data>
+  <data name="starting_pairly" xml:space="preserve"><value>Pairly startet …</value></data>
+  <data name="startup_will_be_enabled_automatically_after" xml:space="preserve"><value>Der Autostart wird nach der ersten erfolgreichen Kopplung automatisch aktiviert.</value></data>
+  <data name="step_1_of_3" xml:space="preserve"><value>Schritt 1 von 3</value></data>
+  <data name="stop" xml:space="preserve"><value>Stoppen</value></data>
+  <data name="stop_phone_screen" xml:space="preserve"><value>Handybildschirm beenden</value></data>
+  <data name="stream_details" xml:space="preserve"><value>Übertragungsdetails</value></data>
+  <data name="sync" xml:space="preserve"><value>Synchronisieren</value></data>
+  <data name="sync_phone_data" xml:space="preserve"><value>Handydaten synchronisieren</value></data>
+  <data name="tabs_on_top" xml:space="preserve"><value>Tabs oben</value></data>
+  <data name="take_the_tour" xml:space="preserve"><value>Tour starten</value></data>
+  <data name="the_app_list_could_not_be_loaded" xml:space="preserve"><value>Die App-Liste konnte nicht geladen werden.</value></data>
+  <data name="the_embedded_host_is_not_running_yet" xml:space="preserve"><value>Der Dienst läuft noch nicht.</value></data>
+  <data name="the_hardware_video_decoder_could_not_start_c" xml:space="preserve"><value>Der Hardware-Videodecoder konnte nicht starten. Prüfe deinen Grafiktreiber.</value></data>
+  <data name="the_host_is_not_running_so_files_cannot_be_s" xml:space="preserve"><value>Der Dienst läuft nicht, daher können keine Dateien gesendet werden.</value></data>
+  <data name="the_media_command_could_not_be_sent" xml:space="preserve"><value>Der Medienbefehl konnte nicht gesendet werden.</value></data>
+  <data name="the_message_could_not_be_sent_check_the_phon" xml:space="preserve"><value>Die Nachricht konnte nicht gesendet werden. Prüfe das Handy und versuche es erneut.</value></data>
+  <data name="the_mirror_surface_was_not_ready_try_again" xml:space="preserve"><value>Die Anzeige war noch nicht bereit. Versuche es erneut.</value></data>
+  <data name="the_pc_clipboard_contains_an_image_it_will_b" xml:space="preserve"><value>Die PC-Zwischenablage enthält ein Bild. Es wird automatisch an alle verbundenen Handys gesendet.</value></data>
+  <data name="the_phone_did_not_accept_the_mirror_request" xml:space="preserve"><value>Das Handy hat die Spiegelung nicht angenommen ({0}).</value></data>
+  <data name="the_phone_did_not_send_its_app_list_try_refr" xml:space="preserve"><value>Das Handy hat seine App-Liste nicht gesendet. Versuche Aktualisieren.</value></data>
+  <data name="the_phone_is_not_connected_so_the_media_comm" xml:space="preserve"><value>Das Handy ist nicht verbunden, daher wurde der Medienbefehl nicht gesendet.</value></data>
+  <data name="the_phone_notification_could_not_be_dismisse" xml:space="preserve"><value>Die Benachrichtigung konnte auf dem Handy nicht geschlossen werden. Versuche es erneut.</value></data>
+  <data name="the_phone_screen_could_not_be_started" xml:space="preserve"><value>Der Handybildschirm konnte nicht gestartet werden.</value></data>
+  <data name="the_phone_screen_could_not_be_stopped_cleanl" xml:space="preserve"><value>Der Handybildschirm konnte nicht sauber beendet werden. Versuche es erneut, falls er aktiv bleibt.</value></data>
+  <data name="the_phone_screen_doesn_t_start" xml:space="preserve"><value>Der Handybildschirm startet nicht</value></data>
+  <data name="the_photo_could_not_be_opened_check_the_phon" xml:space="preserve"><value>Das Foto konnte nicht geöffnet werden. Prüfe die Verbindung zum Handy und versuche es erneut.</value></data>
+  <data name="the_reply_could_not_be_sent_check_the_phone" xml:space="preserve"><value>Die Antwort konnte nicht gesendet werden. Prüfe die Verbindung zum Handy und versuche es erneut.</value></data>
+  <data name="the_selected_photo_could_not_be_saved_try_ag" xml:space="preserve"><value>Das ausgewählte Foto konnte nicht gespeichert werden. Versuche es erneut.</value></data>
+  <data name="theme" xml:space="preserve"><value>Design</value></data>
+  <data name="this_file_could_not_be_downloaded_try_again" xml:space="preserve"><value>Diese Datei konnte nicht heruntergeladen werden. Versuche es erneut.</value></data>
+  <data name="this_folder_could_not_be_loaded_check_the_ph" xml:space="preserve"><value>Dieser Ordner konnte nicht geladen werden. Prüfe die Verbindung zum Handy und versuche es erneut.</value></data>
+  <data name="this_item_could_not_be_deleted_from_the_phon" xml:space="preserve"><value>Dieses Element konnte nicht vom Handy gelöscht werden. Versuche es erneut.</value></data>
+  <data name="this_item_could_not_be_opened_try_again" xml:space="preserve"><value>Dieses Element konnte nicht geöffnet werden. Versuche es erneut.</value></data>
+  <data name="this_phone_could_not_be_forgotten_try_again" xml:space="preserve"><value>Dieses Handy konnte nicht vergessen werden. Versuche es erneut.</value></data>
+  <data name="to_your_phone_s_downloads" xml:space="preserve"><value>In die Downloads deines Handys</value></data>
+  <data name="today" xml:space="preserve"><value>Heute</value></data>
+  <data name="tour_actions_body" xml:space="preserve"><value>Öffne den Bildschirm deines Handys, sende Dateien und synchronisiere mit einem Klick.</value></data>
+  <data name="tour_actions_title" xml:space="preserve"><value>Schnellaktionen</value></data>
+  <data name="tour_counter" xml:space="preserve"><value>{0} von {1}</value></data>
+  <data name="tour_help_body" xml:space="preserve"><value>In den Einstellungen änderst du Design und Sprache. Die Hilfe beantwortet häufige Fragen und spielt diese Tour erneut ab.</value></data>
+  <data name="tour_help_title" xml:space="preserve"><value>Hilfe und Einstellungen</value></data>
+  <data name="tour_notifications_body" xml:space="preserve"><value>Hier erscheinen die Benachrichtigungen deines Handys. Beantworte oder schließe sie direkt am PC.</value></data>
+  <data name="tour_notifications_title" xml:space="preserve"><value>Benachrichtigungen</value></data>
+  <data name="tour_pages_body" xml:space="preserve"><value>Nachrichten, Fotos, Dateien, Apps und Benachrichtigungen von deinem Handy.</value></data>
+  <data name="tour_pages_title" xml:space="preserve"><value>Alles an einem Ort</value></data>
+  <data name="tour_phone_body" xml:space="preserve"><value>Hier wechselst du zwischen Handys, siehst den Akkustand und fügst weitere Handys hinzu.</value></data>
+  <data name="tour_phone_title" xml:space="preserve"><value>Dein Handy</value></data>
+  <data name="tour_this_window" xml:space="preserve"><value>Tour durch dieses Fenster</value></data>
+  <data name="trust_storage_could_not_be_repaired_the_exis" xml:space="preserve"><value>Der Gerätespeicher konnte nicht repariert werden. Die vorhandenen Sicherungen bleiben unverändert.</value></data>
+  <data name="trust_storage_repair_failed_open_settings_tr" xml:space="preserve"><value>Reparatur des Gerätespeichers fehlgeschlagen. Unter Einstellungen &gt; Geräte findest du Wiederherstellungsoptionen.</value></data>
+  <data name="trust_storage_status_unavailable" xml:space="preserve"><value>Status des Gerätespeichers nicht verfügbar.</value></data>
+  <data name="trust_store_repair_could_not_find_a_usable_b" xml:space="preserve"><value>Für die Reparatur wurde keine brauchbare Sicherung gefunden.</value></data>
+  <data name="trust_store_repaired_from_backup" xml:space="preserve"><value>Gerätespeicher aus der Sicherung repariert.</value></data>
+  <data name="trusted_device_s" xml:space="preserve"><value>{0} vertrauenswürdige(s) Gerät(e), {1}, {2}.</value></data>
+  <data name="trusted_device_storage" xml:space="preserve"><value>Speicher für vertrauenswürdige Geräte</value></data>
+  <data name="try_again" xml:space="preserve"><value>Erneut versuchen</value></data>
+  <data name="try_both_layouts_only_you_see_this_option" xml:space="preserve"><value>Probiere beide Aufbauten aus. Nur du siehst diese Option.</value></data>
+  <data name="type_or_paste_text_to_send_to_your_phones" xml:space="preserve"><value>Text eingeben oder einfügen, um ihn an deine Handys zu senden</value></data>
+  <data name="unavailable" xml:space="preserve"><value>Nicht verfügbar</value></data>
+  <data name="unknown_caller" xml:space="preserve"><value>Unbekannter Anrufer</value></data>
+  <data name="updates" xml:space="preserve"><value>Updates</value></data>
+  <data name="updates_are_installed_by_the_microsoft_store" xml:space="preserve"><value>Updates werden über den Microsoft Store installiert.</value></data>
+  <data name="use_windows_language" xml:space="preserve"><value>Sprache von Windows</value></data>
+  <data name="use_windows_setting" xml:space="preserve"><value>Wie Windows</value></data>
+  <data name="use_wireless_debugging_when_the_phone_has_it" xml:space="preserve"><value>Debugging über WLAN nutzen, wenn es auf dem Handy an ist</value></data>
+  <data name="use_your_phone_from_this_pc" xml:space="preserve"><value>Nutze dein Handy von diesem PC aus</value></data>
+  <data name="version" xml:space="preserve"><value>Version</value></data>
+  <data name="version_is_ready_it_installs_the_next_time_p" xml:space="preserve"><value>Version {0} ist bereit. Sie wird beim nächsten Start von Pairly installiert.</value></data>
+  <data name="video" xml:space="preserve"><value>Video</value></data>
+  <data name="waiting_for_a_clipboard_change" xml:space="preserve"><value>Warte auf eine Änderung der Zwischenablage.</value></data>
+  <data name="waiting_for_your_phone" xml:space="preserve"><value>Warte auf dein Handy …</value></data>
+  <data name="welcome_back" xml:space="preserve"><value>Willkommen zurück</value></data>
+  <data name="welcome_features_pairing_and_preferences_ste" xml:space="preserve"><value>Willkommen, Funktionen, Kopplung und Einstellungen, Schritt für Schritt.</value></data>
+  <data name="what_pairly_does_with_your_data_nothing_leav" xml:space="preserve"><value>Was Pairly mit deinen Daten macht (nichts verlässt deine Geräte).</value></data>
+  <data name="what_s_new" xml:space="preserve"><value>Was ist neu</value></data>
+  <data name="what_you_can_do" xml:space="preserve"><value>Was du machen kannst</value></data>
+  <data name="whats_new_title" xml:space="preserve"><value>Neu in Pairly {0}</value></data>
+  <data name="window_layout" xml:space="preserve"><value>Fensteraufbau</value></data>
+  <data name="windows_startup_registration_could_not_be_up" xml:space="preserve"><value>Der Windows-Autostart konnte für diesen Benutzer nicht geändert werden.</value></data>
+  <data name="yes_there_s_no_account_and_no_cloud_data_goe" xml:space="preserve"><value>Ja. Es gibt kein Konto und keine Cloud. Die Daten gehen direkt zwischen deinen Geräten hin und her, über eine verschlüsselte Verbindung, die fest an diesen PC gebunden ist.</value></data>
+  <data name="yesterday" xml:space="preserve"><value>Gestern</value></data>
+  <data name="you_can_change_all_of_this_later_in_settings" xml:space="preserve"><value>Das kannst du alles später in den Einstellungen ändern.</value></data>
+  <data name="you_re_all_caught_up" xml:space="preserve"><value>Du bist auf dem neuesten Stand</value></data>
+  <data name="your_data_stays_with_your_devices" xml:space="preserve"><value>Deine Daten bleiben auf deinen Geräten</value></data>
+  <data name="your_devices" xml:space="preserve"><value>Deine Geräte</value></data>
+  <data name="your_phone_on_your_pc" xml:space="preserve"><value>Dein Handy auf deinem PC</value></data>
+  <data name="your_phone_reconnects_without_you_opening_pa" xml:space="preserve"><value>Dein Handy verbindet sich, ohne dass du Pairly öffnest.</value></data>
+  <data name="your_phone_s_text_messages_show_up_here_choo" xml:space="preserve"><value>Hier erscheinen die SMS deines Handys. Wähle links eine aus, um sie zu lesen und zu beantworten.</value></data>
+</root>

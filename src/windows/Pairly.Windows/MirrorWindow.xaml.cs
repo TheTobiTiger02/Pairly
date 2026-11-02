@@ -7,6 +7,8 @@ using Pairly.Core;
 using Pairly.Server.Streaming;
 using Pairly.Windows.Mirror;
 
+using Pairly.Windows.Localization;
+
 namespace Pairly.Windows;
 
 public partial class MirrorWindow : Window
@@ -47,7 +49,7 @@ public partial class MirrorWindow : Window
         _diagnostics = diagnostics;
         DeviceTitleText.Text = deviceName;
         AdvancedText.Text = advancedSummary;
-        Title = $"{deviceName} | Phone screen";
+        Title = L.F("phone_screen_2", deviceName);
 
         _statsTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _statsTimer.Tick += StatsTimer_Tick;
@@ -198,7 +200,7 @@ public partial class MirrorWindow : Window
     {
         _audioMuted = !_audioMuted;
         AudioButton.Content = _audioMuted ? "\uE74F" : "\uE767";
-        AudioButton.ToolTip = _audioMuted ? "Play phone sound on this PC" : "Mute phone sound on this PC";
+        AudioButton.ToolTip = _audioMuted ? L.T("play_phone_sound_on_this_pc") : L.T("mute_phone_sound_on_this_pc");
     }
 
     public void AttachControl(StreamConnection connection)
@@ -261,7 +263,7 @@ public partial class MirrorWindow : Window
         if (Surface.SurfaceHandle == nint.Zero)
         {
             connection.DisposeAsync().AsTask().GetAwaiter().GetResult();
-            ShowConnectionError("The mirror surface was not ready. Try again.");
+            ShowConnectionError(L.T("the_mirror_surface_was_not_ready_try_again"));
             return;
         }
 
@@ -292,7 +294,7 @@ public partial class MirrorWindow : Window
             connection.DisposeAsync().AsTask().GetAwaiter().GetResult();
             AdvancedText.Text += $"{Environment.NewLine}Decoder: {ex.GetType().Name}: {ex.Message}";
             _diagnostics?.Record(DiagnosticsCategory.Mirror, "mirror.decoder.failed", ex.ToString(), _deviceId, DiagnosticsSeverity.Error);
-            ShowConnectionError("The hardware video decoder could not start. Check your graphics driver.");
+            ShowConnectionError(L.T("the_hardware_video_decoder_could_not_start_c"));
         }
     }
 
@@ -328,22 +330,22 @@ public partial class MirrorWindow : Window
                 DiagnosticsCategory.Mirror,
                 "mirror.playback",
                 $"decoded {statistics.FramesDecoded}, dropped {statistics.FramesDropped}, "
-                    + $"{statistics.MegabitsPerSecond:F1} Mb/s, decode {statistics.AverageDecodeMs:F2} ms, "
-                    + $"present {statistics.AveragePresentMs:F2} ms, {statistics.DecoderName}"
+                    + L.F("mb_s_decode_ms", statistics.MegabitsPerSecond, statistics.AverageDecodeMs)
+                    + L.F("present_ms", statistics.AveragePresentMs, statistics.DecoderName)
                     + (statistics.ZeroCopy ? ", zero copy" : ", copy fallback")
                     + (_input is null ? ", input off" : $", input {_input.EventsSeen} seen/{_input.EventsUnmapped} unmapped/{_input.MessagesSent} sent{(_input.LastError is null ? string.Empty : " error " + _input.LastError)}"),
                 _deviceId);
         }
         QualityText.Text =
             $"{player.Format.Codec.ToUpperInvariant()} {player.Format.Width}x{player.Format.Height} | "
-            + $"{statistics.MegabitsPerSecond:F1} Mb/s | decode {statistics.AverageDecodeMs:F1} ms";
+            + L.F("mb_s_decode_ms_2", statistics.MegabitsPerSecond, statistics.AverageDecodeMs);
 
         AdvancedText.Text =
             $"{statistics.DecoderName}{(statistics.ZeroCopy ? " (zero copy)" : " (copy fallback)")}"
             + $"{Environment.NewLine}Frames {statistics.FramesDecoded}, dropped {statistics.FramesDropped}"
-            + $"{Environment.NewLine}Present {statistics.AveragePresentMs:F2} ms average"
+            + L.F("present_ms_average", Environment.NewLine, statistics.AveragePresentMs)
             + $"{Environment.NewLine}Input: "
-            + (_input is null ? "not connected" : _input.LastError is null ? $"{_input.MessagesSent} messages" : $"failed ({_input.LastError})");
+            + (_input is null ? L.T("not_connected") : _input.LastError is null ? $"{_input.MessagesSent} messages" : $"failed ({_input.LastError})");
     }
 
     private void BackButton_Click(object sender, RoutedEventArgs e) => Navigate(NavigationTarget.Back, "back");
@@ -399,7 +401,7 @@ public partial class MirrorWindow : Window
             WindowState = WindowState.Maximized;
             MirrorCaptionButtons.Visibility = Visibility.Collapsed;
             FullScreenButton.Content = "";
-            FullScreenButton.ToolTip = "Exit full screen";
+            FullScreenButton.ToolTip = L.T("exit_full_screen");
             _isFullScreen = true;
         }
         else
@@ -413,7 +415,7 @@ public partial class MirrorWindow : Window
             Width = _previousBounds.Width;
             Height = _previousBounds.Height;
             FullScreenButton.Content = "";
-            FullScreenButton.ToolTip = "Enter full screen";
+            FullScreenButton.ToolTip = L.T("enter_full_screen");
             _isFullScreen = false;
         }
     }
@@ -421,9 +423,9 @@ public partial class MirrorWindow : Window
     private void RetryButton_Click(object sender, RoutedEventArgs e)
     {
         RetryButton.Visibility = Visibility.Collapsed;
-        OverlayTitleText.Text = "Connecting to your phone";
-        OverlayBodyText.Text = "Allow screen capture on the phone if it asks.";
-        QualityText.Text = "Connecting";
+        OverlayTitleText.Text = L.T("connecting_to_your_phone");
+        OverlayBodyText.Text = L.T("allow_screen_capture_on_the_phone_if_it_asks");
+        QualityText.Text = L.T("connecting");
 
         _player?.Dispose();
         _player = null;
@@ -436,10 +438,10 @@ public partial class MirrorWindow : Window
     {
         Surface.Visibility = Visibility.Hidden;
         StatusOverlay.Visibility = Visibility.Visible;
-        OverlayTitleText.Text = "Phone screen needs attention";
+        OverlayTitleText.Text = L.T("phone_screen_needs_attention");
         OverlayBodyText.Text = message;
         RetryButton.Visibility = Visibility.Visible;
-        QualityText.Text = "Offline";
+        QualityText.Text = L.T("offline");
     }
 
     private void MirrorWindow_Closing(object? sender, CancelEventArgs e)

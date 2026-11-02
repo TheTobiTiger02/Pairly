@@ -8,6 +8,8 @@ using System.Windows.Media.Imaging;
 using Pairly.Protocol;
 using Pairly.Server.Adb;
 
+using Pairly.Windows.Localization;
+
 namespace Pairly.Windows;
 
 public sealed record PhoneAppItem(string PackageName, string Label, BitmapSource? Icon);
@@ -30,7 +32,7 @@ public partial class MainWindow
     {
         if (DevicesList.SelectedItem is not DeviceViewModel device)
         {
-            AppsStatusText.Text = "Select a phone to see its apps.";
+            AppsStatusText.Text = L.T("select_a_phone_to_see_its_apps");
             return;
         }
 
@@ -40,15 +42,15 @@ public partial class MainWindow
         }
 
         _appsLoading = true;
-        AppsStatusText.Text = $"Loading apps from {device.DisplayName}...";
+        AppsStatusText.Text = L.F("loading_apps_from", device.DisplayName);
         try
         {
             using var response = await _host.GetAsync($"v1/devices/{Uri.EscapeDataString(device.DeviceId)}/apps");
             if (!response.IsSuccessStatusCode)
             {
                 AppsStatusText.Text = response.StatusCode == System.Net.HttpStatusCode.NotFound
-                    ? $"{device.DisplayName} is not connected."
-                    : "The phone did not send its app list. Try Refresh.";
+                    ? L.F("is_not_connected", device.DisplayName)
+                    : L.T("the_phone_did_not_send_its_app_list_try_refr");
                 return;
             }
 
@@ -60,11 +62,11 @@ public partial class MainWindow
             _apps = apps;
             _appsDeviceId = device.DeviceId;
             ApplyAppsFilter();
-            AppsStatusText.Text = $"{apps.Count} apps on {device.DisplayName}. Double-click one to open it.";
+            AppsStatusText.Text = L.F("apps_on_double_click_one_to_open_it", apps.Count, device.DisplayName);
         }
         catch (Exception ex) when (ex is HttpRequestException or JsonException or TaskCanceledException)
         {
-            AppsStatusText.Text = UserFacingError("The app list could not be loaded.", ex);
+            AppsStatusText.Text = UserFacingError(L.T("the_app_list_could_not_be_loaded"), ex);
         }
         finally
         {
@@ -111,16 +113,16 @@ public partial class MainWindow
             {
                 var problem = await response.Content.ReadAsStringAsync();
                 AppsStatusText.Text = problem.Contains("allow", StringComparison.OrdinalIgnoreCase)
-                    ? $"Android blocked opening {app.Label}. Turn on remote control (the Pairly accessibility service) on the phone, then try again."
-                    : $"{app.Label} could not be opened.";
+                    ? L.F("android_blocked_opening_turn_on_remote_contr", app.Label)
+                    : L.F("could_not_be_opened", app.Label);
                 return;
             }
 
-            AppsStatusText.Text = $"Opened {app.Label} on the phone.";
+            AppsStatusText.Text = L.F("opened_on_the_phone", app.Label);
         }
         catch (HttpRequestException ex)
         {
-            AppsStatusText.Text = UserFacingError($"{app.Label} could not be opened.", ex);
+            AppsStatusText.Text = UserFacingError(L.F("could_not_be_opened", app.Label), ex);
         }
     }
 
@@ -134,21 +136,21 @@ public partial class MainWindow
         if (AppsList.SelectedItem is not PhoneAppItem app
             || _devices.FirstOrDefault(item => item.DeviceId == _appsDeviceId)?.Device is not { } device)
         {
-            AppsStatusText.Text = "Select an app first.";
+            AppsStatusText.Text = L.T("select_an_app_first");
             return;
         }
 
-        var window = CreateMirrorWindow($"{app.Label} ({device.DisplayName})", device.DeviceId, $"App window: {app.PackageName}");
+        var window = CreateMirrorWindow($"{app.Label} ({device.DisplayName})", device.DeviceId, L.F("app_window", app.PackageName));
         window.Show();
         var session = await TryStartAdbStreamAsync(window, device, new AdbStreamRequest(LaunchPackage: app.PackageName));
         if (session is null)
         {
             window.Close();
-            AppsStatusText.Text = $"App windows need wireless debugging. Turn it on in the phone's developer options and pair it with this PC once.";
+            AppsStatusText.Text = L.T("app_windows_need_wireless_debugging_turn_it");
             return;
         }
 
-        AppsStatusText.Text = $"Opened {app.Label} in its own window.";
+        AppsStatusText.Text = L.F("opened_in_its_own_window", app.Label);
     }
 
     private static BitmapSource? DecodeIcon(string? base64)

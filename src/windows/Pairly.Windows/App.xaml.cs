@@ -2,6 +2,8 @@ using System.Windows;
 using Microsoft.Win32;
 using System.Security.Principal;
 
+using Pairly.Windows.Localization;
+
 namespace Pairly.Windows;
 
 public partial class App : System.Windows.Application
@@ -57,8 +59,8 @@ public partial class App : System.Windows.Application
             if (!StartHidden)
             {
                 System.Windows.MessageBox.Show(
-                    "Pairly is already running for this Windows user. Close the existing window or its tray icon before starting another copy.",
-                    "Pairly is already running",
+                    L.T("pairly_is_already_running_for_this_windows_u"),
+                    L.T("pairly_is_already_running"),
                     MessageBoxButton.OK,
                     MessageBoxImage.Information);
             }
