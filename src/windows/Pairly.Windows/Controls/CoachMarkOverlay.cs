@@ -157,7 +157,7 @@ public sealed class CoachMarkOverlay : Grid
         Rect bounds;
         try
         {
-            bounds = target.TransformToAncestor(this).TransformBounds(new Rect(target.RenderSize));
+            bounds = target.TransformToVisual(this).TransformBounds(new Rect(target.RenderSize));
         }
         catch (InvalidOperationException)
         {

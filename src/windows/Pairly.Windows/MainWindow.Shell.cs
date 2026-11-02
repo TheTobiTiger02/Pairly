@@ -49,7 +49,23 @@ public partial class MainWindow
             SetPairingStep(_pairingStep);
         }
         UpdateRealtimeStatusText();
+        if (_updateStatus is not null)
+        {
+            UpdateStatusText.Text = _updateStatus();
+        }
+        if (_startupStatus is not null)
+        {
+            StartupRegistrationStatusText.Text = _startupStatus();
+        }
     }
+
+    private Func<string>? _updateStatus;
+    private Func<string>? _startupStatus;
+
+    /// <summary>Sets a status line from code so it is re-translated when the language changes.</summary>
+    private void ShowUpdateStatus(Func<string> text) => UpdateStatusText.Text = (_updateStatus = text)();
+
+    private void ShowStartupStatus(Func<string> text) => StartupRegistrationStatusText.Text = (_startupStatus = text)();
 
     private void UpdateGreeting()
     {
@@ -295,7 +311,7 @@ public partial class MainWindow
             new(tabs ? NotificationsSection : NavNotifications, L.T("tour_notifications_title"), L.T("tour_notifications_body")),
             new(tabs ? TopTabsActions : NavFooterPanel, L.T("tour_help_title"), L.T("tour_help_body"))
         };
-        _tour = new CoachMarkOverlay(steps, L.T("action_back"), L.T("action_next"), L.T("action_done"), L.T("tour_skip"), L.T("tour_counter"));
+        _tour = new CoachMarkOverlay(steps, L.T("action_back"), L.T("action_next"), L.T("action_done"), L.T("action_skip_tour"), L.T("tour_counter"));
         Grid.SetRowSpan(_tour, 2);
         Grid.SetColumnSpan(_tour, 3);
         Panel.SetZIndex(_tour, 30);

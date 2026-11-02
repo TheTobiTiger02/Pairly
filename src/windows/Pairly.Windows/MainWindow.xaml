@@ -251,7 +251,7 @@
                                             </StackPanel>
                                         </StackPanel>
                                         <StackPanel Style="{StaticResource NoDeviceSelected}">
-                                            <TextBlock Text="{l:Loc no_phone_linked}" FontSize="16" FontWeight="SemiBold" />
+                                            <TextBlock Text="{l:Loc no_phone_linked}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" />
                                             <TextBlock Text="{l:Loc add_a_device_to_get_started}" Style="{StaticResource CaptionText}" Margin="0,3,0,0" />
                                         </StackPanel>
                                     </StackPanel>
@@ -357,14 +357,14 @@
                                     ToolTip="{l:Loc send_the_text_from_settings_clipboard_to_all}" AutomationProperties.Name="{l:Loc send_clipboard}">
                                 <StackPanel>
                                     <TextBlock Text="&#xE77F;" Style="{StaticResource QuickActionGlyph}" />
-                                    <TextBlock Text="{l:Loc clipboard}" HorizontalAlignment="Center" />
+                                    <TextBlock Text="{l:Loc qa_clipboard}" HorizontalAlignment="Center" />
                                 </StackPanel>
                             </Button>
                             <Button Grid.Column="3" Style="{StaticResource QuickActionButton}" Click="RefreshPhoneData_Click"
                                     ToolTip="{l:Loc refresh_phone_data}" AutomationProperties.Name="{l:Loc refresh_phone_data}">
                                 <StackPanel>
                                     <TextBlock Text="&#xE72C;" Style="{StaticResource QuickActionGlyph}" />
-                                    <TextBlock Text="{l:Loc sync}" HorizontalAlignment="Center" />
+                                    <TextBlock Text="{l:Loc qa_sync}" HorizontalAlignment="Center" />
                                 </StackPanel>
                             </Button>
                         </Grid>

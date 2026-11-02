@@ -103,9 +103,9 @@ public partial class MainWindow : Window
 
         _initializingStartupSetting = true;
         StartWithWindowsCheck.IsChecked = StartupRegistration.IsEnabled;
-        StartupRegistrationStatusText.Text = StartupRegistration.IsEnabled
+        ShowStartupStatus(() => StartupRegistration.IsEnabled
             ? L.T("pairly_will_reconnect_after_you_sign_in")
-            : L.T("startup_will_be_enabled_automatically_after");
+            : L.T("startup_will_be_enabled_automatically_after"));
         _initializingStartupSetting = false;
 
         _refreshTimer = new DispatcherTimer
@@ -427,17 +427,17 @@ public partial class MainWindow : Window
     {
         if (StartupRegistration.IsPackaged())
         {
-            UpdateStatusText.Text = L.T("updates_are_installed_by_the_microsoft_store");
+            ShowUpdateStatus(() => L.T("updates_are_installed_by_the_microsoft_store"));
             return;
         }
 
         if (!_updater.IsEnabled)
         {
-            UpdateStatusText.Text = L.T("development_build_automatic_updates_are_off");
+            ShowUpdateStatus(() => L.T("development_build_automatic_updates_are_off"));
             return;
         }
 
-        UpdateStatusText.Text = L.T("pairly_checks_github_for_updates_and_install");
+        ShowUpdateStatus(() => L.T("pairly_checks_github_for_updates_and_install"));
         _updateTimer = new DispatcherTimer { Interval = TimeSpan.FromHours(6) };
         _updateTimer.Tick += async (_, _) => await CheckForDesktopUpdateAsync();
         _updateTimer.Start();
@@ -454,14 +454,14 @@ public partial class MainWindow : Window
         try
         {
             var ready = await _updater.CheckAndDownloadAsync();
-            UpdateStatusText.Text = ready
+            ShowUpdateStatus(() => ready
                 ? L.F("version_is_ready_it_installs_the_next_time_p", _updater.PendingVersion)
-                : L.T("pairly_is_up_to_date");
+                : L.T("pairly_is_up_to_date"));
             RestartToUpdateButton.Visibility = ready ? Visibility.Visible : Visibility.Collapsed;
         }
         catch (Exception ex)
         {
-            UpdateStatusText.Text = UserFacingError(L.T("could_not_check_for_updates_pairly_tries_aga"), ex);
+            ShowUpdateStatus(() => UserFacingError(L.T("could_not_check_for_updates_pairly_tries_aga"), ex));
         }
     }
 
@@ -511,11 +511,11 @@ public partial class MainWindow : Window
 
         var enabled = StartWithWindowsCheck.IsChecked == true;
         var succeeded = StartupRegistration.SetEnabled(enabled);
-        StartupRegistrationStatusText.Text = succeeded
+        ShowStartupStatus(() => succeeded
             ? enabled
                 ? L.T("pairly_will_reconnect_after_you_sign_in")
                 : L.T("automatic_startup_is_off_your_trusted_pairin")
-            : L.T("windows_startup_registration_could_not_be_up");
+            : L.T("windows_startup_registration_could_not_be_up"));
     }
 
     private void MirrorProfileCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -1931,7 +1931,7 @@ public partial class MainWindow : Window
                 _initializingStartupSetting = false;
                 if (startupEnabled)
                 {
-                    StartupRegistrationStatusText.Text = L.T("pairly_will_reconnect_after_you_sign_in");
+                    ShowStartupStatus(() => L.T("pairly_will_reconnect_after_you_sign_in"));
                 }
             }
 

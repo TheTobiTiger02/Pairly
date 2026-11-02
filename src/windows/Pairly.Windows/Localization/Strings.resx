@@ -526,4 +526,6 @@
   <data name="your_phone_on_your_pc" xml:space="preserve"><value>Your phone, on your PC</value></data>
   <data name="your_phone_reconnects_without_you_opening_pa" xml:space="preserve"><value>Your phone reconnects without you opening Pairly.</value></data>
   <data name="your_phone_s_text_messages_show_up_here_choo" xml:space="preserve"><value>Your phone's text messages show up here. Choose one on the left to read and reply.</value></data>
+  <data name="qa_clipboard" xml:space="preserve"><value>Clipboard</value></data>
+  <data name="qa_sync" xml:space="preserve"><value>Sync</value></data>
 </root>
