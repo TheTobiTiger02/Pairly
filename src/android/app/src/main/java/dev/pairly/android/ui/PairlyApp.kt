@@ -1,9 +1,6 @@
 package dev.pairly.android.ui
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
 import androidx.compose.animation.togetherWith
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
@@ -14,10 +11,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.pairly.android.R
+import dev.pairly.android.features.share.FileShareSender
 import dev.pairly.android.network.ConnectionPhase
 import dev.pairly.android.network.PairingLink
 import dev.pairly.android.network.PairlyConnection
@@ -27,6 +28,8 @@ import dev.pairly.android.ui.navigation.ShellCallbacks
 import dev.pairly.android.ui.onboarding.OnboardingScreen
 import dev.pairly.android.ui.onboarding.OnboardingStep
 import dev.pairly.android.ui.onboarding.PairingCallbacks
+import dev.pairly.android.ui.navigation.Motion
+import dev.pairly.android.ui.theme.Pairly
 import dev.pairly.android.ui.theme.PairlyTheme
 import dev.pairly.android.ui.whatsnew.WhatsNewSheet
 import kotlinx.coroutines.delay
@@ -44,6 +47,8 @@ fun PairlyApp(
     val whatsNew by viewModel.whatsNew.collectAsStateWithLifecycle()
     var linkAwaitingConfirmation by remember { mutableStateOf<PairingLink?>(null) }
     val invalidLink = stringResource(R.string.scan_not_pairing_code)
+    val context = LocalContext.current
+    val haptics = LocalHapticFeedback.current
 
     LifecycleResumeEffect(Unit) {
         viewModel.refresh()
@@ -80,17 +85,19 @@ fun PairlyApp(
     LaunchedEffect(state.hasPairing) {
         val justPaired = state.hasPairing && !wasPaired
         wasPaired = state.hasPairing
+        if (justPaired) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
         if (justPaired && !prefs.onboardingDone && prefs.onboardingStep == OnboardingStep.Pair) {
             delay(1_200)
             viewModel.updatePrefs { it.copy(onboardingStep = dev.pairly.android.ui.onboarding.nextUnfinished(OnboardingStep.Pair, state)) }
         }
     }
 
-    PairlyTheme(prefs.variant, prefs.themeMode, prefs.dynamicColor) {
+    PairlyTheme(prefs.themeMode, prefs.dynamicColor, prefs.glassDark) {
+        val style = Pairly.style
         PairlyBackground {
             AnimatedContent(
                 targetState = prefs.onboardingDone,
-                transitionSpec = { (fadeIn() + scaleIn(initialScale = 0.96f)).togetherWith(fadeOut()) },
+                transitionSpec = { Motion.fadeThroughIn(style).togetherWith(Motion.fadeThroughOut(style)) },
                 label = "onboarding-or-app"
             ) { done ->
                 if (!done) {
@@ -117,6 +124,7 @@ fun PairlyApp(
                             setClipboardSync = viewModel::setClipboardSync,
                             readClipboard = viewModel::readClipboard,
                             sendClipboard = viewModel::sendClipboard,
+                            sendFiles = { uris -> FileShareSender.send(context, uris) },
                             updatePrefs = viewModel::updatePrefs,
                             setLanguage = onLanguage,
                             replayOnboarding = { viewModel.updatePrefs { it.copy(onboardingDone = false, onboardingStep = OnboardingStep.Welcome) } }

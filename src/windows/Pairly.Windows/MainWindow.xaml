@@ -1409,6 +1409,34 @@
                                 </Button>
                             </UniformGrid>
 
+                            <Border x:Name="ReceivedFilesCard" Style="{StaticResource PageCard}" Padding="20,16" Margin="0,16,0,0" Visibility="Collapsed">
+                                <StackPanel>
+                                    <DockPanel>
+                                        <Button DockPanel.Dock="Right" Content="{l:Loc open_folder}" Style="{StaticResource SecondaryButton}"
+                                                Click="OpenReceivedFolder_Click" AutomationProperties.Name="{l:Loc open_folder}" />
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="{l:Loc received_from_phone}" Style="{StaticResource SubtitleText}" />
+                                            <TextBlock Text="{l:Loc received_files_hint}" Style="{StaticResource CaptionText}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </DockPanel>
+                                    <ItemsControl x:Name="ReceivedFilesList" Margin="0,12,0,0" Focusable="False">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Style="{StaticResource SubtleButton}" HorizontalContentAlignment="Stretch" Padding="8,6" Click="OpenReceivedFile_Click" Tag="{Binding FilePath}"
+                                                        AutomationProperties.Name="{Binding FileName}">
+                                                    <DockPanel>
+                                                        <TextBlock DockPanel.Dock="Left" Text="&#xE8A5;" Style="{StaticResource IconGlyph}" FontSize="16"
+                                                                   Foreground="{DynamicResource AccentBrush}" Margin="0,0,12,0" />
+                                                        <TextBlock DockPanel.Dock="Right" Text="{Binding SizeText}" Style="{StaticResource CaptionText}" VerticalAlignment="Center" />
+                                                        <TextBlock Text="{Binding FileName}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                                    </DockPanel>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+
                             <ContentControl x:Name="HomeNowPlayingHost" Focusable="False" IsTabStop="False" Margin="0,8,0,0">
                                     <Border x:Name="NowPlayingCard" Style="{StaticResource PageCard}" Padding="12" Margin="0,8,0,0" Visibility="Collapsed">
                                         <StackPanel>

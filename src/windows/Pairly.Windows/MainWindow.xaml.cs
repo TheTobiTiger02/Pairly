@@ -409,6 +409,7 @@ public partial class MainWindow : Window
 
             _notifyIcon.ContextMenuStrip = contextMenu;
             _notifyIcon.DoubleClick += (s, e) => ShowDashboard();
+            _notifyIcon.BalloonTipClicked += ReceivedBalloon_Clicked;
         }
         catch (Exception ex)
         {
@@ -935,6 +936,11 @@ public partial class MainWindow : Window
                     _activeCallOverlay?.Close();
                     _activeCallOverlay = null;
                 });
+            }
+            else if (type == ProtocolMessageTypes.FileShareReceived)
+            {
+                var received = payload.Deserialize<FileShareReceivedPayload>(JsonOptions);
+                if (received is not null) _ = Dispatcher.InvokeAsync(() => ShowReceivedFile(received));
             }
             else if (type == "clipboard.item")
             {

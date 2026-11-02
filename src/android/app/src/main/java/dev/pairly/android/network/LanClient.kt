@@ -69,6 +69,9 @@ class LanClient(
 
     fun send(json: String): Boolean = synchronized(socketLock) { webSocket?.send(json) == true }
 
+    /** Bytes waiting in OkHttp's outgoing queue; large sends wait while this is high. */
+    fun queuedBytes(): Long = synchronized(socketLock) { webSocket?.queueSize() ?: 0L }
+
     fun disconnect(reason: String = "User disconnected") {
         generation.incrementAndGet()
         synchronized(socketLock) {

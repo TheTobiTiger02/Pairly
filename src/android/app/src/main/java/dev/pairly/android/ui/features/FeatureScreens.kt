@@ -113,7 +113,7 @@ fun FeatureDetailScreen(feature: Feature, state: AppState, callbacks: FeatureDet
                     Text(stringResource(R.string.clipboard_android_note), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else {
-                item { FeatureSetupContent(feature, granted) }
+                item { FeatureSetupContent(feature, state.permissions) }
             }
         }
     }

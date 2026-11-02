@@ -60,8 +60,7 @@ import dev.pairly.android.ui.components.StatusPill
 import dev.pairly.android.ui.components.SwitchRow
 import dev.pairly.android.ui.components.connectionLabel
 import dev.pairly.android.ui.components.tone
-import dev.pairly.android.ui.theme.DesignVariant
-import dev.pairly.android.ui.theme.NavStyle
+import dev.pairly.android.ui.theme.GlassDark
 import dev.pairly.android.ui.theme.Space
 import dev.pairly.android.ui.theme.ThemeMode
 import kotlinx.coroutines.launch
@@ -80,21 +79,14 @@ class SettingsCallbacks(
 private const val UNLOCK_TAPS = 7
 
 @Composable
-fun SettingsScreen(
-    state: AppState,
-    prefs: UiPrefs,
-    language: LocaleText.Language,
-    callbacks: SettingsCallbacks,
-    showTitle: Boolean = true
-) {
+fun SettingsScreen(state: AppState, prefs: UiPrefs, language: LocaleText.Language, callbacks: SettingsCallbacks) {
     val context = LocalContext.current
     val actions = LocalFeatureActions.current
     var showForget by remember { mutableStateOf(false) }
     var versionTaps by remember { mutableIntStateOf(0) }
 
     ScreenList {
-        // Opened from the dashboard's top bar, the bar already names the screen.
-        if (showTitle) item { ScreenTitle(stringResource(R.string.settings_title)) }
+        item { ScreenTitle(stringResource(R.string.settings_title)) }
 
         // Connection
         item { SectionLabel(stringResource(R.string.settings_connection)) }
@@ -145,14 +137,6 @@ fun SettingsScreen(
                     selected = prefs.themeMode,
                     onSelect = { mode -> callbacks.updatePrefs { it.copy(themeMode = mode) } }
                 )
-                if (prefs.variant == DesignVariant.DarkVibrant) {
-                    Text(
-                        stringResource(R.string.theme_always_dark),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = Space.s)
-                    )
-                }
                 Spacer(Modifier.height(Space.m))
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     SwitchRow(
@@ -289,39 +273,22 @@ private fun UpdatesCard() {
     }
 }
 
-/** Switch between the candidate designs and navigation styles; remove once one is chosen. */
+/** Switch between the dark-mode candidates; remove once one is chosen. */
 @Composable
 private fun DesignPreviewCard(prefs: UiPrefs, update: ((UiPrefs) -> UiPrefs) -> Unit) {
     PairlyCard(Modifier.fillMaxWidth()) {
         Text(stringResource(R.string.design_preview_detail), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(Space.m))
-        ListRow(stringResource(R.string.design_style), icon = Icons.Rounded.Palette)
+        ListRow(stringResource(R.string.design_dark_look), subtitle = stringResource(R.string.design_dark_look_detail), icon = Icons.Rounded.Palette)
         ChoiceRow(
             options = listOf(
-                DesignVariant.Expressive to stringResource(R.string.design_expressive),
-                DesignVariant.Minimal to stringResource(R.string.design_minimal)
+                GlassDark.Graphite to stringResource(R.string.design_graphite),
+                GlassDark.Navy to stringResource(R.string.design_navy),
+                GlassDark.Black to stringResource(R.string.design_black)
             ),
-            selected = prefs.variant,
-            onSelect = { v -> update { it.copy(variant = v) } }
-        )
-        Spacer(Modifier.height(Space.s))
-        ChoiceRow(
-            options = listOf(
-                DesignVariant.DarkVibrant to stringResource(R.string.design_dark_vibrant),
-                DesignVariant.Glass to stringResource(R.string.design_glass)
-            ),
-            selected = prefs.variant,
-            onSelect = { v -> update { it.copy(variant = v) } }
-        )
-        Spacer(Modifier.height(Space.l))
-        ListRow(stringResource(R.string.design_navigation), icon = Icons.Rounded.Palette)
-        ChoiceRow(
-            options = listOf(
-                NavStyle.BottomBar to stringResource(R.string.design_nav_bar),
-                NavStyle.Dashboard to stringResource(R.string.design_nav_dashboard)
-            ),
-            selected = prefs.navStyle,
-            onSelect = { n -> update { it.copy(navStyle = n) } }
+            selected = prefs.glassDark,
+            // Picking a candidate also shows it, so the change is visible right away.
+            onSelect = { candidate -> update { it.copy(glassDark = candidate, themeMode = ThemeMode.Dark) } }
         )
         HorizontalDivider(Modifier.padding(vertical = Space.m), color = MaterialTheme.colorScheme.outlineVariant)
         StatusPill(stringResource(R.string.design_preview_hint), PillTone.Neutral)

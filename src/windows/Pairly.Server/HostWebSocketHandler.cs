@@ -31,6 +31,7 @@ public sealed class HostWebSocketHandler(
     Networking.EndpointEnumerator endpoints,
     MediaSessionStore mediaSessions,
     Streaming.FilePushService filePush,
+    FileShareReceiver fileShares,
     ResponseBroker<AppsListResponsePayload> appsList,
     ResponseBroker<AppsLaunchResultPayload> appsLaunch,
     ILogger<HostWebSocketHandler> logger)
@@ -106,6 +107,7 @@ public sealed class HostWebSocketHandler(
                 if (connection.IsPhysicalDevice)
                 {
                     devices.MarkConnected(connection.SessionId, connected: false);
+                    fileShares.CancelSession(connection.SessionId);
                 }
             }
         }
@@ -170,6 +172,11 @@ public sealed class HostWebSocketHandler(
                     break;
                 case ProtocolMessageTypes.ContentTransferStart:
                     HandleContentTransferStart(envelope, connection);
+                    break;
+                case ProtocolMessageTypes.FileShareStart:
+                case ProtocolMessageTypes.FileShareChunk:
+                case ProtocolMessageTypes.FileShareComplete:
+                    await HandleFileShareAsync(envelope, connection, cancellationToken);
                     break;
                 case ProtocolMessageTypes.ContentTransferChunk:
                     HandleContentTransferChunk(envelope, connection);
@@ -786,6 +793,58 @@ public sealed class HostWebSocketHandler(
 
         await sessions.SendAsync(state.TargetDeviceId, envelope, cancellationToken);
     }
+
+    /// <summary>
+    /// Files shared from the phone. The phone waits for "accepted" after start, so a PC without
+    /// this feature (which answers with an error instead) is detected and nothing is streamed.
+    /// </summary>
+    private async Task HandleFileShareAsync(ProtocolEnvelope envelope, ConnectionSession connection, CancellationToken cancellationToken)
+    {
+        if (!connection.IsPhysicalDevice || connection.SessionId is null)
+        {
+            throw new InvalidOperationException("Only an authenticated phone may share files.");
+        }
+
+        var sessionId = connection.SessionId;
+        string transferId;
+        FileShareOutcome outcome;
+        string? fileName = null;
+        switch (envelope.Type)
+        {
+            case ProtocolMessageTypes.FileShareStart:
+                var start = envelope.ReadPayload<FileShareStartPayload>() ?? throw new InvalidOperationException("Missing file share start payload.");
+                transferId = start.TransferId;
+                fileName = start.FileName;
+                outcome = fileShares.Begin(sessionId, start);
+                await SendFileShareResultAsync(sessionId, new FileShareResultPayload(transferId, outcome.Accepted ? "accepted" : "failed", outcome.Reason, fileName), cancellationToken);
+                return;
+            case ProtocolMessageTypes.FileShareChunk:
+                var chunk = envelope.ReadPayload<FileShareChunkPayload>() ?? throw new InvalidOperationException("Missing file share chunk payload.");
+                transferId = chunk.TransferId;
+                outcome = fileShares.Append(sessionId, chunk);
+                break;
+            default:
+                var complete = envelope.ReadPayload<FileShareCompletePayload>() ?? throw new InvalidOperationException("Missing file share completion payload.");
+                transferId = complete.TransferId;
+                outcome = fileShares.Complete(sessionId, envelope.DeviceId, complete);
+                break;
+        }
+
+        if (!outcome.Accepted)
+        {
+            await SendFileShareResultAsync(sessionId, new FileShareResultPayload(transferId, "failed", outcome.Reason), cancellationToken);
+            return;
+        }
+
+        if (outcome.Saved is { } saved)
+        {
+            await SendFileShareResultAsync(sessionId, new FileShareResultPayload(transferId, "saved", null, saved.FileName), cancellationToken);
+            await RelayToPcAppsAsync(ProtocolEnvelope.Create(ProtocolMessageTypes.FileShareReceived, "pc-host", NextSequence(), saved), cancellationToken);
+        }
+    }
+
+    private Task SendFileShareResultAsync(string sessionId, FileShareResultPayload result, CancellationToken cancellationToken) =>
+        sessions.SendAsync(sessionId, ProtocolEnvelope.Create(ProtocolMessageTypes.FileShareResult, "pc-host", NextSequence(), result), cancellationToken);
 
     /// <summary>Forwards a phone event as-is to the PC app's realtime sockets.</summary>
     private async Task RelayToPcAppsAsync(ProtocolEnvelope envelope, CancellationToken cancellationToken)

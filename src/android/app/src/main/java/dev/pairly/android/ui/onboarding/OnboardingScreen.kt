@@ -1,6 +1,6 @@
 package dev.pairly.android.ui.onboarding
 
-import androidx.activity.compose.BackHandler
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateDpAsState
@@ -60,6 +60,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
+import dev.pairly.android.ui.navigation.Motion
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -82,6 +86,7 @@ import dev.pairly.android.ui.components.PrimaryButton
 import dev.pairly.android.ui.components.QuietButton
 import dev.pairly.android.ui.features.Feature
 import dev.pairly.android.ui.features.FeatureHeader
+import dev.pairly.android.ui.features.FeatureSetupActions
 import dev.pairly.android.ui.features.FeatureSetupContent
 import dev.pairly.android.ui.features.ShizukuGuide
 import dev.pairly.android.ui.theme.Pairly
@@ -99,7 +104,16 @@ fun OnboardingScreen(
     onStep: (OnboardingStep) -> Unit,
     onFinish: () -> Unit
 ) {
-    BackHandler(enabled = step != OnboardingStep.Welcome) { onStep(step.previous()) }
+    // Android 14+ previews the back gesture: the step follows the finger before it changes.
+    var backProgress by remember { mutableFloatStateOf(0f) }
+    PredictiveBackHandler(enabled = step != OnboardingStep.Welcome) { events ->
+        try {
+            events.collect { backProgress = it.progress }
+            onStep(step.previous())
+        } finally {
+            backProgress = 0f
+        }
+    }
     val progress by animateFloatAsState(step.ordinal / (OnboardingStep.entries.size - 1f), label = "progress")
     val style = Pairly.style
 
@@ -126,12 +140,13 @@ fun OnboardingScreen(
 
             AnimatedContent(
                 targetState = step,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).graphicsLayer {
+                    translationX = backProgress * 48.dp.toPx()
+                    alpha = 1f - backProgress * 0.25f
+                },
                 transitionSpec = {
                     val forward = targetState.ordinal > initialState.ordinal
-                    if (style.reduceMotion) fadeIn().togetherWith(fadeOut())
-                    else (slideInHorizontally(style.offsetSpring()) { if (forward) it / 3 else -it / 3 } + fadeIn())
-                        .togetherWith(slideOutHorizontally(style.offsetSpring()) { if (forward) -it / 3 else it / 3 } + fadeOut())
+                    Motion.slideIn(style, forward).togetherWith(Motion.slideOut(style, forward))
                 },
                 label = "onboarding-step"
             ) { current ->
@@ -372,9 +387,12 @@ private fun PairStep(state: AppState, pairing: PairingCallbacks, onNext: () -> U
         content = {
             StepTitle(stringResource(R.string.onboarding_connect_title), stringResource(R.string.onboarding_connect_body))
             if (state.hasPairing) {
+                // A small pop for the moment it works.
+                val pop = remember { Animatable(0.6f) }
+                LaunchedEffect(Unit) { pop.animateTo(1f, spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessMediumLow)) }
                 PairlyCard(Modifier.fillMaxWidth()) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        CheckBadge(36.dp)
+                        CheckBadge(36.dp, Modifier.graphicsLayer { scaleX = pop.value; scaleY = pop.value })
                         Spacer(Modifier.width(Space.m))
                         Text(
                             stringResource(R.string.onboarding_paired_with, state.pcName.ifBlank { stringResource(R.string.paired_pc_fallback) }),
@@ -417,13 +435,13 @@ private fun PermissionStep(step: OnboardingStep, state: AppState, onNext: () -> 
             Spacer(Modifier.height(Space.m))
             FeatureHeader(feature, granted)
             Spacer(Modifier.height(Space.xl))
-            FeatureSetupContent(feature, granted, showAction = false)
+            FeatureSetupContent(feature, state.permissions, showAction = false)
         },
         actions = {
             if (granted) {
                 PrimaryButton(stringResource(R.string.action_continue), onClick = onNext)
             } else {
-                PrimaryButton(stringResource(feature.action), onClick = { actions.enable(feature) })
+                FeatureSetupActions(feature, state.permissions)
                 QuietButton(stringResource(R.string.action_skip), onClick = onNext)
             }
         }

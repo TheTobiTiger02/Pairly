@@ -537,3 +537,35 @@ public sealed record MirrorQualityPayload(
     int MaxFps,
     int BitrateKbps,
     string Profile);
+
+/// <summary>A phone starts sending one shared file. The hash is only known at the end.</summary>
+public sealed record FileShareStartPayload(
+    string TransferId,
+    string FileName,
+    long ByteCount,
+    string? ContentType = null,
+    int Index = 0,
+    int Total = 1);
+
+public sealed record FileShareChunkPayload(
+    string TransferId,
+    int ChunkIndex,
+    string Base64);
+
+public sealed record FileShareCompletePayload(
+    string TransferId,
+    string ContentHash);
+
+/// <summary>PC → phone. Status is accepted (after start), saved, or failed.</summary>
+public sealed record FileShareResultPayload(
+    string TransferId,
+    string Status,
+    string? Message = null,
+    string? FileName = null);
+
+/// <summary>Host → PC app: a shared file was saved.</summary>
+public sealed record FileShareReceivedPayload(
+    string DeviceId,
+    string FileName,
+    string FilePath,
+    long ByteCount);

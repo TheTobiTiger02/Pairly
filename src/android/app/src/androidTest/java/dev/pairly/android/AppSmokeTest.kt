@@ -19,12 +19,16 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.Until
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
+import java.util.regex.Pattern
 
 /**
  * Drives the real app on an emulator: first-run setup, the main screens, the design preview and
@@ -128,26 +132,45 @@ class AppSmokeTest {
         waitFor(R.string.settings_title)
         screenshot("settings")
 
-        // Unlock the design preview (version tapped seven times) and try another design.
+        // Unlock the design preview (version tapped seven times) and try a dark-mode candidate.
         val list = compose.onNode(hasScrollToNodeAction())
         list.performScrollToNode(hasText(text(R.string.settings_version)))
         repeat(7) { compose.onNodeWithText(text(R.string.settings_version)).performClick() }
         compose.waitForIdle() // the section header shows the title in capitals, so wait on its content
-        list.performScrollToNode(hasText(text(R.string.design_dark_vibrant)))
-        click(R.string.design_dark_vibrant)
-        list.performScrollToNode(hasText(text(R.string.design_nav_dashboard)))
-        click(R.string.design_nav_dashboard)
-        screenshot("design-preview-dark-vibrant")
+        list.performScrollToNode(hasText(text(R.string.design_navy)))
+        click(R.string.design_navy)
+        screenshot("design-preview-navy")
+        list.performScrollToNode(hasText(text(R.string.design_graphite)))
+        click(R.string.design_graphite)
+        screenshot("design-preview-graphite")
 
-        // Dashboard navigation: Home shows feature tiles and Settings moves to the top bar.
-        compose.onNodeWithContentDescription(text(R.string.action_back)).performClick()
+        // Tabs in both directions, including back to Home.
+        click(R.string.nav_home)
         waitFor(R.string.home_not_paired)
-        screenshot("home-dashboard")
+        screenshot("home-dark")
+        click(R.string.nav_features)
+        waitFor(R.string.features_title)
+
+        // "Control your phone" opens Android's settings as close to Pairly's switch as the phone allows.
+        click(R.string.feature_control)
+        waitFor(R.string.feature_why_title)
+        screenshot("feature-control")
+        click(R.string.action_open_settings)
+        val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        check(device.wait(Until.hasObject(By.textContains("Pairly").pkg(Pattern.compile("^(?!dev\\.pairly).*"))), 15_000)) {
+            "Accessibility settings did not show Pairly."
+        }
+        device.takeScreenshot(File(context.filesDir, "screenshots/%02d-accessibility-settings.png".format(++shot)))
+        device.pressBack()
+        waitFor(R.string.feature_why_title)
+        compose.onNodeWithContentDescription(text(R.string.action_back)).performClick()
+        waitFor(R.string.features_title)
 
         // Switch the app to German (recreates the activity on older Android versions).
-        compose.onNodeWithContentDescription(text(R.string.nav_settings)).performClick()
+        click(R.string.nav_settings)
         waitFor(R.string.settings_language)
-        list.performScrollToNode(hasText("Deutsch"))
+        val settings = compose.onNode(hasScrollToNodeAction())
+        settings.performScrollToNode(hasText("Deutsch"))
         compose.onNodeWithText("Deutsch").performClick()
         compose.waitUntil(20_000) { compose.onAllNodesWithText("Einstellungen").fetchSemanticsNodes().isNotEmpty() }
         screenshot("settings-german")

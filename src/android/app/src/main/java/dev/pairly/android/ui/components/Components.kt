@@ -60,6 +60,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
@@ -79,11 +83,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.pairly.android.R
 import dev.pairly.android.network.ConnectionPhase
-import dev.pairly.android.ui.theme.DesignVariant
 import dev.pairly.android.ui.theme.Pairly
 import dev.pairly.android.ui.theme.Space
 
-/** Paints the variant's backdrop (gradients for Dark vibrant and Glass) behind a screen. */
+/** Paints the backdrop (background color plus the theme's soft tint) behind a screen. */
 @Composable
 fun PairlyBackground(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
     val style = Pairly.style
@@ -97,7 +100,7 @@ fun PairlyBackground(modifier: Modifier = Modifier, content: @Composable BoxScop
     }
 }
 
-/** The variant's card: tonal (Expressive), outlined (Minimal), glowing border (Dark vibrant) or frosted (Glass). */
+/** A frosted glass card. */
 @Composable
 fun PairlyCard(
     modifier: Modifier = Modifier,
@@ -153,13 +156,13 @@ fun SectionLabel(text: String, modifier: Modifier = Modifier) {
     )
 }
 
-/** A rounded icon tile; colors follow the variant. */
+/** A rounded icon tile. */
 @Composable
 fun FeatureIcon(icon: ImageVector, modifier: Modifier = Modifier, size: Dp = 44.dp, highlighted: Boolean = false) {
     val style = Pairly.style
     val container = if (highlighted) MaterialTheme.colorScheme.primary else style.iconContainer
     val content = if (highlighted) MaterialTheme.colorScheme.onPrimary else style.onIconContainer
-    val shape = if (style.variant == DesignVariant.Minimal) RoundedCornerShape(size / 4) else RoundedCornerShape(size / 3)
+    val shape = RoundedCornerShape(size / 3)
     Box(modifier.size(size).clip(shape).background(container), contentAlignment = Alignment.Center) {
         Icon(icon, contentDescription = null, tint = content, modifier = Modifier.size(size * 0.5f))
     }
@@ -253,11 +256,12 @@ fun ListRow(
 
 @Composable
 fun SwitchRow(title: String, subtitle: String?, checked: Boolean, onCheckedChange: (Boolean) -> Unit, icon: ImageVector? = null) {
+    val haptics = LocalHapticFeedback.current
     ListRow(
         title = title,
         subtitle = subtitle,
         icon = icon,
-        onClick = { onCheckedChange(!checked) },
+        onClick = { haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove); onCheckedChange(!checked) },
         modifier = Modifier.semantics(mergeDescendants = true) {}
     ) { Switch(checked = checked, onCheckedChange = null) }
 }
@@ -265,7 +269,8 @@ fun SwitchRow(title: String, subtitle: String?, checked: Boolean, onCheckedChang
 /** Single-choice chips, e.g. theme or language. */
 @Composable
 fun <T> ChoiceRow(options: List<Pair<T, String>>, selected: T, onSelect: (T) -> Unit, modifier: Modifier = Modifier) {
-    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.s)) {
+    val haptics = LocalHapticFeedback.current
+    Row(modifier.fillMaxWidth().selectableGroup(), horizontalArrangement = Arrangement.spacedBy(Space.s)) {
         options.forEach { (value, label) ->
             val active = value == selected
             val background by animateColorAsState(
@@ -276,12 +281,14 @@ fun <T> ChoiceRow(options: List<Pair<T, String>>, selected: T, onSelect: (T) -> 
             )
             Box(
                 Modifier.weight(1f).heightIn(min = 44.dp).clip(MaterialTheme.shapes.medium).background(background)
-                    .clickable(role = Role.RadioButton) { onSelect(value) }
-                    .semantics { contentDescription = label + if (active) ", ✓" else "" }
+                    .selectable(selected = active, role = Role.RadioButton) {
+                        if (!active) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        onSelect(value)
+                    }
                     .padding(horizontal = Space.s, vertical = Space.m),
                 contentAlignment = Alignment.Center
             ) {
-                Text(label, style = MaterialTheme.typography.labelLarge, color = foreground, textAlign = TextAlign.Center, maxLines = 1)
+                Text(label, style = MaterialTheme.typography.labelLarge, color = foreground, textAlign = TextAlign.Center, maxLines = 2)
             }
         }
     }
@@ -290,24 +297,9 @@ fun <T> ChoiceRow(options: List<Pair<T, String>>, selected: T, onSelect: (T) -> 
 /** Full-width primary action used at the bottom of steps. */
 @Composable
 fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, icon: ImageVector? = null) {
-    val style = Pairly.style
-    if (style.variant == DesignVariant.DarkVibrant && enabled) {
-        // Gradient pill for the vibrant look.
-        Box(
-            modifier.fillMaxWidth().height(Space.button).clip(CircleShape).background(style.heroBrush)
-                .clickable(role = Role.Button, onClick = onClick),
-            contentAlignment = Alignment.Center
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (icon != null) { Icon(icon, null, tint = Color.White); Spacer(Modifier.width(Space.s)) }
-                Text(text, style = MaterialTheme.typography.labelLarge, color = Color.White)
-            }
-        }
-    } else {
-        Button(onClick = onClick, enabled = enabled, modifier = modifier.fillMaxWidth().height(Space.button)) {
-            if (icon != null) { Icon(icon, null); Spacer(Modifier.width(Space.s)) }
-            Text(text)
-        }
+    Button(onClick = onClick, enabled = enabled, modifier = modifier.fillMaxWidth().height(Space.button)) {
+        if (icon != null) { Icon(icon, null); Spacer(Modifier.width(Space.s)) }
+        Text(text)
     }
 }
 
@@ -346,9 +338,9 @@ fun NumberedSteps(steps: List<String>, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun CheckBadge(size: Dp = 28.dp) {
+fun CheckBadge(size: Dp = 28.dp, modifier: Modifier = Modifier) {
     Box(
-        Modifier.size(size).clip(CircleShape).background(Pairly.style.success),
+        modifier.size(size).clip(CircleShape).background(Pairly.style.success),
         contentAlignment = Alignment.Center
     ) { Icon(Icons.Rounded.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(size * 0.62f)) }
 }

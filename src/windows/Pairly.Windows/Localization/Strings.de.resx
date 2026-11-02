@@ -530,4 +530,9 @@
   <data name="qa_sync" xml:space="preserve"><value>Abgleich</value></data>
   <data name="toggle_on" xml:space="preserve"><value>Ein</value></data>
   <data name="toggle_off" xml:space="preserve"><value>Aus</value></data>
+  <data name="open_folder" xml:space="preserve"><value>Ordner öffnen</value></data>
+  <data name="received_from_phone" xml:space="preserve"><value>Vom Handy empfangen</value></data>
+  <data name="received_files_hint" xml:space="preserve"><value>Von deinem Handy geteilt. Gespeichert unter Downloads\Pairly.</value></data>
+  <data name="file_received" xml:space="preserve"><value>Datei empfangen</value></data>
+  <data name="file_received_detail" xml:space="preserve"><value>{0} liegt unter Downloads\Pairly.</value></data>
 </root>

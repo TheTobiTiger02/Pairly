@@ -28,8 +28,9 @@ import dev.pairly.android.ui.onboarding.OnboardingStep
 import dev.pairly.android.ui.onboarding.PairingCallbacks
 import dev.pairly.android.ui.settings.SettingsCallbacks
 import dev.pairly.android.ui.settings.SettingsScreen
-import dev.pairly.android.ui.theme.DesignVariant
-import dev.pairly.android.ui.theme.NavStyle
+import dev.pairly.android.ui.features.RestrictedSettings
+import dev.pairly.android.ui.features.RestrictedState
+import dev.pairly.android.ui.theme.GlassDark
 import dev.pairly.android.ui.theme.PairlyTheme
 import dev.pairly.android.ui.theme.ThemeMode
 import dev.pairly.android.ui.whatsnew.WhatsNewContent
@@ -42,18 +43,23 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * Renders every screen for each design candidate, light and dark, plus German, so the variants
- * can be compared side by side without a phone:
+ * Renders every screen in light mode and in each dark-mode candidate, plus German and the largest
+ * font size, so they can be compared side by side without a phone:
  *
- *   ./gradlew :app:recordRoborazziDebug   → app/build/outputs/roborazzi/<variant>/<screen>.png
+ *   ./gradlew :app:recordRoborazziDebug   → app/build/outputs/roborazzi/<case>/<screen>.png
  *   ./gradlew :app:verifyRoborazziDebug   → fails if a screen changed unexpectedly
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [34], qualifiers = "w411dp-h891dp-xxhdpi")
 class ScreenshotTest(private val case: Case) {
-    data class Case(val variant: DesignVariant, val mode: ThemeMode, val language: String) {
-        val folder = "${variant.name.lowercase()}-${mode.name.lowercase()}-$language"
+    data class Case(val mode: ThemeMode, val dark: GlassDark, val language: String, val fontScale: Float = 1f) {
+        val folder = buildString {
+            append(mode.name.lowercase())
+            if (mode == ThemeMode.Dark) append("-").append(dark.name.lowercase())
+            append("-").append(language)
+            if (fontScale > 1f) append("-large")
+        }
         override fun toString() = folder
     }
 
@@ -61,10 +67,10 @@ class ScreenshotTest(private val case: Case) {
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
         fun cases(): List<Case> =
-            DesignVariant.entries.flatMap { variant ->
-                val modes = if (variant == DesignVariant.DarkVibrant) listOf(ThemeMode.Dark) else listOf(ThemeMode.Light, ThemeMode.Dark)
-                modes.map { Case(variant, it, "en") }
-            } + Case(DesignVariant.Expressive, ThemeMode.Light, "de")
+            listOf(Case(ThemeMode.Light, GlassDark.Graphite, "en")) +
+                GlassDark.entries.map { Case(ThemeMode.Dark, it, "en") } +
+                Case(ThemeMode.Light, GlassDark.Graphite, "de") +
+                Case(ThemeMode.Light, GlassDark.Graphite, "de", fontScale = 2f)
     }
 
     @get:Rule
@@ -90,9 +96,10 @@ class ScreenshotTest(private val case: Case) {
 
     private fun capture(name: String, content: @Composable () -> Unit) {
         if (case.language != "en") RuntimeEnvironment.setQualifiers("${case.language}-w411dp-h891dp-xxhdpi")
+        if (case.fontScale != 1f) RuntimeEnvironment.setFontScale(case.fontScale)
         compose.setContent {
             CompositionLocalProvider(LocalFeatureActions provides NoFeatureActions) {
-                PairlyTheme(case.variant, case.mode) {
+                PairlyTheme(case.mode, glassDark = case.dark) {
                     PairlyBackground { content() }
                 }
             }
@@ -107,7 +114,8 @@ class ScreenshotTest(private val case: Case) {
         OnboardingScreen(step, state, pairing, LocaleText.Language.System, {}, {}, {})
     }
 
-    private val shell = ShellCallbacks(pairing, {}, {}, {}, {}, {}, { "" }, { true }, {}, {}, {})
+    private val shell = ShellCallbacks(pairing, {}, {}, {}, {}, {}, { "" }, { true }, {}, {}, {}, {})
+    private val prefs get() = UiPrefs(themeMode = case.mode, glassDark = case.dark)
 
     @Test fun onboardingWelcome() = onboarding(OnboardingStep.Welcome)
     @Test fun onboardingTour() = onboarding(OnboardingStep.Tour)
@@ -117,10 +125,20 @@ class ScreenshotTest(private val case: Case) {
     @Test fun onboardingClipboard() = onboarding(OnboardingStep.Clipboard, connected)
     @Test fun onboardingDone() = onboarding(OnboardingStep.Done, connected)
 
-    @Test fun homeBottomBar() = capture("home-bottom-bar") { MainShell(connected, UiPrefs(variant = case.variant), LocaleText.Language.System, shell) }
-    @Test fun homeDashboard() = capture("home-dashboard") { MainShell(connected, UiPrefs(variant = case.variant, navStyle = NavStyle.Dashboard), LocaleText.Language.System, shell) }
+    @Test fun home() = capture("home") { MainShell(connected, prefs, LocaleText.Language.System, shell) }
+    @Test fun homeNotPaired() = capture("home-not-paired") { MainShell(AppState(), prefs, LocaleText.Language.System, shell) }
     @Test fun homeReconnecting() = capture("home-reconnecting") {
-        MainShell(connected.copy(connection = ConnectionState(ConnectionPhase.Reconnecting, "Your PC isn’t reachable yet. Retrying automatically…")), UiPrefs(variant = case.variant), LocaleText.Language.System, shell)
+        MainShell(connected.copy(connection = ConnectionState(ConnectionPhase.Reconnecting, "Your PC isn’t reachable yet. Retrying automatically…")), prefs, LocaleText.Language.System, shell)
+    }
+    @Test fun featureBlocked() {
+        RestrictedSettings.attempted[Feature.Messages] = true
+        try {
+            capture("feature-blocked") {
+                Screen { FeatureDetailScreen(Feature.Messages, connected.copy(permissions = PermissionSnapshot(restricted = RestrictedState.Blocked)), detailCallbacks) }
+            }
+        } finally {
+            RestrictedSettings.attempted.clear()
+        }
     }
     @Test fun features() = capture("features") { Screen { FeaturesScreen(connected) {} } }
     @Test fun featureDetail() = capture("feature-detail") { Screen { FeatureDetailScreen(Feature.RemoteControl, connected, detailCallbacks) } }
@@ -130,13 +148,13 @@ class ScreenshotTest(private val case: Case) {
     @Test fun settings() = capture("settings") {
         Screen {
             SettingsScreen(
-                connected, UiPrefs(variant = case.variant, themeMode = case.mode, designPreviewUnlocked = true), LocaleText.Language.System,
+                connected, prefs.copy(designPreviewUnlocked = true), LocaleText.Language.System,
                 SettingsCallbacks({}, {}, {}, {}, {}, {}, {}, {})
             )
         }
     }
     @Test fun whatsNew() = capture("whats-new") {
-        Screen { WhatsNewContent(WhatsNew("1.4.0", listOf("A new design with four styles to choose from", "German translation", "Guided setup for every feature"))) {} }
+        Screen { WhatsNewContent(WhatsNew("1.6.0", listOf("Send files and photos to your PC from the share sheet", "A calmer glass design", "Clearer setup when Android blocks a permission"))) {} }
     }
 
     private val detailCallbacks = FeatureDetailCallbacks({}, {}, { "" }, { true }, {})

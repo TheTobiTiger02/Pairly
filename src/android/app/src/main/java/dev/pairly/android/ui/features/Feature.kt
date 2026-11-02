@@ -40,8 +40,11 @@ enum class Feature(
     @StringRes val why: Int,
     val steps: List<Int>,
     @StringRes val action: Int,
-    /** Android 13+ blocks these settings for apps installed outside an app store until the user allows them. */
-    val restrictedSetting: Boolean = false,
+    /**
+     * The Android version (API level) from which "restricted settings" can block this permission
+     * for apps installed outside an app store, or null if it never does.
+     */
+    val restrictedFrom: Int? = null,
     /** Advanced and optional: offered at the end of onboarding, not as a regular step. */
     val advanced: Boolean = false
 ) {
@@ -54,12 +57,13 @@ enum class Feature(
         "notifications", { Icons.Rounded.NotificationsActive },
         R.string.feature_notifications, R.string.feature_notifications_summary, R.string.feature_notifications_description, R.string.feature_notifications_why,
         listOf(R.string.step_open_settings, R.string.feature_notifications_step2, R.string.step_confirm_return), R.string.action_open_settings,
-        restrictedSetting = true
+        restrictedFrom = Build.VERSION_CODES.TIRAMISU
     ),
     Messages(
         "messages", { Icons.Rounded.Sms },
         R.string.feature_sms, R.string.feature_sms_summary, R.string.feature_sms_description, R.string.feature_sms_why,
-        listOf(R.string.step_allow_access, R.string.feature_sms_step2), R.string.action_allow_access
+        listOf(R.string.step_allow_access, R.string.feature_sms_step2), R.string.action_allow_access,
+        restrictedFrom = Build.VERSION_CODES.TIRAMISU
     ),
     Calls(
         "calls", { Icons.Rounded.Call },
@@ -80,7 +84,7 @@ enum class Feature(
         "control", { Icons.Rounded.TouchApp },
         R.string.feature_control, R.string.feature_control_summary, R.string.feature_control_description, R.string.feature_control_why,
         listOf(R.string.step_open_settings, R.string.feature_control_step2, R.string.feature_control_step3), R.string.action_open_settings,
-        restrictedSetting = true
+        restrictedFrom = Build.VERSION_CODES.TIRAMISU
     ),
     Mirroring(
         "mirroring", { Icons.Rounded.ScreenShare },
@@ -108,7 +112,10 @@ enum class Feature(
 }
 
 /** Which features are switched on right now. */
-data class PermissionSnapshot(val granted: Set<Feature> = emptySet()) {
+data class PermissionSnapshot(
+    val granted: Set<Feature> = emptySet(),
+    val restricted: RestrictedState = RestrictedState.Allowed
+) {
     fun isOn(feature: Feature): Boolean = feature in granted
     val missing: List<Feature> get() = Feature.setupOrder.filterNot { it in granted }
 
@@ -130,7 +137,7 @@ data class PermissionSnapshot(val granted: Set<Feature> = emptySet()) {
             if (Settings.canDrawOverlays(context)) on += Feature.Mirroring
             if (power.isIgnoringBatteryOptimizations(context.packageName)) on += Feature.Background
             if (ClipboardShizukuAccess.state.value == ClipboardHelperLifecycle.State.Ready) on += Feature.Clipboard
-            return PermissionSnapshot(on)
+            return PermissionSnapshot(on, RestrictedSettings.state(context))
         }
 
         private fun granted(context: Context, permission: String) =
