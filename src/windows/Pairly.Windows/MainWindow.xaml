@@ -989,26 +989,11 @@
                                             <DockPanel>
                                                 <TextBlock Text="&#xE946;" Style="{StaticResource SettingsCardGlyph}" />
                                                 <Button x:Name="AboutVersionButton" Content="{l:Loc version}" Style="{StaticResource SubtleButton}" DockPanel.Dock="Right"
-                                                        VerticalAlignment="Center" Margin="16,0,0,0" Click="AboutVersion_Click"
+                                                        VerticalAlignment="Center" Margin="16,0,0,0" IsHitTestVisible="False" Focusable="False"
                                                         AutomationProperties.Name="{l:Loc version}" />
                                                 <StackPanel VerticalAlignment="Center">
                                                     <TextBlock Text="{l:Loc pairly_for_windows}" Style="{StaticResource SettingsCardTitle}" />
                                                     <TextBlock Text="{l:Loc no_account_no_cloud_your_data_stays_on_your}" Style="{StaticResource SettingsCardDescription}" />
-                                                </StackPanel>
-                                            </DockPanel>
-                                        </Border>
-                                        <Border x:Name="DesignPreviewCard" Style="{StaticResource SettingsCard}" Visibility="Collapsed">
-                                            <DockPanel>
-                                                <TextBlock Text="&#xE8A9;" Style="{StaticResource SettingsCardGlyph}" />
-                                                <ComboBox x:Name="DarkLookCombo" DockPanel.Dock="Right" VerticalAlignment="Center" Margin="16,0,0,0" MinWidth="200"
-                                                          SelectionChanged="DarkLookCombo_SelectionChanged" AutomationProperties.Name="{l:Loc design_preview_dark_look}">
-                                                    <ComboBoxItem Tag="Graphite" Content="{l:Loc dark_look_graphite}" />
-                                                    <ComboBoxItem Tag="Navy" Content="{l:Loc dark_look_navy}" />
-                                                    <ComboBoxItem Tag="Black" Content="{l:Loc dark_look_black}" />
-                                                </ComboBox>
-                                                <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="{l:Loc design_preview_dark_look}" Style="{StaticResource SettingsCardTitle}" />
-                                                    <TextBlock Text="{l:Loc dark_look_hint}" Style="{StaticResource SettingsCardDescription}" />
                                                 </StackPanel>
                                             </DockPanel>
                                         </Border>

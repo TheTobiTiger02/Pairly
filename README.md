@@ -92,13 +92,13 @@ cd src\android
 
 Launch only `Pairly.Windows.exe`; it owns the embedded host.
 
-### Design preview
+### Design
 
-The Android app ships four candidate designs (Expressive, Minimal, Dark vibrant, Glass) and two navigation styles (bottom bar, dashboard). Unlock the switcher by tapping **Settings → Version** seven times. The Windows app can switch between a left navigation pane and top tabs the same way (click the version seven times). CI renders every Android screen in every design, light and dark, English and German, and every Windows page in both layouts (`--render-screenshots`), and attaches them to each run as the `android-screenshots` and `windows-screenshots` artifacts.
+Both apps use the Glass design with a navy dark mode: a bottom bar on Android, a navigation pane on Windows. CI renders every Android screen in light and dark, English, German and at the largest font size, and every Windows page in light and dark (`--render-screenshots`), and attaches them to each run as the `android-screenshots` and `windows-screenshots` artifacts.
 
-<img src="docs/screenshots/android-designs.png" width="820" alt="The four Android design candidates">
+<img src="docs/screenshots/android-designs.png" width="520" alt="Pairly on Android in light and dark mode">
 
-Side-by-side sheets for every screen, light and dark, and the two Windows layouts are in [docs/design-comparison](docs/design-comparison/README.md).
+Side-by-side sheets for every screen are in [docs/design-comparison](docs/design-comparison/README.md).
 
 ### Releasing
 

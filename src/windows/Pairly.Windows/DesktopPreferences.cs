@@ -18,12 +18,9 @@ internal sealed class DesktopPreferences
     /// <summary>"" follows Windows; "en" or "de".</summary>
     public string Language { get; set; } = string.Empty;
 
-    /// <summary>Dark-mode candidate while the final one is chosen: "Graphite", "Navy" or "Black".</summary>
-    public string DarkLook { get; set; } = "Graphite";
 
     public bool OnboardingCompleted { get; set; }
     public bool TourCompleted { get; set; }
-    public bool DesignPreviewUnlocked { get; set; }
 
     /// <summary>The version whose "What's new" was last shown.</summary>
     public string LastSeenVersion { get; set; } = string.Empty;

@@ -21,17 +21,14 @@ public partial class MainWindow
     private const int HomeTabIndex = 5;
     private const int NotificationsTabIndex = 6;
     private const int HelpTabIndex = 7;
-    private const int DesignPreviewTaps = 7;
     private const string RepositoryUrl = "https://github.com/TheTobiTiger02/Pairly";
 
     private bool _syncingChoices;
-    private int _versionTaps;
     private CoachMarkOverlay? _tour;
 
     private void InitializeShell()
     {
         AboutVersionButton.Content = CurrentVersion() ?? "dev";
-        DesignPreviewCard.Visibility = _preferences.DesignPreviewUnlocked ? Visibility.Visible : Visibility.Collapsed;
         SyncChoiceCombos();
         SelectPage(MainTabs.SelectedIndex);
         MainTabs.SelectedIndex = HomeTabIndex;
@@ -143,7 +140,6 @@ public partial class MainWindow
         SelectByTag(OnboardingThemeCombo, _preferences.Theme);
         SelectByTag(LanguageCombo, _preferences.Language);
         SelectByTag(OnboardingLanguageCombo, _preferences.Language);
-        SelectByTag(DarkLookCombo, _preferences.DarkLook);
         _syncingChoices = false;
     }
 
@@ -177,45 +173,6 @@ public partial class MainWindow
         _preferences.Save();
         LocalizationSource.Instance.SetLanguage(_preferences.Language);
         SyncChoiceCombos();
-    }
-
-    /// <summary>Design preview: the dark-mode candidates, the same three the phone app offers.</summary>
-    private void DarkLookCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (_syncingChoices || !IsInitialized)
-        {
-            return;
-        }
-        _preferences.DarkLook = SelectedTag(sender) is { Length: > 0 } look ? look : "Graphite";
-        _preferences.Theme = "Dark";
-        _preferences.Save();
-        ThemeManager.DarkLook = _preferences.DarkLook;
-        ThemeManager.Preference = _preferences.Theme;
-        ThemeManager.ApplySystemTheme(System.Windows.Application.Current.Resources);
-        SyncChoiceCombos();
-    }
-
-    /// <summary>Clicking the version seven times reveals the design preview (dark-mode candidates).</summary>
-    private void AboutVersion_Click(object sender, RoutedEventArgs e)
-    {
-        if (_preferences.DesignPreviewUnlocked)
-        {
-            return;
-        }
-        _versionTaps++;
-        var left = DesignPreviewTaps - _versionTaps;
-        if (left > 0)
-        {
-            if (left <= 3)
-            {
-                StatusText.Text = L.F("design_preview_taps_left", left);
-            }
-            return;
-        }
-        _preferences.DesignPreviewUnlocked = true;
-        _preferences.Save();
-        DesignPreviewCard.Visibility = Visibility.Visible;
-        StatusText.Text = L.T("design_preview_unlocked");
     }
 
     // --- What's new and the tour ----------------------------------------------------------------

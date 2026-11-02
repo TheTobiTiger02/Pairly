@@ -11,8 +11,8 @@ using Pairly.Windows.Localization;
 namespace Pairly.Windows;
 
 /// <summary>
-/// <c>Pairly.Windows.exe --render-screenshots &lt;folder&gt;</c> renders every page in light and in each
-/// dark-mode candidate, English and German, plus setup, the tour and What's new, then exits. CI runs it
+/// <c>Pairly.Windows.exe --render-screenshots &lt;folder&gt;</c> renders every page in light and dark,
+/// English and German, plus setup, the tour and What's new, then exits. CI runs it
 /// so a broken page (for example a missing resource) fails the build and the images can be reviewed.
 /// </summary>
 public partial class MainWindow
@@ -70,26 +70,19 @@ public partial class MainWindow
             foreach (var language in new[] { "en", "de" })
             {
                 LocalizationSource.Instance.SetLanguage(language);
-                var looks = language == "en"
-                    ? new[] { ("Light", "Graphite", "light"), ("Dark", "Graphite", "dark-graphite"), ("Dark", "Navy", "dark-navy"), ("Dark", "Black", "dark-black") }
-                    : new[] { ("Light", "Graphite", "light") };
-                foreach (var (theme, darkLook, look) in looks)
+                foreach (var theme in language == "en" ? new[] { "Light", "Dark" } : new[] { "Light" })
                 {
                     ThemeManager.Preference = theme;
-                    ThemeManager.DarkLook = darkLook;
                     ThemeManager.ApplySystemTheme(System.Windows.Application.Current.Resources);
-                    var prefix = $"{language}-{look}";
-                    // The extra dark candidates only need the pages that show the most surface.
-                    var full = look is "light" or "dark-graphite";
+                    var prefix = $"{language}-{theme.ToLowerInvariant()}";
                     foreach (var (page, name) in ScreenshotPages)
                     {
-                        if (!full && name is not ("home" or "settings" or "messages")) continue;
                         SelectPage(page);
                         await Settle();
                         Save($"{prefix}-{name}");
                     }
 
-                    if (full)
+                    // Setup, the tour and What's new in this theme.
                     {
                         foreach (var step in OnboardingSequence)
                         {
@@ -139,13 +132,13 @@ public partial class MainWindow
     }
 
     /// <summary>
-    /// Uses the window like a person would: presses the setup buttons, the tour, and the dark look,
+    /// Uses the window like a person would: presses the setup buttons, the tour, and the
     /// theme and language choices, and checks after each step that the expected thing happened.
     /// Preferences are restored afterwards so a local run leaves nothing changed.
     /// </summary>
     private async Task RunClickThroughAsync(Func<int, Task> settle, List<string> failures)
     {
-        var saved = (_preferences.Theme, _preferences.Language, _preferences.DarkLook, _preferences.OnboardingCompleted, _preferences.TourCompleted, _preferences.MinimizeToTray);
+        var saved = (_preferences.Theme, _preferences.Language, _preferences.OnboardingCompleted, _preferences.TourCompleted, _preferences.MinimizeToTray);
         void Expect(bool condition, string what)
         {
             if (!condition)
@@ -203,15 +196,10 @@ public partial class MainWindow
             Expect(MainTabs.SelectedIndex == 0 && NavMessages.IsChecked == true, "Messages to open from the navigation pane");
 
             // Dark-mode candidate, theme and language through the real controls in Settings.
-            DarkLookCombo.SelectedIndex = 1; // Navy
-            await settle(150);
-            Expect(ThemeManager.IsDark && (TryFindResource("WindowBrush") as SolidColorBrush)?.Color == Color.FromRgb(0x0D, 0x12, 0x20), "Navy to switch the dark look");
-            DarkLookCombo.SelectedIndex = 0; // Graphite
-            await settle(150);
-
             ThemeCombo.SelectedIndex = 2; // Dark
             await settle(150);
             Expect(ThemeManager.IsDark || ThemeManager.IsHighContrast, "Dark to switch the theme");
+            Expect(ThemeManager.IsHighContrast || (TryFindResource("WindowBrush") as SolidColorBrush)?.Color == Color.FromRgb(0x0D, 0x12, 0x20), "dark mode to use the navy background");
             ThemeCombo.SelectedIndex = 1; // Light
             await settle(150);
             Expect(!ThemeManager.IsDark || ThemeManager.IsHighContrast, "Light to switch the theme");
@@ -225,7 +213,7 @@ public partial class MainWindow
         }
         finally
         {
-            (_preferences.Theme, _preferences.Language, _preferences.DarkLook, _preferences.OnboardingCompleted, _preferences.TourCompleted, _preferences.MinimizeToTray) = saved;
+            (_preferences.Theme, _preferences.Language, _preferences.OnboardingCompleted, _preferences.TourCompleted, _preferences.MinimizeToTray) = saved;
             _preferences.Save();
         }
     }

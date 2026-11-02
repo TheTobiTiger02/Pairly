@@ -30,7 +30,6 @@ import dev.pairly.android.ui.settings.SettingsCallbacks
 import dev.pairly.android.ui.settings.SettingsScreen
 import dev.pairly.android.ui.features.RestrictedSettings
 import dev.pairly.android.ui.features.RestrictedState
-import dev.pairly.android.ui.theme.GlassDark
 import dev.pairly.android.ui.theme.PairlyTheme
 import dev.pairly.android.ui.theme.ThemeMode
 import dev.pairly.android.ui.whatsnew.WhatsNewContent
@@ -43,7 +42,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * Renders every screen in light mode and in each dark-mode candidate, plus German and the largest
+ * Renders every screen in light and dark mode, plus German and the largest
  * font size, so they can be compared side by side without a phone:
  *
  *   ./gradlew :app:recordRoborazziDebug   → app/build/outputs/roborazzi/<case>/<screen>.png
@@ -53,24 +52,20 @@ import org.robolectric.annotation.GraphicsMode
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [34], qualifiers = "w411dp-h891dp-xxhdpi")
 class ScreenshotTest(private val case: Case) {
-    data class Case(val mode: ThemeMode, val dark: GlassDark, val language: String, val fontScale: Float = 1f) {
-        val folder = buildString {
-            append(mode.name.lowercase())
-            if (mode == ThemeMode.Dark) append("-").append(dark.name.lowercase())
-            append("-").append(language)
-            if (fontScale > 1f) append("-large")
-        }
+    data class Case(val mode: ThemeMode, val language: String, val fontScale: Float = 1f) {
+        val folder = "${mode.name.lowercase()}-$language" + if (fontScale > 1f) "-large" else ""
         override fun toString() = folder
     }
 
     companion object {
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
-        fun cases(): List<Case> =
-            listOf(Case(ThemeMode.Light, GlassDark.Graphite, "en")) +
-                GlassDark.entries.map { Case(ThemeMode.Dark, it, "en") } +
-                Case(ThemeMode.Light, GlassDark.Graphite, "de") +
-                Case(ThemeMode.Light, GlassDark.Graphite, "de", fontScale = 2f)
+        fun cases(): List<Case> = listOf(
+            Case(ThemeMode.Light, "en"),
+            Case(ThemeMode.Dark, "en"),
+            Case(ThemeMode.Light, "de"),
+            Case(ThemeMode.Light, "de", fontScale = 2f)
+        )
     }
 
     @get:Rule
@@ -99,7 +94,7 @@ class ScreenshotTest(private val case: Case) {
         if (case.fontScale != 1f) RuntimeEnvironment.setFontScale(case.fontScale)
         compose.setContent {
             CompositionLocalProvider(LocalFeatureActions provides NoFeatureActions) {
-                PairlyTheme(case.mode, glassDark = case.dark) {
+                PairlyTheme(case.mode) {
                     PairlyBackground { content() }
                 }
             }
@@ -115,7 +110,7 @@ class ScreenshotTest(private val case: Case) {
     }
 
     private val shell = ShellCallbacks(pairing, {}, {}, {}, {}, {}, { "" }, { true }, {}, {}, {}, {})
-    private val prefs get() = UiPrefs(themeMode = case.mode, glassDark = case.dark)
+    private val prefs get() = UiPrefs(themeMode = case.mode)
 
     @Test fun onboardingWelcome() = onboarding(OnboardingStep.Welcome)
     @Test fun onboardingTour() = onboarding(OnboardingStep.Tour)
@@ -148,7 +143,7 @@ class ScreenshotTest(private val case: Case) {
     @Test fun settings() = capture("settings") {
         Screen {
             SettingsScreen(
-                connected, prefs.copy(designPreviewUnlocked = true), LocaleText.Language.System,
+                connected, prefs, LocaleText.Language.System,
                 SettingsCallbacks({}, {}, {}, {}, {}, {}, {}, {})
             )
         }

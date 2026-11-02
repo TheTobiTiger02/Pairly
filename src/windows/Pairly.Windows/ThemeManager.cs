@@ -24,9 +24,6 @@ internal static class ThemeManager
     /// <summary>"System" follows Windows; "Light" and "Dark" override it. High contrast always wins.</summary>
     public static string Preference { get; set; } = "System";
 
-    /// <summary>The dark-mode candidate, matching the phone app: "Graphite", "Navy" or "Black".</summary>
-    public static string DarkLook { get; set; } = "Graphite";
-
     // Pairly's indigo, as on the phone: a lighter tint on dark surfaces, the brand shade on light ones.
     private static readonly Color BrandLight = Color.FromRgb(0x4F, 0x5B, 0xE8);
     private static readonly Color BrandDark = Color.FromRgb(0x9A, 0xA2, 0xFF);
@@ -77,13 +74,10 @@ internal static class ThemeManager
 
         if (IsDark && !IsHighContrast)
         {
-            // Calm, near-neutral surfaces instead of a coloured tint; the same three looks as the phone.
-            var (window, raised, elevated) = DarkLook switch
-            {
-                "Navy" => (Color.FromRgb(0x0D, 0x12, 0x20), Color.FromRgb(0x14, 0x1A, 0x2B), Color.FromRgb(0x1B, 0x22, 0x36)),
-                "Black" => (Color.FromRgb(0x00, 0x00, 0x00), Color.FromRgb(0x0E, 0x0F, 0x12), Color.FromRgb(0x17, 0x18, 0x1C)),
-                _ => (Color.FromRgb(0x10, 0x12, 0x16), Color.FromRgb(0x17, 0x1A, 0x20), Color.FromRgb(0x1F, 0x23, 0x2A))
-            };
+            // Deep navy surfaces, the same as the phone app's dark mode.
+            var window = Color.FromRgb(0x0D, 0x12, 0x20);
+            var raised = Color.FromRgb(0x14, 0x1A, 0x2B);
+            var elevated = Color.FromRgb(0x1B, 0x22, 0x36);
             SetBrush(currentTheme, "SolidBackgroundBrush", window);
             SetBrush(currentTheme, "WindowBrush", window);
             SetBrush(currentTheme, "NavigationBrush", raised);

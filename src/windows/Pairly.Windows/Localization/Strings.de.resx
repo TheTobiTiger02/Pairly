@@ -97,8 +97,6 @@
   <data name="decline" xml:space="preserve"><value>Ablehnen</value></data>
   <data name="delete" xml:space="preserve"><value>Löschen</value></data>
   <data name="delete_failed" xml:space="preserve"><value>Löschen fehlgeschlagen: {0}</value></data>
-  <data name="design_preview_taps_left" xml:space="preserve"><value>Noch {0} Klicks bis zur Design-Vorschau.</value></data>
-  <data name="design_preview_unlocked" xml:space="preserve"><value>Design-Vorschau freigeschaltet. Du findest sie unter Einstellungen &gt; Allgemein &gt; Info.</value></data>
   <data name="desktop_socket_connected" xml:space="preserve"><value>Desktop-Verbindung steht.</value></data>
   <data name="desktop_socket_reconnecting" xml:space="preserve"><value>Desktop-Verbindung wird neu aufgebaut.</value></data>
   <data name="details" xml:space="preserve"><value>Details</value></data>
@@ -530,9 +528,4 @@
   <data name="received_files_hint" xml:space="preserve"><value>Von deinem Handy geteilt. Gespeichert unter Downloads\Pairly.</value></data>
   <data name="file_received" xml:space="preserve"><value>Datei empfangen</value></data>
   <data name="file_received_detail" xml:space="preserve"><value>{0} liegt unter Downloads\Pairly.</value></data>
-  <data name="design_preview_dark_look" xml:space="preserve"><value>Designvorschau: Aussehen im dunklen Modus</value></data>
-  <data name="dark_look_hint" xml:space="preserve"><value>Probier die Kandidaten für den dunklen Modus aus (die Handy-App hat dieselben drei). Nur du siehst diese Option.</value></data>
-  <data name="dark_look_graphite" xml:space="preserve"><value>Graphit</value></data>
-  <data name="dark_look_navy" xml:space="preserve"><value>Marine</value></data>
-  <data name="dark_look_black" xml:space="preserve"><value>Schwarz</value></data>
 </root>

@@ -133,17 +133,11 @@ class AppSmokeTest {
         waitFor(R.string.settings_title)
         screenshot("settings")
 
-        // Unlock the design preview (version tapped seven times) and try a dark-mode candidate.
+        // Dark mode (Navy) through the real theme choice.
         val list = compose.onNode(hasScrollToNodeAction())
-        list.performScrollToNode(hasText(text(R.string.settings_version)))
-        repeat(7) { compose.onNodeWithText(text(R.string.settings_version)).performClick() }
-        compose.waitForIdle() // the section header shows the title in capitals, so wait on its content
-        list.performScrollToNode(hasText(text(R.string.design_navy)))
-        click(R.string.design_navy)
-        screenshot("design-preview-navy")
-        list.performScrollToNode(hasText(text(R.string.design_graphite)))
-        click(R.string.design_graphite)
-        screenshot("design-preview-graphite")
+        list.performScrollToNode(hasText(text(R.string.theme_dark)))
+        click(R.string.theme_dark)
+        screenshot("settings-dark")
 
         // Tabs in both directions, including back to Home.
         click(R.string.nav_home)
