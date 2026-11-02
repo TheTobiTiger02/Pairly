@@ -172,7 +172,7 @@ class AppSmokeTest {
 
         // Switch the app to German (recreates the activity on older Android versions).
         click(R.string.nav_settings)
-        waitFor(R.string.settings_language)
+        compose.waitForIdle() // Settings keeps its scroll position, so scroll to the language row
         val settings = compose.onNode(hasScrollToNodeAction())
         settings.performScrollToNode(hasText("Deutsch"))
         compose.onNodeWithText("Deutsch").performClick()
