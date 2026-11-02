@@ -267,12 +267,6 @@
     <string name="settings_host_id">PC-Identität</string>
     <string name="settings_legacy_pairing">Ältere Kopplung; wird bei der nächsten Verbindung aktualisiert</string>
     <string name="settings_not_available">Nicht verfügbar</string>
-    <string name="design_preview_title">Design-Vorschau</string>
-    <string name="design_preview_detail">Probier die Kandidaten für den dunklen Modus aus. Nur du siehst diesen Bereich.</string>
-    <string name="design_preview_hint">Änderungen gelten sofort</string>
-    <string name="design_preview_hide">Design-Vorschau ausblenden</string>
-    <string name="design_preview_unlocked">Design-Vorschau freigeschaltet</string>
-    <string name="design_preview_taps_left">Noch %1$d-mal tippen</string>
     <string name="help_title">Hilfe</string>
     <string name="help_subtitle">Antworten auf häufige Fragen</string>
     <string name="help_faq">Häufige Fragen</string>
@@ -339,11 +333,6 @@
     <string name="home_clipboard_empty">Deine Zwischenablage ist leer.</string>
     <string name="home_features_title">Funktionen</string>
     <string name="home_features_count">%1$d von %2$d an</string>
-    <string name="design_dark_look">Aussehen im dunklen Modus</string>
-    <string name="design_dark_look_detail">Bei Auswahl wechselt die App zu dunkel.</string>
-    <string name="design_graphite">Graphit</string>
-    <string name="design_navy">Marine</string>
-    <string name="design_black">Schwarz</string>
     <string name="restricted_guide_title">Android hat das vorerst blockiert</string>
     <string name="restricted_guide_body">Android schützt diese Berechtigung bei Apps, die nicht aus einem App Store installiert wurden. Erlaube sie einmalig in der App-Info:</string>
     <string name="restricted_step_app_info">Tippe unten auf App-Info öffnen.</string>

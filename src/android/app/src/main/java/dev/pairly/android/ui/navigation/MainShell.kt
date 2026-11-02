@@ -186,10 +186,18 @@ private fun NavHostController.navigateTab(route: String) {
     }
 }
 
-private fun isTop(entry: NavBackStackEntry) = entry.destination.route in Routes.topLevel
+/** Position in the bottom bar, or null for screens that aren't tabs. */
+private fun tabIndex(entry: NavBackStackEntry): Int? = tabs.indexOfFirst { it.route == entry.destination.route }.takeIf { it >= 0 }
 
-/** Tab to tab (in either direction, including back to Home): fade-through. Anything deeper: slide. */
-private fun AnimatedContentTransitionScope<NavBackStackEntry>.betweenTabs() = isTop(initialState) && isTop(targetState)
+/**
+ * Whether a change moves to the right: towards a tab further right, or (for anything else) deeper
+ * into the app. Going back, or to a tab on the left (like Home), slides the other way.
+ */
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.forward(pop: Boolean): Boolean {
+    val from = tabIndex(initialState)
+    val to = tabIndex(targetState)
+    return if (from != null && to != null) to > from else !pop
+}
 
 @Composable
 private fun PairlyNavHost(
@@ -200,18 +208,11 @@ private fun PairlyNavHost(
     callbacks: ShellCallbacks
 ) {
     val style = Pairly.style
-    val enter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
-        if (betweenTabs()) Motion.fadeThroughIn(style) else Motion.slideIn(style, forward = true)
-    }
-    val exit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
-        if (betweenTabs()) Motion.fadeThroughOut(style) else Motion.slideOut(style, forward = true)
-    }
-    val popEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
-        if (betweenTabs()) Motion.fadeThroughIn(style) else Motion.slideIn(style, forward = false)
-    }
-    val popExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
-        if (betweenTabs()) Motion.fadeThroughOut(style) else Motion.slideOut(style, forward = false)
-    }
+    // Every change slides; the direction follows the bottom bar's order or how deep the screen is.
+    val enter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = { Motion.slideIn(style, forward(pop = false)) }
+    val exit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = { Motion.slideOut(style, forward(pop = false)) }
+    val popEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = { Motion.slideIn(style, forward(pop = true)) }
+    val popExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = { Motion.slideOut(style, forward(pop = true)) }
 
     val openFeature: (Feature) -> Unit = { nav.navigate(Routes.feature(it)) }
     val openHelp: () -> Unit = { nav.navigateTab(Routes.HELP) }

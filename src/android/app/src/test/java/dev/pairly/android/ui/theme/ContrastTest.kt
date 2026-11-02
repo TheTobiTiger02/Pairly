@@ -7,7 +7,7 @@ import androidx.compose.ui.graphics.luminance
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** WCAG AA: 4.5:1 for text, 3:1 for large text and UI parts, in light mode and every dark candidate. */
+/** WCAG AA: 4.5:1 for text, 3:1 for large text and UI parts, in light and dark mode. */
 class ContrastTest {
     private fun ratio(foreground: Color, background: Color): Double {
         val fg = foreground.compositeOver(background).luminance() + 0.05
@@ -39,14 +39,12 @@ class ContrastTest {
     @Test
     fun lightMeetsAa() {
         val scheme = glassLight()
-        check("light", scheme, style(scheme, dark = false, candidate = GlassDark.Graphite, reduceMotion = false))
+        check("light", scheme, style(scheme, dark = false, reduceMotion = false))
     }
 
     @Test
-    fun everyDarkCandidateMeetsAa() {
-        GlassDark.entries.forEach { candidate ->
-            val scheme = glassDark(candidate)
-            check(candidate.name, scheme, style(scheme, dark = true, candidate = candidate, reduceMotion = false))
-        }
+    fun darkMeetsAa() {
+        val scheme = glassDark()
+        check("dark", scheme, style(scheme, dark = true, reduceMotion = false))
     }
 }

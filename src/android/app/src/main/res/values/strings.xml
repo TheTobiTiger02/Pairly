@@ -267,12 +267,6 @@
     <string name="settings_host_id">PC identity</string>
     <string name="settings_legacy_pairing">Older pairing; upgrades on the next connection</string>
     <string name="settings_not_available">Not available</string>
-    <string name="design_preview_title">Design preview</string>
-    <string name="design_preview_detail">Try the dark-mode candidates. Only you see this section.</string>
-    <string name="design_preview_hint">Changes apply instantly</string>
-    <string name="design_preview_hide">Hide design preview</string>
-    <string name="design_preview_unlocked">Design preview unlocked</string>
-    <string name="design_preview_taps_left">%1$d more taps</string>
     <string name="help_title">Help</string>
     <string name="help_subtitle">Answers to common questions</string>
     <string name="help_faq">Frequently asked</string>
@@ -339,11 +333,6 @@
     <string name="home_clipboard_empty">Your clipboard is empty.</string>
     <string name="home_features_title">Features</string>
     <string name="home_features_count">%1$d of %2$d on</string>
-    <string name="design_dark_look">Dark mode look</string>
-    <string name="design_dark_look_detail">Choosing one switches the app to dark.</string>
-    <string name="design_graphite">Graphite</string>
-    <string name="design_navy">Navy</string>
-    <string name="design_black">Black</string>
     <string name="restricted_guide_title">Android blocked this for now</string>
     <string name="restricted_guide_body">Android protects this permission for apps installed outside an app store. Allow it once in App info:</string>
     <string name="restricted_step_app_info">Tap Open App info below.</string>

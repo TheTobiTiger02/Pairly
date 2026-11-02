@@ -33,14 +33,9 @@ import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.sp
 
-/**
- * Pairly's look is "Glass": frosted cards on a calm background. Dark mode has three candidates
- * while the final one is chosen in the Design preview.
- */
-enum class GlassDark { Graphite, Navy, Black }
+/** Pairly's look is "Glass": frosted cards on a calm background; dark mode is a deep navy. */
 
 enum class ThemeMode { System, Light, Dark }
 
@@ -115,15 +110,9 @@ internal fun glassLight(): ColorScheme = lightColorScheme(
     error = Color(0xFFBA1A1A), errorContainer = Color(0xFFFFDAD6), onErrorContainer = Color(0xFF410002)
 )
 
-/** Background tones per dark candidate: base, a slightly lighter navigation surface. */
-private fun darkBase(candidate: GlassDark): Pair<Color, Color> = when (candidate) {
-    GlassDark.Graphite -> Color(0xFF101216) to Color(0xFF171A20)
-    GlassDark.Navy -> Color(0xFF0D1220) to Color(0xFF141A2B)
-    GlassDark.Black -> Color(0xFF000000) to Color(0xFF0E0F12)
-}
-
-internal fun glassDark(candidate: GlassDark): ColorScheme {
-    val (base, raised) = darkBase(candidate)
+internal fun glassDark(): ColorScheme {
+    val base = Color(0xFF0D1220)
+    val raised = Color(0xFF141A2B)
     return darkColorScheme(
         primary = IndigoLight, onPrimary = Color(0xFF111650),
         primaryContainer = Color(0xFF2B3170), onPrimaryContainer = Color(0xFFE0E2FF),
@@ -175,17 +164,14 @@ private fun typography(): Typography {
     )
 }
 
-internal fun style(scheme: ColorScheme, dark: Boolean, candidate: GlassDark, reduceMotion: Boolean): PairlyStyle {
+internal fun style(scheme: ColorScheme, dark: Boolean, reduceMotion: Boolean): PairlyStyle {
     val success = if (dark) Color(0xFF7FD69B) else Color(0xFF1E7E3A)
     val warning = if (dark) Color(0xFFF2C46B) else Color(0xFF9A5B00)
     return if (dark) PairlyStyle(
         dark = true, cardRadius = 24.dp,
-        cardColor = Color.White.copy(alpha = if (candidate == GlassDark.Black) 0.08f else 0.06f),
+        cardColor = Color.White.copy(alpha = 0.06f),
         cardBorder = BorderStroke(1.dp, Color.White.copy(alpha = 0.10f)),
-        // Graphite gets one faint indigo glow in the top corner; the others stay flat.
-        backgroundBrush = if (candidate == GlassDark.Graphite)
-            Brush.radialGradient(listOf(Indigo.copy(alpha = 0.16f), Color.Transparent), center = Offset(0f, 0f), radius = 1400f)
-        else null,
+        backgroundBrush = null,
         heroBrush = Brush.linearGradient(listOf(Color.White.copy(alpha = 0.10f), Color.White.copy(alpha = 0.06f))),
         onHero = scheme.onSurface,
         iconContainer = Color.White.copy(alpha = 0.08f), onIconContainer = scheme.primary,
@@ -213,7 +199,6 @@ fun isDark(themeMode: ThemeMode): Boolean = when (themeMode) {
 fun PairlyTheme(
     themeMode: ThemeMode = ThemeMode.System,
     dynamicColor: Boolean = false,
-    glassDark: GlassDark = GlassDark.Graphite,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
@@ -221,11 +206,11 @@ fun PairlyTheme(
     val reduceMotion = remember(context) {
         runCatching { Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f }.getOrDefault(false)
     }
-    val base = if (dark) glassDark(glassDark) else glassLight()
+    val base = if (dark) glassDark() else glassLight()
     val scheme = if (dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         withAccent(base, if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context))
     } else base
-    val pairlyStyle = style(scheme, dark, glassDark, reduceMotion)
+    val pairlyStyle = style(scheme, dark, reduceMotion)
     CompositionLocalProvider(LocalPairlyStyle provides pairlyStyle) {
         MaterialTheme(colorScheme = scheme, shapes = shapes, typography = typography(), content = content)
     }

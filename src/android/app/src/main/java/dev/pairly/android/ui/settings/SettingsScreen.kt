@@ -60,7 +60,6 @@ import dev.pairly.android.ui.components.StatusPill
 import dev.pairly.android.ui.components.SwitchRow
 import dev.pairly.android.ui.components.connectionLabel
 import dev.pairly.android.ui.components.tone
-import dev.pairly.android.ui.theme.GlassDark
 import dev.pairly.android.ui.theme.Space
 import dev.pairly.android.ui.theme.ThemeMode
 import kotlinx.coroutines.launch
@@ -76,14 +75,12 @@ class SettingsCallbacks(
     val replayOnboarding: () -> Unit
 )
 
-private const val UNLOCK_TAPS = 7
 
 @Composable
 fun SettingsScreen(state: AppState, prefs: UiPrefs, language: LocaleText.Language, callbacks: SettingsCallbacks) {
     val context = LocalContext.current
     val actions = LocalFeatureActions.current
     var showForget by remember { mutableStateOf(false) }
-    var versionTaps by remember { mutableIntStateOf(0) }
 
     ScreenList {
         item { ScreenTitle(stringResource(R.string.settings_title)) }
@@ -172,25 +169,7 @@ fun SettingsScreen(state: AppState, prefs: UiPrefs, language: LocaleText.Languag
                 ListRow(stringResource(R.string.help_replay_onboarding), icon = Icons.Rounded.Replay, onClick = callbacks.replayOnboarding)
                 ListRow(stringResource(R.string.settings_privacy), subtitle = stringResource(R.string.settings_privacy_detail), icon = Icons.Rounded.PrivacyTip, onClick = { actions.openUrl(Links.PRIVACY) })
                 ListRow(stringResource(R.string.settings_source), icon = Icons.Rounded.Code, onClick = { actions.openUrl(Links.SOURCE) })
-                val unlockedText = stringResource(R.string.design_preview_unlocked)
-                val remainingText = stringResource(R.string.design_preview_taps_left)
-                ListRow(
-                    stringResource(R.string.settings_version),
-                    subtitle = BuildConfig.VERSION_NAME,
-                    icon = Icons.Rounded.Info,
-                    onClick = {
-                        if (prefs.designPreviewUnlocked) return@ListRow
-                        versionTaps += 1
-                        val left = UNLOCK_TAPS - versionTaps
-                        when {
-                            left <= 0 -> {
-                                callbacks.updatePrefs { it.copy(designPreviewUnlocked = true) }
-                                Toast.makeText(context, unlockedText, Toast.LENGTH_SHORT).show()
-                            }
-                            left <= 3 -> Toast.makeText(context, remainingText.format(left), Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                )
+                ListRow(stringResource(R.string.settings_version), subtitle = BuildConfig.VERSION_NAME, icon = Icons.Rounded.Info)
             }
         }
 
@@ -210,15 +189,6 @@ fun SettingsScreen(state: AppState, prefs: UiPrefs, language: LocaleText.Languag
             }
         }
 
-        // Design preview (hidden until unlocked)
-        if (prefs.designPreviewUnlocked) {
-            item { SectionLabel(stringResource(R.string.design_preview_title)) }
-            item {
-                AnimatedVisibility(true, enter = expandVertically() + fadeIn()) {
-                    DesignPreviewCard(prefs, callbacks.updatePrefs)
-                }
-            }
-        }
     }
 
     if (showForget) {
@@ -270,31 +240,5 @@ private fun UpdatesCard() {
                 }
             }
         )
-    }
-}
-
-/** Switch between the dark-mode candidates; remove once one is chosen. */
-@Composable
-private fun DesignPreviewCard(prefs: UiPrefs, update: ((UiPrefs) -> UiPrefs) -> Unit) {
-    PairlyCard(Modifier.fillMaxWidth()) {
-        Text(stringResource(R.string.design_preview_detail), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.height(Space.m))
-        ListRow(stringResource(R.string.design_dark_look), subtitle = stringResource(R.string.design_dark_look_detail), icon = Icons.Rounded.Palette)
-        ChoiceRow(
-            options = listOf(
-                GlassDark.Graphite to stringResource(R.string.design_graphite),
-                GlassDark.Navy to stringResource(R.string.design_navy),
-                GlassDark.Black to stringResource(R.string.design_black)
-            ),
-            selected = prefs.glassDark,
-            // Picking a candidate also shows it, so the change is visible right away.
-            onSelect = { candidate -> update { it.copy(glassDark = candidate, themeMode = ThemeMode.Dark) } }
-        )
-        HorizontalDivider(Modifier.padding(vertical = Space.m), color = MaterialTheme.colorScheme.outlineVariant)
-        StatusPill(stringResource(R.string.design_preview_hint), PillTone.Neutral)
-        Spacer(Modifier.height(Space.s))
-        TextButton(onClick = { update { it.copy(designPreviewUnlocked = false) } }) {
-            Text(stringResource(R.string.design_preview_hide))
-        }
     }
 }

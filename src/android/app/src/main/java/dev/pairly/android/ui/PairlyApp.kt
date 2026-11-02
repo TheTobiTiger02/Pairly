@@ -92,12 +92,13 @@ fun PairlyApp(
         }
     }
 
-    PairlyTheme(prefs.themeMode, prefs.dynamicColor, prefs.glassDark) {
+    PairlyTheme(prefs.themeMode, prefs.dynamicColor) {
         val style = Pairly.style
         PairlyBackground {
             AnimatedContent(
                 targetState = prefs.onboardingDone,
-                transitionSpec = { Motion.fadeThroughIn(style).togetherWith(Motion.fadeThroughOut(style)) },
+                // Finishing setup moves forward into the app; replaying setup moves back.
+                transitionSpec = { Motion.slideIn(style, forward = targetState).togetherWith(Motion.slideOut(style, forward = targetState)) },
                 label = "onboarding-or-app"
             ) { done ->
                 if (!done) {
