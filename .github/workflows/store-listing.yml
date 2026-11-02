@@ -100,7 +100,9 @@ jobs:
           # Partner Center explains refusals in the response body; show it instead of a bare status code.
           function Invoke-Store([string]$Method, [string]$Uri, $Body) {
             try {
-              if ($null -eq $Body) { return Invoke-RestMethod -Method $Method -Uri $Uri -Headers $headers }
+              if ($null -eq $Body -and $Method -eq 'Get') { return Invoke-RestMethod -Method $Method -Uri $Uri -Headers $headers }
+              # The API refuses a POST without a content type and length, even when it takes no body.
+              if ($null -eq $Body) { $Body = [byte[]]@() }
               return Invoke-RestMethod -Method $Method -Uri $Uri -Headers $headers -ContentType 'application/json; charset=utf-8' -Body $Body
             } catch {
               $detail = $_.ErrorDetails.Message
