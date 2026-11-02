@@ -46,8 +46,13 @@ try {
 
     $keytool = Get-Command keytool.exe -ErrorAction SilentlyContinue
     if (-not $keytool) {
-        $knownKeytool = 'C:\Program Files\Eclipse Adoptium\jdk-17.0.14.7-hotspot\bin\keytool.exe'
-        if (Test-Path -LiteralPath $knownKeytool) {
+        # Fall back to JAVA_HOME, then any JDK under the usual install folders.
+        $candidates = @()
+        if ($env:JAVA_HOME) { $candidates += [System.IO.Path]::Combine($env:JAVA_HOME, 'bin', 'keytool.exe') }
+        $candidates += Get-ChildItem -Path 'C:\Program Files\Eclipse Adoptium', 'C:\Program Files\Java', 'C:\Program Files\Android\Android Studio\jbr' `
+            -Filter keytool.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName
+        $knownKeytool = $candidates | Where-Object { $_ -and (Test-Path -LiteralPath $_) } | Select-Object -First 1
+        if ($knownKeytool) {
             $keytool = Get-Item -LiteralPath $knownKeytool
         }
     }

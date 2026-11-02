@@ -1,60 +1,103 @@
+<div align="center">
+
+<img src="src/windows/Pairly.Windows/Assets/PairlyMark.svg" width="96" height="96" alt="Pairly logo">
+
 # Pairly
 
-Pairly (formerly Smartphone Link) is a Windows + Android companion app for connecting multiple trusted Android phones to one PC on the same network. The desktop app uses WPF and an embedded ASP.NET Core host; the Android app uses Jetpack Compose. Screen mirroring remains WebRTC + MediaProjection + WebView2.
+**Your Android phone, on your Windows PC.**<br>
+Messages, notifications, photos, files, a shared clipboard and your phone's screen, privately over your own Wi-Fi.
 
-## Current product
+[Deutsch](README.de.md) · [Privacy](PRIVACY.md) · [Releases](https://github.com/TheTobiTiger02/Pairly/releases)
 
-- Phone Link-inspired Windows shell with a selected-device rail and Messages, Photos, Files, Phone screen, Notifications, Clipboard, and Settings destinations.
-- Android first-run onboarding plus Home, Features, and Settings, with typed connection state and actionable permission cards.
-- Stable PC identity, pinned WSS, challenge-response authentication, encrypted trust data, endpoint rediscovery, generation-safe sockets, bounded send queues, heartbeats, and reconnect after boot or package update.
-- Automatic text and PNG clipboard sync between the Windows tray app and all paired phones, with Shizuku background capture, ordered relay, verified chunks, and per-device acknowledgements.
-- Selected-phone photo and notification views with snapshot reconciliation, richer grouping metadata, cursor paging, and bounded caches.
-- One responsive mirror at a time with typed configuration, telemetry, leases, retry/ICE recovery, aspect/rotation preservation, H.264 preference, VP8 fallback, and adaptive quality.
+<a href="https://apps.microsoft.com/detail/9NDLWS4D52HM"><img src="https://get.microsoft.com/images/en-us%20dark.svg" height="56" alt="Get it from Microsoft"></a>
 
-Android background clipboard sync requires Shizuku to be installed, running, and allowed for Pairly. Start it once through Wireless debugging; the clipboard helper turns Wireless debugging off by default after a healthy call. Keep Developer options and USB debugging enabled, and follow Shizuku's restart guidance. Normal keyboards and a closed phone activity are supported. Without Shizuku, foreground capture and Share/notification/Quick Settings sending remain available. Sensitive Android clips are skipped.
+<a href="https://github.com/TheTobiTiger02/Pairly/releases/latest/download/Pairly-Setup.exe"><img src="https://img.shields.io/badge/Windows-Download%20Pairly--Setup.exe-0078D4?style=for-the-badge" alt="Download Pairly-Setup.exe for Windows"></a>
+<a href="https://github.com/TheTobiTiger02/Pairly/releases/latest/download/Pairly.apk"><img src="https://img.shields.io/badge/Android-Download%20Pairly.apk-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download Pairly.apk for Android"></a>
 
-## Repository layout
+[![Latest release](https://img.shields.io/github/v/release/TheTobiTiger02/Pairly?label=latest&color=4F5BE8)](https://github.com/TheTobiTiger02/Pairly/releases/latest)
+[![CI](https://github.com/TheTobiTiger02/Pairly/actions/workflows/ci.yml/badge.svg)](https://github.com/TheTobiTiger02/Pairly/actions/workflows/ci.yml)
 
-- `src/shared/Pairly.Protocol` — versioned JSON envelopes and payload contracts.
-- `src/shared/Pairly.Core` — trust, clipboard, media, notification, SMS, transfer, and permission services.
-- `src/windows/Pairly.Server` — embedded loopback management API plus pinned LAN WSS device transport.
-- `src/windows/Pairly.Host` — optional server-only developer wrapper.
-- `src/windows/Pairly.Windows` — WPF desktop app; this is the normal Windows entry point.
-- `src/android` — Kotlin + Jetpack Compose companion app.
-- `tests/Pairly.Tests` — dependency-free .NET protocol/core/server test harness.
-- `packaging/windows` and `scripts` — private MSIX/APK signing and packaging workflow.
+<img src="docs/store-screenshot-1.png" width="820" alt="Pairly on Windows">
 
-## Build and test
+</div>
+
+## What you can do
+
+| | |
+| --- | --- |
+| 💬 **Messages** | Read your SMS conversations and reply from your keyboard. |
+| 🔔 **Notifications** | See your phone's notifications on your PC, reply, and mute the apps you don't care about. |
+| 🖼️ **Photos** | Browse your phone's photos and videos and save them to your PC. |
+| 📁 **Files** | Send files between phone and PC in either direction. |
+| 📋 **Clipboard** | Copy on one device, paste on another, for text and images, with every connected phone. |
+| 📱 **Phone screen** | Mirror your phone in a window and control it with mouse and keyboard. |
+| 📞 **Calls** | See who's calling and answer or decline from your PC. |
+| 👥 **Several phones** | Connect multiple Android phones to one PC and switch between them. |
+
+No account, no cloud, no ads, no tracking. Everything travels only between your own devices over an encrypted connection pinned to your PC. Both apps are available in **English and German**.
+
+## Get started in 3 steps
+
+1. **Install Pairly on your PC.** Use the [Microsoft Store](https://apps.microsoft.com/detail/9NDLWS4D52HM) (recommended), or [`Pairly-Setup.exe`](https://github.com/TheTobiTiger02/Pairly/releases/latest/download/Pairly-Setup.exe), which installs without admin rights and updates itself. Use one or the other, not both.
+   > The installer is not code-signed, so Windows SmartScreen warns once: select **More info → Run anyway**. The Store version has no warning.
+2. **Install Pairly on your phone.** Download [`Pairly.apk`](https://github.com/TheTobiTiger02/Pairly/releases/latest/download/Pairly.apk) on the phone (or scan the QR code the PC app shows) and allow installing from your browser when Android asks. Android 8.0 or newer.
+3. **Pair them.** Both apps walk you through it the first time: scan the QR code on the PC with your phone, then turn on the features you want. Phone and PC must be on the same network.
+
+Both apps keep themselves up to date. After an update they show what's new.
+
+<details>
+<summary><b>Optional: background clipboard sync on Android</b></summary>
+
+Android only lets the app that's on screen read the clipboard. To sync copies made in any app, Pairly uses [Shizuku](https://shizuku.rikka.app/). The Android app has an illustrated step-by-step guide under **Features → Clipboard**. Without Shizuku, the clipboard still syncs while Pairly is open, and you can send it any time from the share sheet, the notification, or the Quick Settings tile.
+</details>
+
+## Help
+
+- **The phone can't find the PC.** Make sure both are on the same Wi-Fi (not a guest network), and allow Pairly through the Windows firewall for **private** networks when Windows asks.
+- **The connection drops in the background.** Allow Pairly to run without battery restrictions. The app has a button for it under **Features → Background**.
+- More answers are in **Help** inside both apps. Found a bug? [Open an issue](https://github.com/TheTobiTiger02/Pairly/issues).
+
+---
+
+## For developers
+
+Windows: WPF (.NET 9, [WPF-UI](https://github.com/lepoco/wpfui), MVVM) with an embedded ASP.NET Core host. Android: Kotlin and Jetpack Compose (Material 3). Screen mirroring uses WebRTC, MediaProjection and WebView2.
+
+### Repository layout
+
+| Path | Contents |
+| --- | --- |
+| `src/shared/Pairly.Protocol` | Versioned JSON envelopes and payload contracts |
+| `src/shared/Pairly.Core` | Trust, clipboard, media, notification, SMS, transfer and permission services |
+| `src/windows/Pairly.Server` | Loopback management API and pinned LAN WSS device transport |
+| `src/windows/Pairly.Windows` | The desktop app (normal Windows entry point) |
+| `src/windows/Pairly.Host` | Optional server-only developer wrapper |
+| `src/android` | Android app (`app`), ADB-mode server (`server`) and shared streaming code (`streamcore`) |
+| `tests/Pairly.Tests` | Dependency-free .NET protocol, core and server tests |
+| `scripts`, `packaging` | Release build and MSIX packaging |
+| `docs` | Architecture, protocol, testing and [release](docs/releasing.md) docs |
+
+### Build and test
 
 ```powershell
-$env:DOTNET_CLI_HOME = (Get-Location).Path
 dotnet build Pairly.sln --configuration Release
 dotnet run --project tests/Pairly.Tests/Pairly.Tests.csproj --configuration Release
 
-Push-Location src\android
-.\gradlew.bat :app:testDebugUnitTest :app:assembleDebug :app:assembleRelease
-Pop-Location
+cd src\android
+.\gradlew.bat :app:testDebugUnitTest :app:assembleDebug
+.\gradlew.bat :app:recordRoborazziDebug   # re-render the screenshot tests after UI changes
 ```
 
-The unsigned local outputs are under each project’s `bin` or `build/outputs` directory. Launch only `Pairly.Windows.exe` for the normal app; it owns the embedded host lifecycle.
+Launch only `Pairly.Windows.exe`; it owns the embedded host.
 
-## Install
+### Releasing
 
-- **Windows:** install from the [Microsoft Store](https://apps.microsoft.com/detail/9NDLWS4D52HM), which keeps the app updated. Or run `Pairly-Setup.exe` from the [latest release](https://github.com/TheTobiTiger02/Pairly/releases/latest): it installs per user without admin rights and updates itself from GitHub right away, without waiting for Store certification. Windows SmartScreen warns once because the installer is not code-signed (**More info → Run anyway**). Use one of the two, not both.
-- **Android:** install `Pairly.apk` from the [latest release](https://github.com/TheTobiTiger02/Pairly/releases/latest). The app checks for new releases every 12 hours and from **Settings → Check for updates**. The first update asks for one confirmation; later updates install without prompting on Android 12+.
+**Actions → Release → Run workflow → patch / minor / major.** That builds and publishes the APK, the Windows installer and the Store package, and submits to the Microsoft Store. One-time setup and details are in [docs/releasing.md](docs/releasing.md). Never replace the Android signing key: installed apps can't update across a key change.
 
-See the [privacy policy](PRIVACY.md).
+### Security boundaries
 
-## Releases
-
-Pushing a tag like `v1.2.0` runs the Release workflow. It submits the Windows package to the Microsoft Store and publishes the signed Android APK on GitHub. See `docs/private-release.md` for the one-time setup.
-
-Do not replace the Android signing key between releases: an installed app cannot receive an in-place update signed by a different key.
-
-## Security boundaries
-
-- Management, media-download, and mirror-viewer HTTP endpoints are loopback-only.
-- Phones use certificate-pinned WSS and authenticate with a nonce challenge; the trust secret is not sent during reconnect.
-- Windows protects trust secrets with DPAPI and redundant checksummed snapshots. Android stores the trusted host encrypted with Android Keystore.
-- Clipboard contents are ephemeral, memory-bounded, and removed after expiry; history stores delivery metadata rather than durable clipboard content.
-- Release Android builds disable cleartext transport. The debug-only manifest override permits local development when needed.
+- Management, media-download and mirror-viewer HTTP endpoints are loopback-only.
+- Phones use certificate-pinned WSS and authenticate with a nonce challenge; the trust secret is never sent on reconnect.
+- Windows protects trust secrets with DPAPI and redundant checksummed snapshots; Android stores the trusted host encrypted with the Android Keystore.
+- Clipboard contents are ephemeral and memory-bounded; history keeps delivery metadata, not clipboard content.
+- Release Android builds disable cleartext traffic.

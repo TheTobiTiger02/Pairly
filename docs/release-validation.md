@@ -16,13 +16,13 @@ Push-Location src\android
 Pop-Location
 ```
 
-The signed private-release gate is:
+The signed release build (the same script the Release workflow runs) is:
 
 ```powershell
-.\scripts\Build-PrivateRelease.ps1
+.\scripts\Build-Release.ps1 -Version 1.2.3 -WindowsPackage Sideload
 ```
 
-Do not publish the output unless the script completes both platform signature checks.
+Do not publish the output unless the script completes the Android signature check.
 
 ## Milestone 1 stability gate
 
@@ -30,7 +30,7 @@ Close `Pairly.Windows.exe` before running the automated preflight. The port-conf
 binds 7816, 7817 and 7818 exclusively, so it fails while the app itself holds them.
 
 Evidence for this gate is the **Diagnostics** page, not recollection. It shows host uptime, the
-reconnect-reason histogram, per-session queue and drop counters, and � via **Ask phone** � the
+reconnect-reason histogram, per-session queue and drop counters, and — via **Ask phone** — the
 phone's own transport log merged into the same list.
 
 | Scenario | Pass condition |
@@ -94,7 +94,7 @@ Record RTT, available bitrate, encoded/decoded FPS, packet loss, freezes, jitter
 
 ## UI and accessibility gate
 
-Windows: test 980×640, 1280×720, and a wide desktop at 100%, 150%, and 200% scaling; light, dark, high contrast, keyboard-only focus, and reduced motion.
+Windows: test 980Ã—640, 1280Ã—720, and a wide desktop at 100%, 150%, and 200% scaling; light, dark, high contrast, keyboard-only focus, and reduced motion.
 
 Android: test API 26, 29, 33, 34, and 36 on phone and tablet widths; light/dark theme, 200% font size, display scaling, TalkBack traversal, first-run onboarding, permission denial, permanently denied permission, and recovery actions.
 

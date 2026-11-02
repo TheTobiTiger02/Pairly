@@ -29,8 +29,9 @@ android {
         applicationId = "dev.pairly.android"
         minSdk = 26
         targetSdk = 36
-        versionCode = providers.gradleProperty("PairlyVersionCode").orNull?.toIntOrNull() ?: 10002
-        versionName = providers.gradleProperty("PairlyVersionName").orNull ?: "1.0.1.1"
+        // Release builds get both from the git tag (scripts/Build-Release.ps1); local builds are 0.0.0-dev.
+        versionCode = providers.gradleProperty("PairlyVersionCode").orNull?.toIntOrNull() ?: 1
+        versionName = providers.gradleProperty("PairlyVersionName").orNull ?: "0.0.0-dev"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
