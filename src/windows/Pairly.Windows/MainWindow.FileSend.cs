@@ -4,6 +4,8 @@ using DragEventArgs = System.Windows.DragEventArgs;
 using DataFormats = System.Windows.DataFormats;
 using DragDropEffects = System.Windows.DragDropEffects;
 
+using Pairly.Windows.Localization;
+
 namespace Pairly.Windows;
 
 /// <summary>
@@ -18,13 +20,13 @@ public partial class MainWindow
     {
         if (DevicesList.SelectedItem is not DeviceViewModel device)
         {
-            StatusText.Text = "Select a phone first.";
+            StatusText.Text = L.T("select_a_phone_first");
             return;
         }
 
         var dialog = new Microsoft.Win32.OpenFileDialog
         {
-            Title = $"Send files to {device.DisplayName}",
+            Title = L.F("send_files_to", device.DisplayName),
             Multiselect = true,
             CheckFileExists = true
         };
@@ -56,13 +58,13 @@ public partial class MainWindow
         var push = _embeddedServer.FilePush;
         if (push is null)
         {
-            StatusText.Text = "The host is not running, so files cannot be sent.";
+            StatusText.Text = L.T("the_host_is_not_running_so_files_cannot_be_s");
             return;
         }
 
         if (_sendingFiles)
         {
-            StatusText.Text = "Files are already being sent. Wait for them to finish, then try again.";
+            StatusText.Text = L.T("files_are_already_being_sent_wait_for_them_t");
             return;
         }
 
@@ -72,7 +74,7 @@ public partial class MainWindow
         var skipped = paths.Count - files.Length;
         if (files.Length == 0)
         {
-            StatusText.Text = "Only files can be sent, not folders.";
+            StatusText.Text = L.T("only_files_can_be_sent_not_folders");
             return;
         }
 
@@ -92,11 +94,11 @@ public partial class MainWindow
                     if (percent != lastPercent)
                     {
                         lastPercent = percent;
-                        StatusText.Text = $"Sending {prefix}{name} to {deviceName}: {percent}%";
+                        StatusText.Text = L.F("sending_to", prefix, name, deviceName, percent);
                     }
                 });
 
-                StatusText.Text = $"Sending {prefix}{name} to {deviceName}...";
+                StatusText.Text = L.F("sending_to_2", prefix, name, deviceName);
                 var outcome = await Task.Run(() => push.PushAsync(deviceId, files[index], progress));
                 if (outcome.Succeeded)
                 {
@@ -121,13 +123,13 @@ public partial class MainWindow
         if (files.Length > 1)
         {
             StatusText.Text = failures.Count == 0
-                ? $"Sent {sent} files to {deviceName}'s Downloads folder."
-                : $"Sent {sent} of {files.Length} files. {failures[0]}";
+                ? L.F("sent_files_to_s_downloads_folder", sent, deviceName)
+                : L.F("sent_of_files", sent, files.Length, failures[0]);
         }
 
         if (skipped > 0)
         {
-            StatusText.Text += $" Skipped {skipped} folder(s).";
+            StatusText.Text += L.F("skipped_folder_s", skipped);
         }
     }
 }

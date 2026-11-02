@@ -1,0 +1,54 @@
+name: Release dry run
+
+# Runs the real release build (scripts/Build-Release.ps1) without signing keys and without
+# publishing anything, so a broken release pipeline shows up on the pull request that broke it
+# instead of on release day.
+on:
+  pull_request:
+    paths:
+      - 'scripts/**'
+      - 'packaging/**'
+      - '.github/workflows/release*.yml'
+      - 'Directory.Build.props'
+      - '**/*.csproj'
+      - 'src/android/**/*.gradle.kts'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      # Placeholder identity: the package is never uploaded.
+      STORE_IDENTITY_NAME: Pairly.DryRun
+      STORE_PUBLISHER: CN=00000000-0000-0000-0000-000000000000
+      STORE_PUBLISHER_DISPLAY_NAME: Pairly
+      STORE_DISPLAY_NAME: Pairly
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Install Velopack
+        shell: pwsh
+        run: |
+          $props = Get-Content Directory.Build.props -Raw
+          $vpk = [regex]::Match($props, '<VelopackVersion>([^<]+)</VelopackVersion>').Groups[1].Value
+          dotnet tool install -g vpk --version $vpk
+
+      - name: Build every release artifact (unsigned)
+        shell: pwsh
+        run: .\scripts\Build-Release.ps1 -Version 0.0.1 -WindowsPackage Store -Unsigned
+
+      - name: Check outputs
+        shell: pwsh
+        run: |
+          foreach ($file in 'artifacts/release/android/Pairly.apk', 'artifacts/release/windows/Pairly.msix', 'artifacts/release/velopack/Pairly-Setup.exe') {
+            if (-not (Test-Path $file)) { throw "$file was not produced." }
+            "{0,-45} {1,10:N0} bytes" -f $file, (Get-Item $file).Length
+          }

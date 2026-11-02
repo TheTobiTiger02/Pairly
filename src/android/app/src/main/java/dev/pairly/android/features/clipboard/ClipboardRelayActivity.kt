@@ -6,6 +6,7 @@ import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
 import dev.pairly.android.R
+import dev.pairly.android.ui.LocaleText
 import dev.pairly.android.network.PairlyConnectionService
 
 class ClipboardRelayActivity : Activity() {
@@ -43,7 +44,7 @@ class ClipboardRelayActivity : Activity() {
                         PairlyConnectionService.sendClipboardImage(this, it.file.absolutePath, it.fileName)
                         Toast.makeText(this, R.string.share_image_queued, Toast.LENGTH_SHORT).show()
                     }.onFailure {
-                        Toast.makeText(this, it.message ?: getString(R.string.clipboard_unavailable), Toast.LENGTH_LONG).show()
+                        Toast.makeText(this, it.message ?: LocaleText.of(this).getString(R.string.clipboard_unavailable), Toast.LENGTH_LONG).show()
                     }
                     finish()
                 }
@@ -57,9 +58,9 @@ class ClipboardRelayActivity : Activity() {
         Toast.makeText(
             this,
             if (sent) {
-                getString(R.string.clipboard_queued_all_devices)
+                LocaleText.of(this).getString(R.string.clipboard_queued_all_devices)
             } else {
-                getString(R.string.clipboard_unavailable)
+                LocaleText.of(this).getString(R.string.clipboard_unavailable)
             },
             Toast.LENGTH_SHORT
         ).show()

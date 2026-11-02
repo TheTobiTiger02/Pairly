@@ -11,6 +11,7 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import dev.pairly.android.R
+import dev.pairly.android.ui.LocaleText
 import dev.pairly.android.features.sync.FeatureSyncController
 import dev.pairly.android.network.PairlyConnection
 import dev.pairly.android.protocol.ProtocolJson
@@ -181,8 +182,8 @@ class MirrorProjectionService : Service() {
     private fun notification() =
         NotificationCompat.Builder(this, ensureChannel())
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(getString(R.string.mirror_active_notification_title))
-            .setContentText(getString(R.string.mirror_active_notification_text))
+            .setContentTitle(LocaleText.of(this).getString(R.string.mirror_active_notification_title))
+            .setContentText(LocaleText.of(this).getString(R.string.mirror_active_notification_text))
             .setOngoing(true)
             .build()
 
@@ -191,7 +192,7 @@ class MirrorProjectionService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
-                getString(R.string.mirror_active_channel_name),
+                LocaleText.of(this).getString(R.string.mirror_active_channel_name),
                 NotificationManager.IMPORTANCE_LOW
             )
             getSystemService(NotificationManager::class.java).createNotificationChannel(channel)

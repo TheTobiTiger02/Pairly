@@ -7,6 +7,8 @@ using System.Windows.Media;
 using Point = System.Windows.Point;
 using UserControl = System.Windows.Controls.UserControl;
 
+using Pairly.Windows.Localization;
+
 namespace Pairly.Windows.Controls;
 
 /// <summary>
@@ -98,8 +100,8 @@ public partial class CaptionButtons : UserControl
 
         var maximized = _window.WindowState == WindowState.Maximized;
         MaximizeButton.Content = maximized ? RestoreGlyph : MaximizeGlyph;
-        MaximizeButton.ToolTip = maximized ? "Restore" : "Maximize";
-        AutomationProperties.SetName(MaximizeButton, maximized ? "Restore" : "Maximize");
+        MaximizeButton.ToolTip = maximized ? L.T("restore") : L.T("maximize");
+        AutomationProperties.SetName(MaximizeButton, maximized ? L.T("restore") : L.T("maximize"));
 
         // A maximized WindowChrome window overhangs the screen by its invisible resize frame.
         if (_window.Content is FrameworkElement root)

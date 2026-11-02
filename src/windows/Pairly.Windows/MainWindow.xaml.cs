@@ -25,6 +25,8 @@ using Pairly.Server.Adb;
 using Pairly.Server.Streaming;
 using Pairly.Windows.Pairing;
 
+using Pairly.Windows.Localization;
+
 namespace Pairly.Windows;
 
 public partial class MainWindow : Window
@@ -51,7 +53,7 @@ public partial class MainWindow : Window
     private CancellationTokenSource? _photoPrefetchCts;
     private NotificationViewModel[] _allNotifications = Array.Empty<NotificationViewModel>();
     private readonly HashSet<string> _mutedNotificationPackages = new(StringComparer.Ordinal);
-    private readonly DesktopPreferences _preferences = DesktopPreferences.Load();
+    private readonly DesktopPreferences _preferences = App.Preferences;
     private Window? _activeMirrorWindow;
     private Controls.VirtualizingWrapPanel? _photoGridPanel;
 
@@ -87,6 +89,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         WindowBackdrop.Attach(this);
+        InitializeShell();
         AppVersionText.Text = $"Pairly {typeof(MainWindow).Assembly.GetName().Version?.ToString(3)}";
         InitializeUpdates();
 
@@ -100,9 +103,9 @@ public partial class MainWindow : Window
 
         _initializingStartupSetting = true;
         StartWithWindowsCheck.IsChecked = StartupRegistration.IsEnabled;
-        StartupRegistrationStatusText.Text = StartupRegistration.IsEnabled
-            ? "Pairly will reconnect after you sign in."
-            : "Startup will be enabled automatically after the first successful pairing.";
+        ShowStartupStatus(() => StartupRegistration.IsEnabled
+            ? L.T("pairly_will_reconnect_after_you_sign_in")
+            : L.T("startup_will_be_enabled_automatically_after"));
         _initializingStartupSetting = false;
 
         _refreshTimer = new DispatcherTimer
@@ -142,6 +145,11 @@ public partial class MainWindow : Window
                 }
                 await RefreshFromHostAsync(showErrors: true);
             }
+            if (App.ScreenshotDirectory is not null)
+            {
+                await RunScreenshotsAsync();
+                return;
+            }
             if (App.StartHidden)
             {
                 Hide();
@@ -178,7 +186,7 @@ public partial class MainWindow : Window
 
         MainTabs.SelectedIndex = pageIndex;
         foreach (var navigationButton in FindVisualChildren<System.Windows.Controls.RadioButton>(this)
-                     .Where(button => string.Equals(button.GroupName, "MainNavigation", StringComparison.Ordinal)))
+                     .Where(button => button.GroupName.StartsWith("MainNavigation", StringComparison.Ordinal)))
         {
             navigationButton.IsChecked = int.TryParse(navigationButton.Tag?.ToString(), out var index) && index == pageIndex;
         }
@@ -206,83 +214,14 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OpenPairingPanel_Click(object sender, RoutedEventArgs e)
-    {
-        DevicePickerToggle.IsChecked = false;
-        ShowPairingPanel(PairingStep.Pair);
-    }
-
-    private void ClosePairingPanel_Click(object sender, RoutedEventArgs e) => ClosePairingPanel();
-
-    private void PairingShowGetApp_Click(object sender, RoutedEventArgs e) => SetPairingStep(PairingStep.GetApp);
-
-    private void PairingPrimary_Click(object sender, RoutedEventArgs e)
-    {
-        if (_pairingStep == PairingStep.GetApp)
-        {
-            SetPairingStep(PairingStep.Pair);
-        }
-        else
-        {
-            ClosePairingPanel();
-        }
-    }
-
     private void CopyInstallLink_Click(object sender, RoutedEventArgs e)
     {
         Clipboard.SetText(PairingQr.AndroidApkUrl);
-        StatusText.Text = "Download link copied.";
+        StatusText.Text = L.T("download_link_copied");
     }
 
     private void OpenReleasePage_Click(object sender, RoutedEventArgs e) =>
         Process.Start(new ProcessStartInfo(PairingQr.ReleasePageUrl) { UseShellExecute = true });
-
-    private void ShowPairingPanel(PairingStep step)
-    {
-        PairingOverlay.Visibility = Visibility.Visible;
-        SetPairingStep(step);
-        PairingPanel.Focus();
-    }
-
-    private void ClosePairingPanel()
-    {
-        PairingOverlay.Visibility = Visibility.Collapsed;
-        _pairingTimer?.Stop();
-        _pairingTicket = null;
-    }
-
-    private void SetPairingStep(PairingStep step)
-    {
-        _pairingStep = step;
-        PairingGetAppStep.Visibility = step == PairingStep.GetApp ? Visibility.Visible : Visibility.Collapsed;
-        PairingPairStep.Visibility = step == PairingStep.Pair ? Visibility.Visible : Visibility.Collapsed;
-        PairingDoneStep.Visibility = step == PairingStep.Done ? Visibility.Visible : Visibility.Collapsed;
-        PairingStep2Indicator.Opacity = step >= PairingStep.Pair ? 1 : 0.45;
-        PairingStep3Indicator.Opacity = step == PairingStep.Done ? 1 : 0.45;
-
-        PairingBackButton.Visibility = step == PairingStep.Pair ? Visibility.Visible : Visibility.Collapsed;
-        PairingSecondaryButton.Visibility = step == PairingStep.Done ? Visibility.Collapsed : Visibility.Visible;
-        PairingPrimaryButton.Visibility = step == PairingStep.Pair ? Visibility.Collapsed : Visibility.Visible;
-        PairingPrimaryButton.Content = step == PairingStep.GetApp ? "I have the app" : "Start using Pairly";
-
-        if (step == PairingStep.GetApp)
-        {
-            InstallQrImage.Source ??= PairingQr.Render(PairingQr.AndroidApkUrl);
-            _pairingTimer?.Stop();
-        }
-        else if (step == PairingStep.Pair)
-        {
-            var addresses = GetLocalIPv4Addresses();
-            PairingAddressesText.Text = addresses.Length == 0
-                ? "This PC has no network address right now."
-                : $"This PC's addresses: {string.Join(", ", addresses)}";
-            _ = StartPairingAsync();
-        }
-        else
-        {
-            _pairingTimer?.Stop();
-        }
-    }
 
     private async Task StartPairingAsync()
     {
@@ -310,12 +249,12 @@ public partial class MainWindow : Window
     private async Task CreatePairingTicketAsync()
     {
         PairingQrPlaceholder.Visibility = Visibility.Visible;
-        PairingQrPlaceholder.Text = "Creating code…";
+        PairingQrPlaceholder.Text = L.T("creating_code");
         PairingQrImage.Source = null;
         if (!_pairingHostAvailable)
         {
-            PairingQrPlaceholder.Text = "Pairing unavailable";
-            PairingExpiryText.Text = "Pairing is disabled until the port conflict is resolved.";
+            PairingQrPlaceholder.Text = L.T("pairing_unavailable");
+            PairingExpiryText.Text = L.T("pairing_is_disabled_until_the_port_conflict");
             return;
         }
 
@@ -335,8 +274,8 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             _pairingTicket = null;
-            PairingQrPlaceholder.Text = "Could not create a code";
-            PairingExpiryText.Text = UserFacingError("Could not create a pairing code. Retrying in a moment.", ex);
+            PairingQrPlaceholder.Text = L.T("could_not_create_a_code");
+            PairingExpiryText.Text = UserFacingError(L.T("could_not_create_a_pairing_code_retrying_in"), ex);
         }
     }
 
@@ -376,7 +315,7 @@ public partial class MainWindow : Window
         var fraction = Math.Clamp(remaining.TotalSeconds / PairingTicketLifetime.TotalSeconds, 0, 1);
         PairingCountdownRemaining.Width = new GridLength(fraction, GridUnitType.Star);
         PairingCountdownElapsed.Width = new GridLength(1 - fraction, GridUnitType.Star);
-        PairingExpiryText.Text = $"New code in {(int)remaining.TotalMinutes}:{remaining.Seconds:00}";
+        PairingExpiryText.Text = L.F("new_code_in", (int)remaining.TotalMinutes, remaining.Seconds);
     }
 
     private async Task CheckForNewlyPairedDeviceAsync()
@@ -395,8 +334,8 @@ public partial class MainWindow : Window
                 return;
             }
 
-            PairingDoneTitle.Text = $"Paired with {paired.DisplayName}";
-            SetPairingStep(PairingStep.Done);
+            PairingDoneTitle.Text = L.F("paired_with", paired.DisplayName);
+            OnPhonePaired();
             await RefreshFromHostAsync(showErrors: false);
         }
         catch (Exception ex)
@@ -424,14 +363,17 @@ public partial class MainWindow : Window
 
     private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        // Narrow windows keep every feature: the phone pane slims down and the tabs drop their labels.
-        LeftPaneColumn.Width = new GridLength(ActualWidth < 1180 ? 312 : 340);
-        var labelVisibility = ActualWidth < 1080 ? Visibility.Collapsed : Visibility.Visible;
+        // Narrow windows keep every feature: panes slim down and the tabs drop their labels.
+        NavPane.Width = ActualWidth < 1000 ? 272 : 292;
+        SidePanel.Width = ActualWidth < 1180 ? 312 : 340;
+        var labelVisibility = ActualWidth < 1120 ? Visibility.Collapsed : Visibility.Visible;
+        HomeTabLabel.Visibility = labelVisibility;
         MessagesTabLabel.Visibility = labelVisibility;
         PhotosTabLabel.Visibility = labelVisibility;
         FilesTabLabel.Visibility = labelVisibility;
         AppsTabLabel.Visibility = labelVisibility;
         BrandTitleText.Visibility = ActualWidth < 1040 ? Visibility.Collapsed : Visibility.Visible;
+        HomeQuickActions.Columns = ActualWidth < 1180 ? 2 : 4;
     }
 
     private static IEnumerable<T> FindVisualChildren<T>(System.Windows.DependencyObject root) where T : System.Windows.DependencyObject
@@ -462,8 +404,8 @@ public partial class MainWindow : Window
             _notifyIcon.Visible = true;
 
             var contextMenu = new System.Windows.Forms.ContextMenuStrip();
-            contextMenu.Items.Add("Open Dashboard", null, (s, e) => ShowDashboard());
-            contextMenu.Items.Add("Exit", null, (s, e) => ExitFully());
+            contextMenu.Items.Add(L.T("open_dashboard"), null, (s, e) => ShowDashboard());
+            contextMenu.Items.Add(L.T("exit"), null, (s, e) => ExitFully());
 
             _notifyIcon.ContextMenuStrip = contextMenu;
             _notifyIcon.DoubleClick += (s, e) => ShowDashboard();
@@ -485,17 +427,17 @@ public partial class MainWindow : Window
     {
         if (StartupRegistration.IsPackaged())
         {
-            UpdateStatusText.Text = "Updates are installed by the Microsoft Store.";
+            ShowUpdateStatus(() => L.T("updates_are_installed_by_the_microsoft_store"));
             return;
         }
 
         if (!_updater.IsEnabled)
         {
-            UpdateStatusText.Text = "Development build: automatic updates are off.";
+            ShowUpdateStatus(() => L.T("development_build_automatic_updates_are_off"));
             return;
         }
 
-        UpdateStatusText.Text = "Pairly checks GitHub for updates and installs them when it restarts.";
+        ShowUpdateStatus(() => L.T("pairly_checks_github_for_updates_and_install"));
         _updateTimer = new DispatcherTimer { Interval = TimeSpan.FromHours(6) };
         _updateTimer.Tick += async (_, _) => await CheckForDesktopUpdateAsync();
         _updateTimer.Start();
@@ -512,14 +454,14 @@ public partial class MainWindow : Window
         try
         {
             var ready = await _updater.CheckAndDownloadAsync();
-            UpdateStatusText.Text = ready
-                ? $"Version {_updater.PendingVersion} is ready. It installs the next time Pairly starts."
-                : "Pairly is up to date.";
+            ShowUpdateStatus(() => ready
+                ? L.F("version_is_ready_it_installs_the_next_time_p", _updater.PendingVersion)
+                : L.T("pairly_is_up_to_date"));
             RestartToUpdateButton.Visibility = ready ? Visibility.Visible : Visibility.Collapsed;
         }
         catch (Exception ex)
         {
-            UpdateStatusText.Text = UserFacingError("Could not check for updates. Pairly tries again later.", ex);
+            ShowUpdateStatus(() => UserFacingError(L.T("could_not_check_for_updates_pairly_tries_aga"), ex));
         }
     }
 
@@ -569,11 +511,11 @@ public partial class MainWindow : Window
 
         var enabled = StartWithWindowsCheck.IsChecked == true;
         var succeeded = StartupRegistration.SetEnabled(enabled);
-        StartupRegistrationStatusText.Text = succeeded
+        ShowStartupStatus(() => succeeded
             ? enabled
-                ? "Pairly will reconnect after you sign in."
-                : "Automatic startup is off. Your trusted pairing is unchanged."
-            : "Windows startup registration could not be updated for this user.";
+                ? L.T("pairly_will_reconnect_after_you_sign_in")
+                : L.T("automatic_startup_is_off_your_trusted_pairin")
+            : L.T("windows_startup_registration_could_not_be_up"));
     }
 
     private void MirrorProfileCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -651,12 +593,12 @@ public partial class MainWindow : Window
 
         var uptime = diagnostics.ConnectedFor;
         DiagnosticsSummaryText.Text = uptime is { } connected
-            ? $"Host link live for {FormatDuration(connected)}. {(_realtimeConnected ? "Desktop socket connected." : "Desktop socket reconnecting.")}"
-            : "Host link is not currently connected.";
+            ? L.F("host_link_live_for", FormatDuration(connected), _realtimeConnected ? L.T("desktop_socket_connected") : L.T("desktop_socket_reconnecting"))
+            : L.T("host_link_is_not_currently_connected");
 
         var reasons = diagnostics.ReconnectReasons();
         DiagnosticsReasonsText.Text = reasons.Count == 0
-            ? "No reconnects recorded since this app started."
+            ? L.T("no_reconnects_recorded_since_this_app_starte")
             : "Reconnects: " + string.Join(", ", reasons.Select(reason => $"{reason.Key} x{reason.Value}"));
 
         _diagnosticsEvents.Clear();
@@ -678,18 +620,18 @@ public partial class MainWindow : Window
             var statuses = await _host.GetFromJsonAsync<List<WebSocketSessionStatus>>("v1/diagnostics/sessions", JsonOptions);
             if (statuses is null || statuses.Count == 0)
             {
-                DiagnosticsSessionsText.Text = "No active sessions.";
+                DiagnosticsSessionsText.Text = L.T("no_active_sessions");
                 return;
             }
 
             DiagnosticsSessionsText.Text = string.Join(
                 "  |  ",
                 statuses.Select(status =>
-                    $"{status.SessionId}: queued {status.QueuedMessages}, dropped {status.DroppedMessages}, telemetry dropped {status.DroppedTelemetry}"));
+                    L.F("queued_dropped_telemetry_dropped", status.SessionId, status.QueuedMessages, status.DroppedMessages, status.DroppedTelemetry)));
         }
         catch (Exception ex)
         {
-            DiagnosticsSessionsText.Text = $"Session statistics unavailable: {ex.Message}";
+            DiagnosticsSessionsText.Text = L.F("session_statistics_unavailable", ex.Message);
         }
     }
 
@@ -698,7 +640,7 @@ public partial class MainWindow : Window
         var device = GetSelectedDevice();
         if (device is null)
         {
-            DiagnosticsSummaryText.Text = "Select a phone first to ask it for its connection history.";
+            DiagnosticsSummaryText.Text = L.T("select_a_phone_first_to_ask_it_for_its_conne");
             return;
         }
 
@@ -707,7 +649,7 @@ public partial class MainWindow : Window
             var response = await _host.PostAsync($"v1/devices/{device.DeviceId}/diagnostics?maxEntries=200", content: null);
             if (!response.IsSuccessStatusCode)
             {
-                DiagnosticsSummaryText.Text = $"{device.DisplayName} did not answer the diagnostics request ({(int)response.StatusCode}).";
+                DiagnosticsSummaryText.Text = L.F("did_not_answer_the_diagnostics_request", device.DisplayName, (int)response.StatusCode);
                 return;
             }
 
@@ -726,12 +668,12 @@ public partial class MainWindow : Window
             }
 
             DiagnosticsSummaryText.Text =
-                $"{device.DisplayName}: connected for {FormatDuration(TimeSpan.FromSeconds(snapshot.ConnectedForSeconds))}, "
-                + $"{snapshot.ReconnectCount} reconnect(s) since the phone app started.";
+                L.F("connected_for", device.DisplayName, FormatDuration(TimeSpan.FromSeconds(snapshot.ConnectedForSeconds)))
+                + L.F("reconnect_s_since_the_phone_app_started", snapshot.ReconnectCount);
         }
         catch (Exception ex)
         {
-            DiagnosticsSummaryText.Text = $"Could not read phone diagnostics: {ex.Message}";
+            DiagnosticsSummaryText.Text = L.F("could_not_read_phone_diagnostics", ex.Message);
         }
     }
 
@@ -891,7 +833,7 @@ public partial class MainWindow : Window
                 _embeddedServer.Diagnostics.Record(
                     DiagnosticsCategory.Transport,
                     "desktop.heartbeat.timeout",
-                    $"No pong for {silence.TotalSeconds:F0}s.",
+                    L.F("no_pong_for_s", silence.TotalSeconds),
                     severity: DiagnosticsSeverity.Warning);
                 socketCts.Cancel();
                 socket.Abort();
@@ -928,7 +870,7 @@ public partial class MainWindow : Window
 
     private void UpdateRealtimeStatusText()
     {
-        RealtimeStatusText.Text = _realtimeConnected ? "Live" : "Reconnecting";
+        RealtimeStatusText.Text = _realtimeConnected ? L.T("live") : L.T("reconnecting");
         RealtimeStatusDot.SetResourceReference(System.Windows.Shapes.Shape.FillProperty, _realtimeConnected ? "SuccessBrush" : "CautionBrush");
     }
 
@@ -1032,8 +974,8 @@ public partial class MainWindow : Window
             _pairingHostAvailable = true;
             var addresses = GetLocalIPv4Addresses();
             StatusText.Text = addresses.Length == 0
-                ? "Embedded host started on port 7816. Allow Windows Firewall if prompted."
-                : $"Embedded host started. Phone host IP: {string.Join(" / ", addresses)}";
+                ? L.T("embedded_host_started_on_port_7816_allow_win")
+                : L.F("embedded_host_started_phone_host_ip", string.Join(" / ", addresses));
             return true;
         }
         catch (Exception ex)
@@ -1042,7 +984,7 @@ public partial class MainWindow : Window
             StatusText.Text = ex is HostStartupException
                 ? ex.Message
                 : UserFacingError(
-                    "Pairly could not start all required services. Close another running host and try again.",
+                    L.T("pairly_could_not_start_all_required_services"),
                     ex);
             return false;
         }
@@ -1061,16 +1003,16 @@ public partial class MainWindow : Window
             var status = await response.Content.ReadFromJsonAsync<DeviceRegistryPersistenceStatus>(JsonOptions);
             TrustStoreStatusText.Text = FormatTrustStoreStatus(status);
             StatusText.Text = response.IsSuccessStatusCode
-                ? "Trust store repaired from backup."
-                : "Trust store repair could not find a usable backup.";
+                ? L.T("trust_store_repaired_from_backup")
+                : L.T("trust_store_repair_could_not_find_a_usable_b");
             await RefreshFromHostAsync(showErrors: true);
         }
         catch (Exception ex)
         {
             TrustStoreStatusText.Text = UserFacingError(
-                "Trust storage could not be repaired. The existing snapshots were left unchanged.",
+                L.T("trust_storage_could_not_be_repaired_the_exis"),
                 ex);
-            StatusText.Text = "Trust storage repair failed. Open Settings > Troubleshooting for recovery options.";
+            StatusText.Text = L.T("trust_storage_repair_failed_open_settings_tr");
         }
     }
 
@@ -1079,13 +1021,13 @@ public partial class MainWindow : Window
         var device = GetSelectedDevice();
         if (device is null)
         {
-            StatusText.Text = "Select a connected phone before refreshing phone data.";
+            StatusText.Text = L.T("select_a_connected_phone_before_refreshing_p");
             return;
         }
 
         if (!device.Connected)
         {
-            StatusText.Text = $"{device.DisplayName} is paired but offline.";
+            StatusText.Text = L.F("is_paired_but_offline", device.DisplayName);
             return;
         }
 
@@ -1097,17 +1039,17 @@ public partial class MainWindow : Window
                 JsonOptions);
             if (!response.IsSuccessStatusCode)
             {
-                StatusText.Text = $"Phone data refresh failed: {response.StatusCode}. {await response.Content.ReadAsStringAsync()}";
+                StatusText.Text = L.F("phone_data_refresh_failed", response.StatusCode, await response.Content.ReadAsStringAsync());
                 return;
             }
 
-            StatusText.Text = $"Requested fresh data from {device.DisplayName}.";
+            StatusText.Text = L.F("requested_fresh_data_from", device.DisplayName);
             await Task.Delay(700);
             await RefreshFromHostAsync(showErrors: true);
         }
         catch (Exception ex)
         {
-            StatusText.Text = UserFacingError("Phone data could not be refreshed. Check the connection and retry.", ex);
+            StatusText.Text = UserFacingError(L.T("phone_data_could_not_be_refreshed_check_the"), ex);
         }
     }
 
@@ -1116,7 +1058,7 @@ public partial class MainWindow : Window
         var device = GetSelectedDevice();
         if (device is null)
         {
-            StatusText.Text = "Select a device to forget.";
+            StatusText.Text = L.T("select_a_device_to_forget");
             return;
         }
 
@@ -1124,13 +1066,13 @@ public partial class MainWindow : Window
         {
             using var response = await _host.DeleteAsync($"v1/devices/{Uri.EscapeDataString(device.DeviceId)}");
             StatusText.Text = response.IsSuccessStatusCode
-                ? $"Forgot {device.DisplayName}. Pair it again from Android to create a new trust key."
-                : $"Forget failed: {response.StatusCode}.";
+                ? L.F("forgot_pair_it_again_from_android_to_create", device.DisplayName)
+                : L.F("forget_failed", response.StatusCode);
             await RefreshFromHostAsync(showErrors: true);
         }
         catch (Exception ex)
         {
-            StatusText.Text = UserFacingError("This phone could not be forgotten. Try again.", ex);
+            StatusText.Text = UserFacingError(L.T("this_phone_could_not_be_forgotten_try_again"), ex);
         }
     }
 
@@ -1139,14 +1081,14 @@ public partial class MainWindow : Window
         if (!Clipboard.ContainsText() && Clipboard.ContainsImage())
         {
             ClipboardText.Text = string.Empty;
-            ClipboardStatusText.Text = "The PC clipboard contains an image. It will be sent automatically to all connected phones.";
+            ClipboardStatusText.Text = L.T("the_pc_clipboard_contains_an_image_it_will_b");
             return;
         }
 
         ClipboardText.Text = Clipboard.ContainsText() ? Clipboard.GetText() : string.Empty;
         ClipboardStatusText.Text = ClipboardText.Text.Length == 0
-            ? "PC clipboard did not contain text."
-            : "PC clipboard text loaded.";
+            ? L.T("pc_clipboard_did_not_contain_text")
+            : L.T("pc_clipboard_text_loaded");
     }
 
     private async void PublishClipboard_Click(object sender, RoutedEventArgs e)
@@ -1220,7 +1162,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            StatusText.Text = UserFacingError("Messages could not be loaded. Check the phone connection and retry.", ex);
+            StatusText.Text = UserFacingError(L.T("messages_could_not_be_loaded_check_the_phone"), ex);
         }
     }
 
@@ -1228,14 +1170,14 @@ public partial class MainWindow : Window
     {
         if (SmsThreadsList.SelectedItem is not SmsThreadViewModel thread)
         {
-            StatusText.Text = "Select an SMS thread first.";
+            StatusText.Text = L.T("select_an_sms_thread_first");
             return;
         }
 
         var device = GetSelectedDevice();
         if (device is null)
         {
-            StatusText.Text = "Select the phone that should send the SMS.";
+            StatusText.Text = L.T("select_the_phone_that_should_send_the_sms");
             return;
         }
 
@@ -1247,8 +1189,8 @@ public partial class MainWindow : Window
                 JsonOptions);
             var responseText = await response.Content.ReadAsStringAsync();
             StatusText.Text = response.IsSuccessStatusCode
-                ? $"SMS sent by {device.DisplayName}."
-                : $"SMS send failed: {response.StatusCode}. {responseText}";
+                ? L.F("sms_sent_by", device.DisplayName)
+                : L.F("sms_send_failed", response.StatusCode, responseText);
             if (response.IsSuccessStatusCode)
             {
                 await Task.Delay(1_000);
@@ -1257,7 +1199,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            StatusText.Text = UserFacingError("The message could not be sent. Check the phone and retry.", ex);
+            StatusText.Text = UserFacingError(L.T("the_message_could_not_be_sent_check_the_phon"), ex);
         }
 
         SmsReplyText.Clear();
@@ -1268,20 +1210,20 @@ public partial class MainWindow : Window
         var device = GetSelectedDevice();
         if (device is null)
         {
-            StatusText.Text = "Select a connected phone before starting mirror.";
+            StatusText.Text = L.T("select_a_connected_phone_before_starting_mir");
             return;
         }
 
         if (!device.Connected)
         {
-            StatusText.Text = $"{device.DisplayName} is paired but offline.";
+            StatusText.Text = L.F("is_paired_but_offline", device.DisplayName);
             return;
         }
 
         var streams = _embeddedServer.MirrorStreams;
         if (streams is null)
         {
-            MirrorStatusText.Text = "The embedded host is not running yet.";
+            MirrorStatusText.Text = L.T("the_embedded_host_is_not_running_yet");
             return;
         }
 
@@ -1312,7 +1254,7 @@ public partial class MainWindow : Window
         _activeMirrorWindow = mirrorWindow;
         mirrorWindow.Show();
 
-        MirrorStatusText.Text = $"Starting mirror for {device.DisplayName}...";
+        MirrorStatusText.Text = L.F("starting_mirror_for", device.DisplayName);
         _ = StartMirrorStreamAsync(mirrorWindow, device, request, useAdb);
     }
 
@@ -1324,11 +1266,11 @@ public partial class MainWindow : Window
             var adbRequest = new AdbStreamRequest(Math.Max(request.MaxWidth, request.MaxHeight), request.MaxFps, request.Profile, request.Codec);
             if (await TryStartAdbStreamAsync(window, device, adbRequest) is null)
             {
-                MirrorStatusText.Text = $"{device.DisplayName} is not reachable over wireless debugging; using the app instead.";
+                MirrorStatusText.Text = L.F("is_not_reachable_over_wireless_debugging_usi", device.DisplayName);
             }
             else
             {
-                MirrorStatusText.Text = $"Mirroring {device.DisplayName} over wireless debugging.";
+                MirrorStatusText.Text = L.F("mirroring_over_wireless_debugging", device.DisplayName);
                 return;
             }
         }
@@ -1403,7 +1345,7 @@ public partial class MainWindow : Window
                 // The host may already be shutting down.
             }
 
-            Dispatcher.Invoke(() => MirrorStatusText.Text = "Mirror stopped.");
+            Dispatcher.Invoke(() => MirrorStatusText.Text = L.T("mirror_stopped"));
         };
 
         return mirrorWindow;
@@ -1545,16 +1487,16 @@ public partial class MainWindow : Window
             if (!response.IsSuccessStatusCode)
             {
                 Dispatcher.Invoke(() =>
-                    MirrorStatusText.Text = $"The phone did not accept the mirror request ({(int)response.StatusCode}).");
+                    MirrorStatusText.Text = L.F("the_phone_did_not_accept_the_mirror_request", (int)response.StatusCode));
                 return;
             }
 
-            Dispatcher.Invoke(() => MirrorStatusText.Text = "Mirroring active in a separate window.");
+            Dispatcher.Invoke(() => MirrorStatusText.Text = L.T("mirroring_active_in_a_separate_window"));
         }
         catch (Exception ex)
         {
             Dispatcher.Invoke(() =>
-                MirrorStatusText.Text = UserFacingError("The phone screen could not be started.", ex));
+                MirrorStatusText.Text = UserFacingError(L.T("the_phone_screen_could_not_be_started"), ex));
         }
     }
 
@@ -1572,7 +1514,7 @@ public partial class MainWindow : Window
         }
         catch (HttpRequestException)
         {
-            Dispatcher.Invoke(() => MirrorStatusText.Text = "Phone controls are unavailable right now.");
+            Dispatcher.Invoke(() => MirrorStatusText.Text = L.T("phone_controls_are_unavailable_right_now"));
         }
     }
 
@@ -1583,7 +1525,7 @@ public partial class MainWindow : Window
         var device = GetSelectedDevice();
         if (device is null)
         {
-            StatusText.Text = "Select a phone before stopping mirror.";
+            StatusText.Text = L.T("select_a_phone_before_stopping_mirror");
             return;
         }
 
@@ -1598,11 +1540,11 @@ public partial class MainWindow : Window
             {
                 await _host.PostAsync($"v1/mirror/{Uri.EscapeDataString(device.DeviceId)}/stop", content: null);
             }
-            MirrorStatusText.Text = "Mirror stopped.";
+            MirrorStatusText.Text = L.T("mirror_stopped");
         }
         catch (Exception ex)
         {
-            MirrorStatusText.Text = UserFacingError("The phone screen could not be stopped cleanly. Retry if it remains active.", ex);
+            MirrorStatusText.Text = UserFacingError(L.T("the_phone_screen_could_not_be_stopped_cleanl"), ex);
         }
     }
 
@@ -1611,7 +1553,7 @@ public partial class MainWindow : Window
         var device = GetSelectedDevice();
         if (device is null)
         {
-            NotificationStatusText.Text = "Select a connected phone first.";
+            NotificationStatusText.Text = L.T("select_a_connected_phone_first");
             return;
         }
 
@@ -1624,15 +1566,15 @@ public partial class MainWindow : Window
 
             try
             {
-                NotificationStatusText.Text = $"Sending reply to {notification.AppName}...";
+                NotificationStatusText.Text = L.F("sending_reply_to", notification.AppName);
                 using var response = await _host.PostAsJsonAsync(
                     $"v1/notifications/{Uri.EscapeDataString(device.DeviceId)}/action",
                     new NotificationActionPayload(notification.NotificationId, "reply", notification.ReplyText),
                     JsonOptions);
                 var responseText = await response.Content.ReadAsStringAsync();
                 NotificationStatusText.Text = response.IsSuccessStatusCode
-                    ? $"Reply sent to {device.DisplayName}."
-                    : $"Notification reply failed: {response.StatusCode}. {responseText}";
+                    ? L.F("reply_sent_to", device.DisplayName)
+                    : L.F("notification_reply_failed", response.StatusCode, responseText);
                 if (response.IsSuccessStatusCode)
                 {
                     notification.ReplyText = string.Empty;
@@ -1640,7 +1582,7 @@ public partial class MainWindow : Window
             }
             catch (Exception ex)
             {
-                NotificationStatusText.Text = UserFacingError("The reply could not be sent. Check the phone connection and retry.", ex);
+                NotificationStatusText.Text = UserFacingError(L.T("the_reply_could_not_be_sent_check_the_phone"), ex);
             }
         }
     }
@@ -1650,7 +1592,7 @@ public partial class MainWindow : Window
         var device = GetSelectedDevice();
         if (device is null)
         {
-            NotificationStatusText.Text = "Select a connected phone first.";
+            NotificationStatusText.Text = L.T("select_a_connected_phone_first");
             return;
         }
 
@@ -1661,15 +1603,15 @@ public partial class MainWindow : Window
 
         try
         {
-            NotificationStatusText.Text = $"Dismissing {notification.AppName} notification...";
+            NotificationStatusText.Text = L.F("dismissing_notification", notification.AppName);
             using var response = await _host.PostAsJsonAsync(
                 $"v1/notifications/{Uri.EscapeDataString(device.DeviceId)}/action",
                 new NotificationActionPayload(notification.NotificationId, "dismiss", null),
                 JsonOptions);
             var responseText = await response.Content.ReadAsStringAsync();
             NotificationStatusText.Text = response.IsSuccessStatusCode
-                ? $"Dismissed notification from {notification.AppName}."
-                : $"Dismiss failed: {response.StatusCode}. {responseText}";
+                ? L.F("dismissed_notification_from", notification.AppName)
+                : L.F("dismiss_failed", response.StatusCode, responseText);
             if (response.IsSuccessStatusCode)
             {
                 _allNotifications = _allNotifications
@@ -1680,7 +1622,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            NotificationStatusText.Text = UserFacingError("The phone notification could not be dismissed. Try again.", ex);
+            NotificationStatusText.Text = UserFacingError(L.T("the_phone_notification_could_not_be_dismisse"), ex);
         }
     }
 
@@ -1691,7 +1633,7 @@ public partial class MainWindow : Window
             _mutedNotificationPackages.Add(notification.PackageName);
             _preferences.MutedNotificationPackages.Add(notification.PackageName);
             _preferences.Save();
-            NotificationStatusText.Text = $"Muted {notification.AppName} locally on this PC.";
+            NotificationStatusText.Text = L.F("muted_locally_on_this_pc", notification.AppName);
             ApplyNotificationFilters(updateAppFilter: false);
         }
     }
@@ -1701,7 +1643,7 @@ public partial class MainWindow : Window
         _mutedNotificationPackages.Clear();
         _preferences.MutedNotificationPackages.Clear();
         _preferences.Save();
-        NotificationStatusText.Text = "Restored notifications from all locally muted apps.";
+        NotificationStatusText.Text = L.T("restored_notifications_from_all_locally_mute");
         ApplyNotificationFilters(updateAppFilter: false);
     }
 
@@ -1718,7 +1660,7 @@ public partial class MainWindow : Window
         var device = GetSelectedDevice();
         if (device is null)
         {
-            NotificationStatusText.Text = "Select a paired device to clear notifications.";
+            NotificationStatusText.Text = L.T("select_a_paired_device_to_clear_notification");
             return;
         }
 
@@ -1728,12 +1670,12 @@ public partial class MainWindow : Window
             ReconcileNotifications(Array.Empty<NotificationPayload>());
             ApplyNotificationFilters(updateAppFilter: true);
             NotificationStatusText.Text = response.IsSuccessStatusCode
-                ? "Cleared the local notification list."
-                : $"Clear failed: {response.StatusCode}.";
+                ? L.T("cleared_the_local_notification_list")
+                : L.F("clear_failed", response.StatusCode);
         }
         catch (Exception ex)
         {
-            NotificationStatusText.Text = UserFacingError("Notifications could not be cleared from this PC. Try again.", ex);
+            NotificationStatusText.Text = UserFacingError(L.T("notifications_could_not_be_cleared_from_this"), ex);
         }
     }
 
@@ -1774,7 +1716,7 @@ public partial class MainWindow : Window
         var device = GetSelectedDevice();
         if (device is null)
         {
-            PhotosStatusText.Text = "Select a connected phone first.";
+            PhotosStatusText.Text = L.T("select_a_connected_phone_first");
             return;
         }
 
@@ -1785,7 +1727,7 @@ public partial class MainWindow : Window
                 $"v1/media/{Uri.EscapeDataString(device.DeviceId)}/{Uri.EscapeDataString(photo.MediaId)}/content");
             if (!response.IsSuccessStatusCode)
             {
-                PhotosStatusText.Text = $"Photo download failed: {response.StatusCode}. {await response.Content.ReadAsStringAsync()}";
+                PhotosStatusText.Text = L.F("photo_download_failed", response.StatusCode, await response.Content.ReadAsStringAsync());
                 return;
             }
 
@@ -1815,7 +1757,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            PhotosStatusText.Text = UserFacingError("The photo could not be opened. Check the phone connection and retry.", ex);
+            PhotosStatusText.Text = UserFacingError(L.T("the_photo_could_not_be_opened_check_the_phon"), ex);
         }
     }
 
@@ -1827,7 +1769,7 @@ public partial class MainWindow : Window
         }
         else
         {
-            PhotosStatusText.Text = "Select a photo first.";
+            PhotosStatusText.Text = L.T("select_a_photo_first");
         }
     }
 
@@ -1845,13 +1787,13 @@ public partial class MainWindow : Window
         var device = GetSelectedDevice();
         if (device is null || selectedPhotos.Length == 0)
         {
-            PhotosStatusText.Text = "Select one or more photos first.";
+            PhotosStatusText.Text = L.T("select_one_or_more_photos_first");
             return;
         }
 
         using var folderDialog = new System.Windows.Forms.FolderBrowserDialog
         {
-            Description = "Save selected Pairly photos",
+            Description = L.T("save_selected_pairly_photos"),
             UseDescriptionForTitle = true,
             ShowNewFolderButton = true
         };
@@ -1891,7 +1833,7 @@ public partial class MainWindow : Window
             }
         }
 
-        PhotosStatusText.Text = $"Saved {saved} of {selectedPhotos.Length} selected photo(s) to {folderDialog.SelectedPath}.";
+        PhotosStatusText.Text = L.F("saved_of_selected_photo_s_to", saved, selectedPhotos.Length, folderDialog.SelectedPath);
     }
 
     private async void PhotosList_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -1917,7 +1859,7 @@ public partial class MainWindow : Window
             var device = GetSelectedDevice();
             if (device is null)
             {
-                PhotosStatusText.Text = "Select a connected phone first.";
+                PhotosStatusText.Text = L.T("select_a_connected_phone_first");
                 return;
             }
 
@@ -1936,7 +1878,7 @@ public partial class MainWindow : Window
                         $"v1/media/{Uri.EscapeDataString(device.DeviceId)}/{Uri.EscapeDataString(photo.MediaId)}/content");
                     if (!response.IsSuccessStatusCode)
                     {
-                        PhotosStatusText.Text = $"Photo download failed: {response.StatusCode}. {await response.Content.ReadAsStringAsync()}";
+                        PhotosStatusText.Text = L.F("photo_download_failed", response.StatusCode, await response.Content.ReadAsStringAsync());
                         return;
                     }
 
@@ -1944,12 +1886,12 @@ public partial class MainWindow : Window
                     {
                         await response.Content.CopyToAsync(file);
                     }
-                    PhotosStatusText.Text = $"Saved to {Path.GetFileName(saveDialog.FileName)}";
+                    PhotosStatusText.Text = L.F("saved_to", Path.GetFileName(saveDialog.FileName));
                 }
             }
             catch (Exception ex)
             {
-                PhotosStatusText.Text = UserFacingError("The selected photo could not be saved. Try again.", ex);
+                PhotosStatusText.Text = UserFacingError(L.T("the_selected_photo_could_not_be_saved_try_ag"), ex);
             }
         }
     }
@@ -1975,11 +1917,10 @@ public partial class MainWindow : Window
             var devicesData = await _host.GetFromJsonAsync<LinkedDevice[]>("v1/devices", JsonOptions)
                 ?? Array.Empty<LinkedDevice>();
 
-            if (devicesData.Length == 0 && !_firstRunPairingShown && !App.StartHidden)
+            if (!_firstRunPairingShown && !App.StartHidden && App.ScreenshotDirectory is null)
             {
-                // First run starts with installing the phone app; pairing follows from there.
                 _firstRunPairingShown = true;
-                ShowPairingPanel(PairingStep.GetApp);
+                OnFirstDeviceList(devicesData.Length);
             }
 
             if (devicesData.Length > 0 && !StartupRegistration.IsEnabled)
@@ -1990,7 +1931,7 @@ public partial class MainWindow : Window
                 _initializingStartupSetting = false;
                 if (startupEnabled)
                 {
-                    StartupRegistrationStatusText.Text = "Pairly will reconnect after you sign in.";
+                    ShowStartupStatus(() => L.T("pairly_will_reconnect_after_you_sign_in"));
                 }
             }
 
@@ -2006,8 +1947,8 @@ public partial class MainWindow : Window
                             _notifiedLowBatteryDevices.Add(device.DeviceId);
                             _notifyIcon?.ShowBalloonTip(
                                 5000,
-                                "Low Battery warning",
-                                $"{device.DisplayName} battery is at {device.BatteryLevel}%. Please plug in a charger.",
+                                L.T("low_battery_warning"),
+                                L.F("battery_is_at_please_plug_in_a_charger", device.DisplayName, device.BatteryLevel),
                                 System.Windows.Forms.ToolTipIcon.Warning);
                         }
                     }
@@ -2044,13 +1985,13 @@ public partial class MainWindow : Window
                 StartPhotoThumbnailPrefetch(_photosView?.Cast<MediaItemViewModel>().Take(24).ToArray() ?? Array.Empty<MediaItemViewModel>());
                 var photosPermission = PermissionText(selectedDevice, "photos");
                 PhotosStatusText.Text = !PermissionGranted(selectedDevice, "photos")
-                    ? $"Photos permission: {photosPermission}. Open the Android app and grant Photos, then refresh phone data."
+                    ? L.F("photos_permission_open_the_android_app_and_g", photosPermission)
                     : photos.Length == 0
-                        ? "Photos permission granted. No photo metadata from this device yet."
-                        : $"Photos permission granted. Showing {PhotosList.Items.Count} of {photos.Length} photo(s).";
+                        ? L.T("photos_permission_granted_no_photo_metadata")
+                        : L.F("photos_permission_granted_showing_of_photo_s", PhotosList.Items.Count, photos.Length);
                 MirrorStatusText.Text = selectedDevice.Connected
-                    ? $"Connected: {selectedDevice.DisplayName}. Mirror permission: {PermissionText(selectedDevice, "mirroring")}."
-                    : $"{selectedDevice.DisplayName} is paired but offline.";
+                    ? L.F("connected_mirror_permission", selectedDevice.DisplayName, PermissionText(selectedDevice, "mirroring"))
+                    : L.F("is_paired_but_offline", selectedDevice.DisplayName);
 
                 // If storage path was not initialized for this device, load root.
                 if (!string.Equals(_storageDeviceId, selectedDevice.DeviceId, StringComparison.Ordinal))
@@ -2065,8 +2006,8 @@ public partial class MainWindow : Window
             {
                 ReconcilePhotos(Array.Empty<MediaItemViewModel>());
                 ApplyPhotoFilters();
-                PhotosStatusText.Text = "Select a paired device to browse photos.";
-                MirrorStatusText.Text = "No active mirror session";
+                PhotosStatusText.Text = L.T("select_a_paired_device_to_browse_photos");
+                MirrorStatusText.Text = L.T("no_active_mirror_session");
             }
 
             var notifications = selectedDevice is null
@@ -2077,8 +2018,8 @@ public partial class MainWindow : Window
             ReconcileNotifications(notifications);
             ApplyNotificationFilters(updateAppFilter: true);
             NotificationStatusText.Text = selectedDevice is null
-                ? "Select a paired device to view notifications."
-                : $"Notification access: {PermissionText(selectedDevice, "notifications")}. Showing {NotificationsList.Items.Count} of {_allNotifications.Length}.";
+                ? L.T("select_a_paired_device_to_view_notifications")
+                : L.F("notification_access", PermissionText(selectedDevice, "notifications"), NotificationsList.Items.Count, _allNotifications.Length);
 
             var smsThreads = selectedDevice is null
                 ? Array.Empty<SmsThreadViewModel>()
@@ -2090,22 +2031,22 @@ public partial class MainWindow : Window
             ReconcileSmsThreads(smsThreads);
             FilterSmsThreads();
             SmsStatusText.Text = selectedDevice is null
-                ? "Select a paired device to view SMS."
-                : $"SMS permission: {PermissionText(selectedDevice, "sms")}.";
+                ? L.T("select_a_paired_device_to_view_sms")
+                : L.F("sms_permission", PermissionText(selectedDevice, "sms"));
 
 
             var onlineCount = devicesData.Count(device => device.Connected);
             var reconnectingCount = devicesData.Count(device => !device.Connected
                 && DateTimeOffset.UtcNow - device.LastSeenAt < TimeSpan.FromMinutes(2));
             StatusText.Text = devicesData.Length == 0
-                ? "Pairly is ready. Add a phone to get started."
+                ? L.T("pairly_is_ready_add_a_phone_to_get_started")
                 : $"{onlineCount} online | {reconnectingCount} reconnecting | {devicesData.Length - onlineCount - reconnectingCount} offline";
         }
         catch (Exception ex)
         {
             if (showErrors)
             {
-                StatusText.Text = UserFacingError("Pairly is reconnecting to its local service.", ex);
+                StatusText.Text = UserFacingError(L.T("pairly_is_reconnecting_to_its_local_service"), ex);
             }
         }
         finally
@@ -2150,12 +2091,12 @@ public partial class MainWindow : Window
     {
         if (status is null)
         {
-            return "Trust storage status unavailable.";
+            return L.T("trust_storage_status_unavailable");
         }
 
-        var source = status.LoadedFromBackup ? "backup restored" : "primary file";
-        var health = status.Healthy ? "healthy" : "needs attention";
-        var message = $"{status.PersistedDeviceCount} trusted device(s), {health}, {source}.";
+        var source = status.LoadedFromBackup ? L.T("backup_restored") : L.T("primary_file");
+        var health = status.Healthy ? "healthy" : L.T("needs_attention");
+        var message = L.F("trusted_device_s", status.PersistedDeviceCount, health, source);
 
         if (!string.IsNullOrWhiteSpace(status.LastLoadError))
         {
@@ -2186,15 +2127,15 @@ public partial class MainWindow : Window
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
-            var filterItems = new[] { "All apps" }.Concat(appNames).ToArray();
+            var filterItems = new[] { L.T("all_apps") }.Concat(appNames).ToArray();
             ReconcileOrderedCollection(_notificationApps, filterItems, item => item);
             NotificationAppFilter.SelectedItem = appNames.Contains(previousFilter, StringComparer.OrdinalIgnoreCase)
                 ? previousFilter
-                : "All apps";
+                : L.T("all_apps");
         }
 
         var search = NotificationSearchBox?.Text?.Trim() ?? string.Empty;
-        var selectedApp = NotificationAppFilter.SelectedItem as string ?? "All apps";
+        var selectedApp = NotificationAppFilter.SelectedItem as string ?? L.T("all_apps");
         var hideMuted = HideMutedNotificationsCheck?.IsChecked == true;
         _notificationsView.Filter = item =>
         {
@@ -2207,7 +2148,7 @@ public partial class MainWindow : Window
                 || notification.AppName.Contains(search, StringComparison.OrdinalIgnoreCase)
                 || notification.Title.Contains(search, StringComparison.OrdinalIgnoreCase)
                 || notification.Body.Contains(search, StringComparison.OrdinalIgnoreCase);
-            var appMatches = string.Equals(selectedApp, "All apps", StringComparison.OrdinalIgnoreCase)
+            var appMatches = string.Equals(selectedApp, L.T("all_apps"), StringComparison.OrdinalIgnoreCase)
                 || string.Equals(notification.AppName, selectedApp, StringComparison.OrdinalIgnoreCase);
             var muteMatches = !hideMuted || !_mutedNotificationPackages.Contains(notification.PackageName);
             return searchMatches && appMatches && muteMatches;
@@ -2229,8 +2170,8 @@ public partial class MainWindow : Window
 
         var search = PhotoSearchBox?.Text?.Trim() ?? string.Empty;
         var sort = (PhotoSortCombo?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "newest";
-        var previousAlbum = albumFilter.SelectedItem as string ?? "All albums";
-        var albumItems = new[] { "All albums" }
+        var previousAlbum = albumFilter.SelectedItem as string ?? L.T("all_albums");
+        var albumItems = new[] { L.T("all_albums") }
             .Concat(_photos
                 .Select(photo => photo.AlbumName)
                 .Where(album => !string.IsNullOrWhiteSpace(album))
@@ -2241,13 +2182,13 @@ public partial class MainWindow : Window
         ReconcileOrderedCollection(_photoAlbums, albumItems, item => item);
         albumFilter.SelectedItem = albumItems.Contains(previousAlbum, StringComparer.OrdinalIgnoreCase)
             ? previousAlbum
-            : "All albums";
-        var selectedAlbum = albumFilter.SelectedItem as string ?? "All albums";
+            : L.T("all_albums");
+        var selectedAlbum = albumFilter.SelectedItem as string ?? L.T("all_albums");
         _photosView.Filter = item => item is MediaItemViewModel photo
             && (string.IsNullOrWhiteSpace(search)
                 || photo.FileName.Contains(search, StringComparison.OrdinalIgnoreCase)
                 || photo.Details.Contains(search, StringComparison.OrdinalIgnoreCase))
-            && (string.Equals(selectedAlbum, "All albums", StringComparison.OrdinalIgnoreCase)
+            && (string.Equals(selectedAlbum, L.T("all_albums"), StringComparison.OrdinalIgnoreCase)
                 || string.Equals(photo.AlbumName, selectedAlbum, StringComparison.OrdinalIgnoreCase));
         _photosView.CustomSort = Comparer<MediaItemViewModel>.Create((left, right) => sort switch
         {
@@ -2261,7 +2202,7 @@ public partial class MainWindow : Window
         var visibleCount = _photosView.Cast<MediaItemViewModel>().Count();
         if (_allPhotos.Length > 0)
         {
-            PhotosStatusText.Text = $"Showing {visibleCount} of {_allPhotos.Length} photo(s).";
+            PhotosStatusText.Text = L.F("showing_of_photo_s", visibleCount, _allPhotos.Length);
         }
     }
 
@@ -2407,7 +2348,7 @@ public partial class MainWindow : Window
     private void UpdateBreadcrumbs(string path)
     {
         Breadcrumbs.Clear();
-        Breadcrumbs.Add(new BreadcrumbItem { Name = "Device", Path = "/" });
+        Breadcrumbs.Add(new BreadcrumbItem { Name = L.T("device"), Path = "/" });
         if (string.IsNullOrEmpty(path) || path == "/") return;
         var parts = path.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
         var currentPath = "";
@@ -2458,14 +2399,14 @@ public partial class MainWindow : Window
             if (!response.IsSuccessStatusCode)
             {
                 var errorText = await response.Content.ReadAsStringAsync();
-                Dispatcher.Invoke(() => StorageStatusText.Text = $"Failed to load folder: {errorText}");
+                Dispatcher.Invoke(() => StorageStatusText.Text = L.F("failed_to_load_folder", errorText));
                 return;
             }
 
             var result = await response.Content.ReadFromJsonAsync<StorageListResponsePayload>(JsonOptions);
             if (result == null)
             {
-                Dispatcher.Invoke(() => StorageStatusText.Text = "Failed: Empty response");
+                Dispatcher.Invoke(() => StorageStatusText.Text = L.T("failed_empty_response"));
                 return;
             }
             if (!string.IsNullOrEmpty(result.Error))
@@ -2485,7 +2426,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            Dispatcher.Invoke(() => StorageStatusText.Text = UserFacingError("This folder could not be loaded. Check the phone connection and retry.", ex));
+            Dispatcher.Invoke(() => StorageStatusText.Text = UserFacingError(L.T("this_folder_could_not_be_loaded_check_the_ph"), ex));
         }
     }
 
@@ -2497,14 +2438,14 @@ public partial class MainWindow : Window
             var response = await _host.PostAsJsonAsync($"v1/devices/{Uri.EscapeDataString(deviceId)}/storage/file", new StorageFileRequestPayload(Guid.NewGuid().ToString(), item.Payload.Path));
             if (!response.IsSuccessStatusCode)
             {
-                StorageStatusText.Text = $"Download failed: {await response.Content.ReadAsStringAsync()}";
+                StorageStatusText.Text = L.F("download_failed", await response.Content.ReadAsStringAsync());
                 return;
             }
 
             var result = await response.Content.ReadFromJsonAsync<StorageFileResponsePayload>(JsonOptions);
             if (result == null || !string.IsNullOrEmpty(result.Error) || result.Base64 == null)
             {
-                StorageStatusText.Text = $"Download failed: {result?.Error ?? "Empty response"}";
+                StorageStatusText.Text = L.F("download_failed", result?.Error ?? L.T("empty_response"));
                 return;
             }
 
@@ -2523,7 +2464,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            StorageStatusText.Text = UserFacingError("This item could not be opened. Try again.", ex);
+            StorageStatusText.Text = UserFacingError(L.T("this_item_could_not_be_opened_try_again"), ex);
         }
     }
 
@@ -2532,7 +2473,7 @@ public partial class MainWindow : Window
         var selectedDevice = GetSelectedDevice();
         if (selectedDevice is null)
         {
-            StorageStatusText.Text = "Please select a device in the sidebar first.";
+            StorageStatusText.Text = L.T("please_select_a_device_in_the_sidebar_first");
             return;
         }
 
@@ -2566,19 +2507,19 @@ public partial class MainWindow : Window
         var selectedDevice = GetSelectedDevice();
         if (selectedDevice is null)
         {
-            StorageStatusText.Text = "Please select a device in the sidebar first.";
+            StorageStatusText.Text = L.T("please_select_a_device_in_the_sidebar_first");
             return;
         }
 
         if (StorageItemsList.SelectedItem is not StorageItemViewModel item)
         {
-            StorageStatusText.Text = "Please select a file to download.";
+            StorageStatusText.Text = L.T("please_select_a_file_to_download");
             return;
         }
 
         if (item.Payload.IsDirectory)
         {
-            StorageStatusText.Text = "Cannot download a directory. Double-click to browse.";
+            StorageStatusText.Text = L.T("cannot_download_a_directory_double_click_to");
             return;
         }
 
@@ -2588,14 +2529,14 @@ public partial class MainWindow : Window
             var response = await _host.PostAsJsonAsync($"v1/devices/{Uri.EscapeDataString(selectedDevice.DeviceId)}/storage/file", new StorageFileRequestPayload(Guid.NewGuid().ToString(), item.Payload.Path));
             if (!response.IsSuccessStatusCode)
             {
-                StorageStatusText.Text = $"Download failed: {await response.Content.ReadAsStringAsync()}";
+                StorageStatusText.Text = L.F("download_failed", await response.Content.ReadAsStringAsync());
                 return;
             }
 
             var result = await response.Content.ReadFromJsonAsync<StorageFileResponsePayload>(JsonOptions);
             if (result == null || !string.IsNullOrEmpty(result.Error) || result.Base64 == null)
             {
-                StorageStatusText.Text = $"Download failed: {result?.Error ?? "Empty response"}";
+                StorageStatusText.Text = L.F("download_failed", result?.Error ?? L.T("empty_response"));
                 return;
             }
 
@@ -2609,16 +2550,16 @@ public partial class MainWindow : Window
             if (saveDialog.ShowDialog() == true)
             {
                 await File.WriteAllBytesAsync(saveDialog.FileName, bytes);
-                StorageStatusText.Text = $"Saved to {Path.GetFileName(saveDialog.FileName)}";
+                StorageStatusText.Text = L.F("saved_to", Path.GetFileName(saveDialog.FileName));
             }
             else
             {
-                StorageStatusText.Text = "Download cancelled.";
+                StorageStatusText.Text = L.T("download_cancelled");
             }
         }
         catch (Exception ex)
         {
-            StorageStatusText.Text = UserFacingError("This file could not be downloaded. Try again.", ex);
+            StorageStatusText.Text = UserFacingError(L.T("this_file_could_not_be_downloaded_try_again"), ex);
         }
     }
 
@@ -2627,17 +2568,17 @@ public partial class MainWindow : Window
         var selectedDevice = GetSelectedDevice();
         if (selectedDevice is null)
         {
-            StorageStatusText.Text = "Please select a device in the sidebar first.";
+            StorageStatusText.Text = L.T("please_select_a_device_in_the_sidebar_first");
             return;
         }
 
         if (StorageItemsList.SelectedItem is not StorageItemViewModel item)
         {
-            StorageStatusText.Text = "Please select an item to delete.";
+            StorageStatusText.Text = L.T("please_select_an_item_to_delete");
             return;
         }
 
-        var resultConfirm = MessageBox.Show($"Are you sure you want to delete {item.Name}?", "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        var resultConfirm = MessageBox.Show(L.F("are_you_sure_you_want_to_delete", item.Name), L.T("confirm_delete"), MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (resultConfirm != MessageBoxResult.Yes) return;
 
         StorageStatusText.Text = $"Deleting {item.Name}...";
@@ -2646,7 +2587,7 @@ public partial class MainWindow : Window
             var response = await _host.DeleteAsync($"v1/devices/{Uri.EscapeDataString(selectedDevice.DeviceId)}/storage?filePath={Uri.EscapeDataString(item.Payload.Path)}");
             if (!response.IsSuccessStatusCode)
             {
-                StorageStatusText.Text = $"Delete failed: {await response.Content.ReadAsStringAsync()}";
+                StorageStatusText.Text = L.F("delete_failed", await response.Content.ReadAsStringAsync());
                 return;
             }
 
@@ -2655,7 +2596,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            StorageStatusText.Text = UserFacingError("This item could not be deleted from the phone. Try again.", ex);
+            StorageStatusText.Text = UserFacingError(L.T("this_item_could_not_be_deleted_from_the_phon"), ex);
         }
     }
 
@@ -2720,7 +2661,7 @@ public partial class MainWindow : Window
             return value.Replace('_', ' ');
         }
 
-        return "needs user action";
+        return L.T("needs_user_action");
     }
 
     private static bool PermissionGranted(LinkedDevice device, string feature) =>
@@ -2755,8 +2696,11 @@ public partial class MainWindow : Window
 
 internal enum PairingStep
 {
+    Welcome,
+    Features,
     GetApp,
     Pair,
+    Preferences,
     Done
 }
 
@@ -3030,7 +2974,7 @@ public class NotificationViewModel : System.ComponentModel.INotifyPropertyChange
         }
     }
 
-    public string ExpandButtonText => IsExpanded ? "Less" : "More";
+    public string ExpandButtonText => IsExpanded ? L.T("less") : L.T("more");
 
     /// <summary>Roughly whether the body overflows the three collapsed lines of a feed card.</summary>
     public bool CanExpand => Body.Length > 110 || Body.Contains('\n');
@@ -3040,8 +2984,8 @@ public class NotificationViewModel : System.ComponentModel.INotifyPropertyChange
         get
         {
             var date = PostedAt.LocalDateTime.Date;
-            if (date == DateTime.Today) return "Today";
-            if (date == DateTime.Today.AddDays(-1)) return "Yesterday";
+            if (date == DateTime.Today) return L.T("today");
+            if (date == DateTime.Today.AddDays(-1)) return L.T("yesterday");
             return date.ToString("dddd, MMMM d");
         }
     }
@@ -3165,26 +3109,26 @@ public sealed class DeviceViewModel : INotifyPropertyChanged
     public bool Connected => Device.Connected;
     public IReadOnlyDictionary<string, string>? Permissions => Device.Permissions;
     public string StatusText => Device.Connected
-        ? "Connected"
+        ? L.T("connected")
         : DateTimeOffset.UtcNow - Device.LastSeenAt < TimeSpan.FromMinutes(2)
-            ? "Reconnecting"
-            : "Offline";
+            ? L.T("reconnecting")
+            : L.T("offline");
 
     /// <summary>Status dot colour from the active theme (high contrast maps these to system colours).</summary>
     public System.Windows.Media.Brush? StatusBrush => System.Windows.Application.Current?.TryFindResource(
-        Device.Connected ? "SuccessBrush" : StatusText == "Reconnecting" ? "CautionBrush" : "TextTertiaryBrush") as System.Windows.Media.Brush;
+        Device.Connected ? "SuccessBrush" : StatusText == L.T("reconnecting") ? "CautionBrush" : "TextTertiaryBrush") as System.Windows.Media.Brush;
 
-    public string BatteryDisplayText => string.IsNullOrWhiteSpace(BatteryStatusText) ? "Unavailable" : BatteryStatusText;
+    public string BatteryDisplayText => string.IsNullOrWhiteSpace(BatteryStatusText) ? L.T("unavailable") : BatteryStatusText;
 
     public string LastSeenText
     {
         get
         {
-            if (Device.Connected) return "Just now";
+            if (Device.Connected) return L.T("just_now");
             var elapsed = DateTimeOffset.UtcNow - Device.LastSeenAt;
-            if (elapsed < TimeSpan.FromMinutes(1)) return "Just now";
-            if (elapsed < TimeSpan.FromHours(1)) return $"{Math.Max(1, (int)elapsed.TotalMinutes)} min ago";
-            if (elapsed < TimeSpan.FromDays(1)) return $"{Math.Max(1, (int)elapsed.TotalHours)} hr ago";
+            if (elapsed < TimeSpan.FromMinutes(1)) return L.T("just_now");
+            if (elapsed < TimeSpan.FromHours(1)) return L.F("min_ago", Math.Max(1, (int)elapsed.TotalMinutes));
+            if (elapsed < TimeSpan.FromDays(1)) return L.F("hr_ago", Math.Max(1, (int)elapsed.TotalHours));
             return Device.LastSeenAt.LocalDateTime.ToString("MMM d");
         }
     }
@@ -3253,7 +3197,7 @@ public sealed class StorageItemViewModel
     public StorageItemPayload Payload { get; }
     public string Name => Payload.Name;
     public string Details => Payload.IsDirectory 
-        ? "Folder" 
+        ? L.T("folder") 
         : $"{Payload.SizeBytes:n0} bytes";
         
     public bool IsDirectory => Payload.IsDirectory;
@@ -3263,17 +3207,17 @@ public sealed class StorageItemViewModel
     {
         get
         {
-            if (Payload.IsDirectory) return "Folder";
+            if (Payload.IsDirectory) return L.T("folder");
             var ext = System.IO.Path.GetExtension(Name).ToLowerInvariant();
             if (ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".webp" || ext == ".gif" || ext == ".bmp")
-                return "Image";
+                return L.T("image");
             if (ext == ".mp3" || ext == ".wav" || ext == ".ogg" || ext == ".m4a" || ext == ".flac" || ext == ".wma")
-                return "Audio";
+                return L.T("audio");
             if (ext == ".mp4" || ext == ".mkv" || ext == ".avi" || ext == ".mov" || ext == ".wmv" || ext == ".flv")
-                return "Video";
+                return L.T("video");
             if (ext == ".pdf" || ext == ".doc" || ext == ".docx" || ext == ".txt" || ext == ".rtf" || ext == ".xls" || ext == ".xlsx" || ext == ".ppt" || ext == ".pptx" || ext == ".pdf")
-                return "Document";
-            return "File";
+                return L.T("document");
+            return L.T("file");
         }
     }
 }
