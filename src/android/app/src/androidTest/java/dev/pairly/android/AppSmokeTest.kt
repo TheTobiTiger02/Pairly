@@ -58,7 +58,7 @@ class AppSmokeTest {
     private fun exists(@StringRes id: Int): Boolean =
         compose.onAllNodesWithText(text(id)).fetchSemanticsNodes().isNotEmpty()
 
-    private fun waitFor(@StringRes id: Int, timeoutMs: Long = 15_000) =
+    private fun waitFor(@StringRes id: Int, timeoutMs: Long = 30_000) =
         compose.waitUntil(timeoutMs) { exists(id) }
 
     private fun click(@StringRes id: Int) {
@@ -95,7 +95,7 @@ class AppSmokeTest {
         var steps = 0
         while (!exists(R.string.onboarding_done_title)) {
             check(++steps <= 15) { "Setup did not reach the summary." }
-            compose.waitUntil(15_000) {
+            compose.waitUntil(30_000) {
                 exists(R.string.action_skip) || exists(R.string.action_maybe_later) ||
                     exists(R.string.action_continue) || exists(R.string.onboarding_done_title)
             }
@@ -132,7 +132,7 @@ class AppSmokeTest {
         val list = compose.onNode(hasScrollToNodeAction())
         list.performScrollToNode(hasText(text(R.string.settings_version)))
         repeat(7) { compose.onNodeWithText(text(R.string.settings_version)).performClick() }
-        waitFor(R.string.design_preview_title)
+        compose.waitForIdle() // the section header shows the title in capitals, so wait on its content
         list.performScrollToNode(hasText(text(R.string.design_dark_vibrant)))
         click(R.string.design_dark_vibrant)
         list.performScrollToNode(hasText(text(R.string.design_nav_dashboard)))

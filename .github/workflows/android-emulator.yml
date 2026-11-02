@@ -48,9 +48,12 @@ jobs:
           profile: pixel_6
           disable-animations: false
           working-directory: src/android
+          # Screenshots and the log are pulled whether or not the test passed; the last line fails the step.
           script: |
-            ./gradlew :app:connectedDebugAndroidTest || (adb logcat -d -t 400 > emulator-logcat.txt; exit 1)
+            ./gradlew :app:connectedDebugAndroidTest || touch test-failed
             adb exec-out run-as dev.pairly.android tar c files/screenshots > screenshots.tar || true
+            adb logcat -d -t 600 > emulator-logcat.txt || true
+            test ! -f test-failed
 
       - name: Collect screenshots
         if: always()
