@@ -80,14 +80,21 @@ class SettingsCallbacks(
 private const val UNLOCK_TAPS = 7
 
 @Composable
-fun SettingsScreen(state: AppState, prefs: UiPrefs, language: LocaleText.Language, callbacks: SettingsCallbacks) {
+fun SettingsScreen(
+    state: AppState,
+    prefs: UiPrefs,
+    language: LocaleText.Language,
+    callbacks: SettingsCallbacks,
+    showTitle: Boolean = true
+) {
     val context = LocalContext.current
     val actions = LocalFeatureActions.current
     var showForget by remember { mutableStateOf(false) }
     var versionTaps by remember { mutableIntStateOf(0) }
 
     ScreenList {
-        item { ScreenTitle(stringResource(R.string.settings_title)) }
+        // Opened from the dashboard's top bar, the bar already names the screen.
+        if (showTitle) item { ScreenTitle(stringResource(R.string.settings_title)) }
 
         // Connection
         item { SectionLabel(stringResource(R.string.settings_connection)) }

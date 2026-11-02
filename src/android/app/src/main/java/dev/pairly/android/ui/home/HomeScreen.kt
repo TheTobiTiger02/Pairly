@@ -79,7 +79,8 @@ fun HomeScreen(state: AppState, navStyle: NavStyle, callbacks: HomeCallbacks) {
         item { HomeTopBar(dashboard, callbacks) }
         item { PcHeroCard(state, callbacks) }
         val missing = state.permissions.missing
-        if (state.hasPairing && missing.isNotEmpty()) {
+        // The dashboard already lists every feature as a tile; until pairing it shows only those.
+        if (missing.isNotEmpty() && (state.hasPairing || !dashboard)) {
             item { FinishSetupCard(missing, callbacks.openFeature) }
         }
         item { QuickActions(state, callbacks) }

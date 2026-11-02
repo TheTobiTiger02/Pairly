@@ -293,7 +293,8 @@ private fun PairlyNavHost(
                         setLanguage = callbacks.setLanguage,
                         openHelp = openHelp,
                         replayOnboarding = callbacks.replayOnboarding
-                    )
+                    ),
+                    showTitle = helpIsTab
                 )
             }
         }
