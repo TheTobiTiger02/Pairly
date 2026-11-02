@@ -17,7 +17,7 @@ Messages, notifications, photos, files, a shared clipboard and your phone's scre
 [![Latest release](https://img.shields.io/github/v/release/TheTobiTiger02/Pairly?label=latest&color=4F5BE8)](https://github.com/TheTobiTiger02/Pairly/releases/latest)
 [![CI](https://github.com/TheTobiTiger02/Pairly/actions/workflows/ci.yml/badge.svg)](https://github.com/TheTobiTiger02/Pairly/actions/workflows/ci.yml)
 
-<img src="docs/store-screenshot-1.png" width="820" alt="Pairly on Windows">
+<img src="docs/screenshots/windows.png" width="820" alt="Pairly on Windows: Home and the pairing step of setup">
 
 <img src="docs/screenshots/android.png" width="820" alt="Pairly on Android: welcome, a guided setup step, home and the shared clipboard">
 
@@ -63,7 +63,7 @@ Android only lets the app that's on screen read the clipboard. To sync copies ma
 
 ## For developers
 
-Windows: WPF (.NET 9, [WPF-UI](https://github.com/lepoco/wpfui), MVVM) with an embedded ASP.NET Core host. Android: Kotlin and Jetpack Compose (Material 3). Screen mirroring uses WebRTC, MediaProjection and WebView2.
+Windows: WPF (.NET 9) with a hand-built Fluent 2 design system (Mica, light/dark/high contrast) and an embedded ASP.NET Core host. Android: Kotlin and Jetpack Compose (Material 3). Screen mirroring uses WebRTC, MediaProjection and WebView2.
 
 ### Repository layout
 
@@ -94,7 +94,7 @@ Launch only `Pairly.Windows.exe`; it owns the embedded host.
 
 ### Design preview
 
-The Android app ships four candidate designs (Expressive, Minimal, Dark vibrant, Glass) and two navigation styles (bottom bar, dashboard). Unlock the switcher by tapping **Settings → Version** seven times. The Windows app can switch between a left navigation pane and top tabs the same way (click the version seven times). CI renders every Android screen in every design, light and dark, English and German, and attaches them to each run as the `android-screenshots` artifact.
+The Android app ships four candidate designs (Expressive, Minimal, Dark vibrant, Glass) and two navigation styles (bottom bar, dashboard). Unlock the switcher by tapping **Settings → Version** seven times. The Windows app can switch between a left navigation pane and top tabs the same way (click the version seven times). CI renders every Android screen in every design, light and dark, English and German, and every Windows page in both layouts (`--render-screenshots`), and attaches them to each run as the `android-screenshots` and `windows-screenshots` artifacts.
 
 <img src="docs/screenshots/android-designs.png" width="820" alt="The four Android design candidates">
 

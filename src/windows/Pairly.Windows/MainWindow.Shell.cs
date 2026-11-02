@@ -302,6 +302,12 @@ public partial class MainWindow
     {
         _tour?.Close();
         SelectPage(HomeTabIndex);
+        // Build the tour once Home is laid out, so its quick actions count as a visible step.
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(ShowTour));
+    }
+
+    private void ShowTour()
+    {
         var tabs = string.Equals(_preferences.Layout, "Tabs", StringComparison.Ordinal);
         var steps = new List<CoachMarkOverlay.Step>
         {

@@ -16,7 +16,7 @@ Nachrichten, Benachrichtigungen, Fotos, Dateien, eine gemeinsame Zwischenablage 
 
 [![Neueste Version](https://img.shields.io/github/v/release/TheTobiTiger02/Pairly?label=neueste&color=4F5BE8)](https://github.com/TheTobiTiger02/Pairly/releases/latest)
 
-<img src="docs/store-screenshot-1.png" width="820" alt="Pairly unter Windows">
+<img src="docs/screenshots/windows.png" width="820" alt="Pairly unter Windows: Startseite und Kopplung bei der Einrichtung">
 
 <img src="docs/screenshots/android.png" width="820" alt="Pairly auf Android: Willkommen, ein Einrichtungsschritt, Startseite und gemeinsame Zwischenablage">
 

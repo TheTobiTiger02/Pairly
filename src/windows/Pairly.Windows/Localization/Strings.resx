@@ -528,4 +528,6 @@
   <data name="your_phone_s_text_messages_show_up_here_choo" xml:space="preserve"><value>Your phone's text messages show up here. Choose one on the left to read and reply.</value></data>
   <data name="qa_clipboard" xml:space="preserve"><value>Clipboard</value></data>
   <data name="qa_sync" xml:space="preserve"><value>Sync</value></data>
+  <data name="toggle_on" xml:space="preserve"><value>On</value></data>
+  <data name="toggle_off" xml:space="preserve"><value>Off</value></data>
 </root>

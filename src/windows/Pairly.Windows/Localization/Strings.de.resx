@@ -528,4 +528,6 @@
   <data name="your_phone_s_text_messages_show_up_here_choo" xml:space="preserve"><value>Hier erscheinen die SMS deines Handys. Wähle links eine aus, um sie zu lesen und zu beantworten.</value></data>
   <data name="qa_clipboard" xml:space="preserve"><value>Ablage</value></data>
   <data name="qa_sync" xml:space="preserve"><value>Abgleich</value></data>
+  <data name="toggle_on" xml:space="preserve"><value>Ein</value></data>
+  <data name="toggle_off" xml:space="preserve"><value>Aus</value></data>
 </root>

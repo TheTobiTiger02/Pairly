@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:l="clr-namespace:Pairly.Windows.Localization"
                     xmlns:controls="clr-namespace:Pairly.Windows.Controls">
     <!-- Shared layout, typography and control styles following Windows 11 (Fluent 2 / WinUI) metrics.
          The palette is supplied by Light/Dark/HighContrast.xaml; every colour here is a DynamicResource. -->
@@ -538,7 +539,7 @@
                             <ColumnDefinition Width="40" />
                         </Grid.ColumnDefinitions>
                         <ContentPresenter VerticalAlignment="Center" Margin="0,0,12,0" RecognizesAccessKey="True" />
-                        <TextBlock x:Name="StateText" Grid.Column="1" Text="Off" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <TextBlock x:Name="StateText" Grid.Column="1" Text="{l:Loc toggle_off}" VerticalAlignment="Center" Margin="0,0,12,0" />
                         <Border x:Name="Track" Grid.Column="2" Width="40" Height="20" CornerRadius="10" VerticalAlignment="Center"
                                 Background="{DynamicResource ControlFillBrush}" BorderBrush="{DynamicResource StrokeStrongBrush}" BorderThickness="1">
                             <Ellipse x:Name="Knob" Width="12" Height="12" HorizontalAlignment="Left" Margin="4,0"
@@ -552,7 +553,7 @@
                             <Setter TargetName="Knob" Property="Margin" Value="3,0" />
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="StateText" Property="Text" Value="On" />
+                            <Setter TargetName="StateText" Property="Text" Value="{l:Loc toggle_on}" />
                             <Setter TargetName="Track" Property="Background" Value="{DynamicResource AccentBrush}" />
                             <Setter TargetName="Track" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
                             <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right" />
