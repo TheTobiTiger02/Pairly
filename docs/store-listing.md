@@ -62,7 +62,7 @@ https://github.com/TheTobiTiger02/Pairly/issues
 
 # German listing (Deutsch)
 
-In Partner Center: open the submission → **Store listings** → **Manage additional languages** → add **German (de-de)**, then paste the text below. The package already declares German, so the Store offers the listing to German-speaking customers.
+**Required.** The Windows package supports German (`de-de`), and Partner Center rejects a submission until every language the package declares has a listing. Add it once: open the submission → **Store listings** → **Add/remove languages** → **German**, then paste the text below and upload at least one screenshot (`docs/store-screenshot-1.png` works). After that, every release fills in the German **What's new** by itself.
 
 ## Kurzbeschreibung
 
