@@ -22,6 +22,9 @@ namespace Pairly.Windows;
 public partial class MainWindow
 {
     private const string DemoDeviceId = "demo-phone";
+
+    /// <summary>A fixed early evening, so the demo times look natural whenever CI renders them.</summary>
+    private static DateTimeOffset DemoNow => new(DateTime.Today.AddHours(18).AddMinutes(40));
     private string _demoLanguage = "en";
 
     private static readonly (string Name, int Page, string Theme)[] StoreShots =
@@ -57,6 +60,10 @@ public partial class MainWindow
             {
                 LocalizationSource.Instance.SetLanguage(language);
                 _demoLanguage = language;
+                // Dates and times in the language's format (23:17 rather than 11:17 PM in German).
+                var culture = System.Globalization.CultureInfo.GetCultureInfo(language == "de" ? "de-DE" : "en-US");
+                System.Globalization.CultureInfo.CurrentCulture = culture;
+                Language = System.Windows.Markup.XmlLanguage.GetLanguage(culture.IetfLanguageTag);
                 ApplyDemoData();
                 foreach (var (name, page, theme) in StoreShots)
                 {
@@ -65,6 +72,8 @@ public partial class MainWindow
                     SelectPage(page);
                     if (page == 0 && SmsThreadsList.Items.Count > 0)
                     {
+                        // Reselect so the conversation loads in the current language.
+                        SmsThreadsList.SelectedIndex = -1;
                         SmsThreadsList.SelectedIndex = 0;
                     }
                     await Settle();
@@ -114,7 +123,9 @@ public partial class MainWindow
     private void ApplyDemoData()
     {
         var de = _demoLanguage == "de";
-        var now = DateTimeOffset.Now;
+        var now = DemoNow;
+        _realtimeConnected = true;
+        UpdateRealtimeStatusText();
         var granted = new[] { "notifications", "sms", "photos", "mirroring", "calls", "files", "clipboard" }
             .ToDictionary(key => key, _ => "granted");
         var phone = new LinkedDevice(
@@ -191,19 +202,19 @@ public partial class MainWindow
         var lines = de
             ? new (bool Me, string Text)[]
             {
-                (false, "Bist du heute Abend zum Essen da? 🍝"),
+                (false, "Bist du heute Abend zum Essen da?"),
                 (true, "Ja, bin um 7 da. Soll ich was mitbringen?"),
                 (false, "Vielleicht Brot vom Bäcker an der Ecke"),
                 (true, "Mach ich! Bis später"),
-                (false, "Super, bis dann ❤️")
+                (false, "Super, bis dann")
             }
             : new (bool Me, string Text)[]
             {
-                (false, "Are you coming for dinner tonight? 🍝"),
+                (false, "Are you coming for dinner tonight?"),
                 (true, "Yes, I'll be there at 7. Should I bring anything?"),
                 (false, "Maybe some bread from the bakery on the corner"),
                 (true, "Will do! See you later"),
-                (false, "Great, see you then ❤️")
+                (false, "Great, see you then")
             };
         return lines.Select((line, index) => new SmsMessagePayload($"m{index}", threadId, "+1 555 0100", line.Text, line.Me, now.AddMinutes(-40 + index * 6))).ToArray();
     }
@@ -211,7 +222,7 @@ public partial class MainWindow
     private static SmsThreadPayload[] DemoThreads(bool de, DateTimeOffset now) => de
         ? new[]
         {
-            new SmsThreadPayload("t1", "Mama", "+49 151 0000100", "Super, bis dann ❤️", now.AddMinutes(-16), 1),
+            new SmsThreadPayload("t1", "Mama", "+49 151 0000100", "Super, bis dann", now.AddMinutes(-16), 1),
             new SmsThreadPayload("t2", "Alex", "+49 151 0000101", "Hast du die Präsentation schon gesehen?", now.AddHours(-1), 2),
             new SmsThreadPayload("t3", "Team Mittagessen", "+49 151 0000102", "Jonas: 12:30 beim Italiener?", now.AddHours(-3), 0),
             new SmsThreadPayload("t4", "Sam", "+49 151 0000103", "Danke fürs Mitnehmen gestern!", now.AddHours(-20), 0),
@@ -220,7 +231,7 @@ public partial class MainWindow
         }
         : new[]
         {
-            new SmsThreadPayload("t1", "Mom", "+1 555 0100", "Great, see you then ❤️", now.AddMinutes(-16), 1),
+            new SmsThreadPayload("t1", "Mom", "+1 555 0100", "Great, see you then", now.AddMinutes(-16), 1),
             new SmsThreadPayload("t2", "Alex Morgan", "+1 555 0101", "Did you see the slides yet?", now.AddHours(-1), 2),
             new SmsThreadPayload("t3", "Team lunch", "+1 555 0102", "Jordan: 12:30 at the Italian place?", now.AddHours(-3), 0),
             new SmsThreadPayload("t4", "Sam", "+1 555 0103", "Thanks for the ride yesterday!", now.AddHours(-20), 0),
@@ -234,7 +245,7 @@ public partial class MainWindow
         new NotificationPayload("n2", "demo.calendar", de ? "Kalender" : "Calendar", de ? "Team-Meeting in 15 Minuten" : "Team meeting in 15 minutes", de ? "Konferenzraum 2" : "Conference room 2", false, now.AddMinutes(-11), Clearable: true),
         new NotificationPayload("n3", "demo.bank", "Bank", de ? "Zahlung eingegangen" : "Payment received", de ? "Du hast 42,00 € von Sam erhalten." : "You received $42.00 from Sam.", false, now.AddMinutes(-35), Clearable: true),
         new NotificationPayload("n4", "demo.delivery", de ? "Pakete" : "Deliveries", de ? "Paket unterwegs" : "Package on its way", de ? "Lieferung heute zwischen 14 und 16 Uhr" : "Arriving today between 2 and 4 PM", false, now.AddHours(-2), Clearable: true),
-        new NotificationPayload("n5", "demo.fitness", "Fitness", de ? "Tagesziel erreicht 🎉" : "Daily goal reached 🎉", de ? "10.000 Schritte, weiter so!" : "10,000 steps, keep it up!", false, now.AddHours(-5), Clearable: true),
+        new NotificationPayload("n5", "demo.fitness", "Fitness", de ? "Tagesziel erreicht" : "Daily goal reached", de ? "10.000 Schritte, weiter so!" : "10,000 steps, keep it up!", false, now.AddHours(-5), Clearable: true),
         new NotificationPayload("n6", "demo.news", de ? "Nachrichten" : "News", de ? "Wetter: Sonniges Wochenende" : "Weather: a sunny weekend ahead", de ? "Bis zu 24 °C am Samstag" : "Highs of 75°F on Saturday", false, now.AddHours(-9), Clearable: true)
     };
 

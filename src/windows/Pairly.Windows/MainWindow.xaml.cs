@@ -1158,7 +1158,7 @@ public partial class MainWindow : Window
 
         if (App.DemoMode)
         {
-            SmsMessagesList.ItemsSource = DemoMessages(thread.ThreadId, _demoLanguage == "de", DateTimeOffset.Now);
+            SmsMessagesList.ItemsSource = DemoMessages(thread.ThreadId, _demoLanguage == "de", DemoNow);
             return;
         }
 
