@@ -14,6 +14,8 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\Pairly.ico</ApplicationIcon>
     <AssemblyName>Pairly.Windows</AssemblyName>
+    <!-- Program.Main runs the Velopack install/update hooks before WPF starts. -->
+    <StartupObject>Pairly.Windows.Program</StartupObject>
     <RootNamespace>Pairly.Windows</RootNamespace>
     <Product>Pairly</Product>
     <Title>Pairly</Title>
@@ -45,6 +47,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="QRCoder" Version="1.6.0" />
+    <PackageReference Include="Velopack" Version="1.2.161" />
   </ItemGroup>
 
 </Project>

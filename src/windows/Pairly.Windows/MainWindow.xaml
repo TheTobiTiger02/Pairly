@@ -1068,9 +1068,12 @@
                                         <Border Style="{StaticResource SettingsCard}">
                                             <DockPanel>
                                                 <TextBlock Text="&#xE895;" Style="{StaticResource SettingsCardGlyph}" />
+                                                <Button x:Name="RestartToUpdateButton" Content="Restart to update" Style="{StaticResource AccentButton}"
+                                                        DockPanel.Dock="Right" VerticalAlignment="Center" Margin="16,0,0,0"
+                                                        Visibility="Collapsed" Click="RestartToUpdate_Click" />
                                                 <StackPanel VerticalAlignment="Center">
                                                     <TextBlock x:Name="AppVersionText" Text="Pairly" Style="{StaticResource SettingsCardTitle}" />
-                                                    <TextBlock Text="Updates are installed by the Microsoft Store."
+                                                    <TextBlock x:Name="UpdateStatusText" Text="Updates are installed by the Microsoft Store."
                                                                Style="{StaticResource SettingsCardDescription}" />
                                                 </StackPanel>
                                             </DockPanel>

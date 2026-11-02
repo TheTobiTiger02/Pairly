@@ -153,7 +153,7 @@ internal static class StartupRegistration
         return string.IsNullOrWhiteSpace(executable) ? null : $"\"{executable}\" --background";
     }
 
-    private static bool IsPackaged()
+    internal static bool IsPackaged()
     {
         var length = 0;
         var result = GetCurrentPackageFullName(ref length, null);

@@ -72,6 +72,19 @@ jobs:
             -AndroidVersionCode ${{ steps.version.outputs.code }} `
             -WindowsPackage $windows
 
+      - name: Build Windows installer (Velopack)
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          dotnet tool install -g vpk --version 1.2.161
+          $out = 'artifacts/release/velopack'
+          # The previous release's package lets vpk produce a small delta update. The first
+          # Velopack release has none, so a failed download is fine.
+          vpk download github --repoUrl 'https://github.com/${{ github.repository }}' --token $env:GH_TOKEN --outputDir $out
+          if ($LASTEXITCODE -ne 0) { Write-Host 'No previous Velopack release; building a full package only.' }
+          .\scripts\Build-Velopack.ps1 -Version '${{ steps.version.outputs.name }}' -OutputDirectory $out
+
       - name: Keep Store package
         if: env.STORE_IDENTITY_NAME != ''
         uses: actions/upload-artifact@v4
@@ -102,13 +115,21 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $notes = if ($env:STORE_PRODUCT_ID) {
-            "Windows: [Microsoft Store](https://apps.microsoft.com/detail/$env:STORE_PRODUCT_ID). New versions reach the Store after certification.`n`nAndroid: install Pairly.apk; installed apps update themselves."
+          $store = if ($env:STORE_PRODUCT_ID) {
+            "Windows: [Microsoft Store](https://apps.microsoft.com/detail/$env:STORE_PRODUCT_ID) (recommended; new versions arrive after certification), or Pairly-Setup.exe below, which updates itself right away.`n`n"
           } else {
-            "Android: install Pairly.apk; installed apps update themselves."
+            "Windows: run Pairly-Setup.exe below; it updates itself.`n`n"
           }
+          $notes = $store + "Android: install Pairly.apk; installed apps update themselves."
+          # Velopack update feed: this version's packages plus the release index installed copies read.
+          $version = '${{ steps.version.outputs.name }}'
+          $velopack = Get-ChildItem artifacts/release/velopack -File | Where-Object {
+            $_.Name -in 'Pairly-Setup.exe', 'releases.win.json', 'assets.win.json', 'RELEASES' -or
+            $_.Name -like "PairlyDesktop-$version-*.nupkg"
+          } | ForEach-Object { $_.FullName }
           gh release create '${{ github.ref_name }}' `
             artifacts/release/android/Pairly.apk `
+            @velopack `
             --title 'Pairly ${{ steps.version.outputs.name }}' `
             --notes $notes `
             --generate-notes

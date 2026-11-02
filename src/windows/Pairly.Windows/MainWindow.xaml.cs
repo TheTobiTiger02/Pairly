@@ -73,6 +73,8 @@ public partial class MainWindow : Window
 
     private System.Windows.Forms.NotifyIcon? _notifyIcon;
     private bool _exitFully;
+    private readonly DesktopUpdater _updater = new();
+    private DispatcherTimer? _updateTimer;
 
     private ClientWebSocket? _eventSocket;
     private volatile string _realtimeDeviceId = string.Empty;
@@ -86,6 +88,7 @@ public partial class MainWindow : Window
         InitializeComponent();
         WindowBackdrop.Attach(this);
         AppVersionText.Text = $"Pairly {typeof(MainWindow).Assembly.GetName().Version?.ToString(3)}";
+        InitializeUpdates();
 
         foreach (var packageName in _preferences.MutedNotificationPackages)
         {
@@ -476,6 +479,54 @@ public partial class MainWindow : Window
         Show();
         WindowState = WindowState.Normal;
         Activate();
+    }
+
+    private void InitializeUpdates()
+    {
+        if (StartupRegistration.IsPackaged())
+        {
+            UpdateStatusText.Text = "Updates are installed by the Microsoft Store.";
+            return;
+        }
+
+        if (!_updater.IsEnabled)
+        {
+            UpdateStatusText.Text = "Development build: automatic updates are off.";
+            return;
+        }
+
+        UpdateStatusText.Text = "Pairly checks GitHub for updates and installs them when it restarts.";
+        _updateTimer = new DispatcherTimer { Interval = TimeSpan.FromHours(6) };
+        _updateTimer.Tick += async (_, _) => await CheckForDesktopUpdateAsync();
+        _updateTimer.Start();
+        // Give the host and pairing a moment to start before the first check.
+        _ = Dispatcher.InvokeAsync(async () =>
+        {
+            await Task.Delay(TimeSpan.FromSeconds(20));
+            await CheckForDesktopUpdateAsync();
+        });
+    }
+
+    private async Task CheckForDesktopUpdateAsync()
+    {
+        try
+        {
+            var ready = await _updater.CheckAndDownloadAsync();
+            UpdateStatusText.Text = ready
+                ? $"Version {_updater.PendingVersion} is ready. It installs the next time Pairly starts."
+                : "Pairly is up to date.";
+            RestartToUpdateButton.Visibility = ready ? Visibility.Visible : Visibility.Collapsed;
+        }
+        catch (Exception ex)
+        {
+            UpdateStatusText.Text = UserFacingError("Could not check for updates. Pairly tries again later.", ex);
+        }
+    }
+
+    private void RestartToUpdate_Click(object sender, RoutedEventArgs e)
+    {
+        _updater.ApplyOnExitAndRestart();
+        ExitFully();
     }
 
     private void ExitFully()

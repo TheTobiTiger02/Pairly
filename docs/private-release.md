@@ -51,7 +51,7 @@ git push origin v1.2.0
 
 The tag is the single version source: the MSIX becomes `1.2.0.0` (the Store requires the last part to be 0), Android `versionName` `1.2.0` and `versionCode` `10200` (`major*10000 + minor*100 + patch`). Minor and patch must stay below 100, and every tag must be higher than the previous one.
 
-The workflow creates a GitHub release with `Pairly.apk` and attaches the Store package to the workflow run as the `Pairly-<version>-store-msix` artifact. Then update the Store by hand:
+The workflow creates a GitHub release with `Pairly.apk` and the Windows installer `Pairly-Setup.exe` plus its Velopack update feed (`releases.win.json`, `PairlyDesktop-<version>-full.nupkg`, and a delta package from the previous version), and attaches the Store package to the workflow run as the `Pairly-<version>-store-msix` artifact. Then update the Store by hand:
 
 1. Download the artifact: `gh run download <run id> --repo TheTobiTiger02/Pairly` (or from the run page on GitHub).
 2. In Partner Center, open Pairly and choose **Update** on the latest submission.
@@ -72,13 +72,21 @@ gh secret set STORE_CLIENT_SECRET
 
 ## Automatic updates
 
-- **Windows:** the Microsoft Store updates installed copies.
+- **Windows (Store):** the Microsoft Store updates installed copies after certification.
+- **Windows (GitHub installer):** Velopack. The app checks the latest GitHub release 20 seconds after start and every 6 hours, downloads newer versions in the background, and installs them the next time Pairly starts, or at once from **Settings → Restart to update**. It installs to `%LOCALAPPDATA%\PairlyDesktop`; settings and pairing data stay in `%LOCALAPPDATA%\Pairly`, so both editions share them. Development builds never update themselves.
 - **Android:** the app queries the GitHub latest-release API every 12 hours from the connection service and from **Settings → Check for updates**, then installs `Pairly.apk` through `PackageInstaller`. Android asks for confirmation until the app is its own installer of record; after the first self-update, Android 12+ installs later updates without prompting. Debug builds never self-update.
 
 ## Local builds
 
 ```powershell
 .\scripts\Build-PrivateRelease.ps1 -PackageVersion 1.2.0.0 -AndroidVersionName 1.2.0 -AndroidVersionCode 10200
+```
+
+For the GitHub installer, after that run (it builds the ADB server the installer bundles):
+
+```powershell
+dotnet tool install -g vpk --version 1.2.161
+.\scripts\Build-Velopack.ps1 -Version 1.2.0
 ```
 
 `-WindowsPackage` selects the Windows output:

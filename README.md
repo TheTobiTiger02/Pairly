@@ -40,7 +40,7 @@ The unsigned local outputs are under each project’s `bin` or `build/outputs` d
 
 ## Install
 
-- **Windows:** install from the Microsoft Store. The Store keeps the app updated.
+- **Windows:** install from the [Microsoft Store](https://apps.microsoft.com/detail/9NDLWS4D52HM), which keeps the app updated. Or run `Pairly-Setup.exe` from the [latest release](https://github.com/TheTobiTiger02/Pairly/releases/latest): it installs per user without admin rights and updates itself from GitHub right away, without waiting for Store certification. Windows SmartScreen warns once because the installer is not code-signed (**More info → Run anyway**). Use one of the two, not both.
 - **Android:** install `Pairly.apk` from the [latest release](https://github.com/TheTobiTiger02/Pairly/releases/latest). The app checks for new releases every 12 hours and from **Settings → Check for updates**. The first update asks for one confirmation; later updates install without prompting on Android 12+.
 
 See the [privacy policy](PRIVACY.md).
