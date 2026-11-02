@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Connection status shown in the app and in the ongoing notification. -->
+<resources>
+    <string name="svc_network_back_paired">Netzwerk verfügbar. Verbinde erneut mit deinem PC …</string>
+    <string name="svc_network_back">Netzwerk verfügbar. Verbinde erneut …</string>
+    <string name="svc_wifi_lost_paired">WLAN getrennt. Verbinde erneut, sobald es wieder da ist …</string>
+    <string name="svc_connection_lost">Verbindung verloren. Verbinde gleich erneut …</string>
+    <string name="svc_finding_paired_pc">Suche deinen PC …</string>
+    <string name="svc_paired_reconnecting">Verbinde erneut mit deinem PC …</string>
+    <string name="svc_connecting">Verbinde mit deinem PC …</string>
+    <string name="svc_upgrading_pairing">Die gespeicherte Kopplung wird auf eine sichere Verbindung umgestellt …</string>
+    <string name="svc_choose_pc">Wähle zuerst einen PC aus.</string>
+    <string name="svc_verifying_pairing">Sichere Verbindung steht. Kopplung wird geprüft …</string>
+    <string name="svc_cert_mismatch_discovery">Die Identität des PCs passt nicht zu deiner Auswahl. Suche erneut und wähle deinen PC.</string>
+    <string name="svc_pair_timeout">Zeitüberschreitung. Lass Pairly auf dem PC geöffnet und versuche es erneut.</string>
+    <string name="svc_disconnected">Getrennt</string>
+    <string name="svc_incompatible_windows">Auf diesem PC läuft eine alte Pairly-Version. Aktualisiere sie und suche dann erneut.</string>
+    <string name="svc_verifying_pc">Prüfe den ausgewählten PC …</string>
+    <string name="svc_cert_changed">Die Identität des ausgewählten PCs hat sich geändert. Suche vor dem Koppeln erneut.</string>
+    <string name="svc_timeout_search">Zeitüberschreitung. Lass Pairly auf dem PC geöffnet und suche erneut.</string>
+    <string name="svc_finding_for_upgrade">Suche deinen PC, um die Verbindung zu aktualisieren …</string>
+    <string name="svc_legacy_unverified">Dein PC konnte noch nicht bestätigt werden. Neuer Versuch …</string>
+    <string name="svc_no_pc_accepted">Noch kein PC hat die gespeicherte Kopplung akzeptiert. Suche erneut …</string>
+    <string name="svc_proof_rejected">Dein PC akzeptiert diese Kopplung nicht mehr. Kopple erneut über den PC.</string>
+    <string name="svc_identity_mismatch">Die Identität des PCs passt nicht zur gespeicherten Kopplung.</string>
+    <string name="svc_session_other_phone">Der PC hat dieses Handy mit einem anderen verwechselt. Kopple erneut.</string>
+    <string name="svc_identity_unproven">Der PC konnte seine gespeicherte Identität nicht nachweisen.</string>
+    <string name="svc_keystore_upgrade">Android konnte die aktualisierte Kopplung nicht sicher speichern.</string>
+    <string name="svc_try_next_pc">Dieser PC kennt die Kopplung nicht. Versuche den nächsten …</string>
+    <string name="svc_code_expired">Der Kopplungscode ist abgelaufen. Lass dir am PC einen neuen anzeigen.</string>
+    <string name="svc_cert_search_again">Die Identität des PCs passt nicht. Suche erneut und wähle deinen PC.</string>
+    <string name="svc_code_rejected">Der Code hat nicht funktioniert. Prüfe ihn oder lass dir am PC einen neuen anzeigen.</string>
+    <string name="svc_keystore_save">Android konnte diese Kopplung nicht sicher speichern.</string>
+    <string name="svc_pair_accepted">Kopplung akzeptiert. Wird abgeschlossen …</string>
+    <string name="svc_retry_clipboard">Zwischenablage wird erneut gesendet …</string>
+    <string name="svc_clipboard_queued_reconnect">Zwischenablage wartet. Verbinde erneut mit deinem PC …</string>
+    <string name="svc_reconnecting_paired">Verbinde erneut mit deinem PC …</string>
+    <string name="svc_pc_found">PC gefunden. Verbinde erneut …</string>
+    <string name="svc_pc_not_reachable">Dein PC ist noch nicht erreichbar. Neuer Versuch folgt automatisch …</string>
+    <string name="svc_timeout_finding">Zeitüberschreitung. Suche deinen PC erneut …</string>
+    <string name="svc_interrupted_finding">Verbindung unterbrochen. Suche deinen PC erneut …</string>
+    <string name="svc_removing">Entferne dieses Handy von deinem PC …</string>
+    <string name="svc_forgotten">PC vergessen. Kopple erneut, wann immer du willst.</string>
+    <string name="svc_image_too_large">Das Bild ist nicht verfügbar oder größer als 8 MB.</string>
+    <string name="svc_pc_forgot_us">Dein PC hat dieses Handy entfernt. Kopple erneut über den PC.</string>
+    <string name="svc_pairing_with">Kopple mit %1$s …</string>
+    <string name="svc_reaching">Verbinde mit %1$s …</string>
+    <string name="svc_unreachable">%1$s ist nicht erreichbar. Verbinde dein Handy mit demselben WLAN wie den PC und erlaube Pairly in der Windows-Firewall. Scanne dann erneut.</string>
+    <string name="svc_verifying_with">Prüfe die Kopplung mit %1$s …</string>
+    <string name="svc_connected_to">Verbunden mit %1$s</string>
+    <string name="svc_saved_rejected">Dein PC hat diese Kopplung abgelehnt: %1$s</string>
+    <plurals name="svc_retry_in_seconds">
+        <item quantity="one">PC nicht erreichbar. Neuer Versuch in %1$d Sekunde.</item>
+        <item quantity="other">PC nicht erreichbar. Neuer Versuch in %1$d Sekunden.</item>
+    </plurals>
+</resources>
