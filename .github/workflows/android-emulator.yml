@@ -1,0 +1,68 @@
+name: Android emulator
+
+# Runs the real app on Android emulators (GitHub's Linux runners have hardware acceleration):
+# first-run setup, the main screens, the design preview and German. Screenshots of each step are
+# attached to the run as android-emulator-screenshots-<api>.
+on:
+  push:
+    branches: [main, 'claude/**']
+    paths: ['src/android/**', '.github/workflows/android-emulator.yml']
+  pull_request:
+    paths: ['src/android/**', '.github/workflows/android-emulator.yml']
+  workflow_dispatch:
+
+jobs:
+  emulator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [30, 34]
+    defaults:
+      run:
+        working-directory: src/android
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Enable hardware acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Build the app and its tests
+        run: ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest
+
+      - name: Run on the emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: false
+          working-directory: src/android
+          script: |
+            ./gradlew :app:connectedDebugAndroidTest || (adb logcat -d -t 400 > emulator-logcat.txt; exit 1)
+            adb exec-out run-as dev.pairly.android tar c files/screenshots > screenshots.tar || true
+
+      - name: Collect screenshots
+        if: always()
+        run: |
+          mkdir -p emulator-screenshots
+          [ -f screenshots.tar ] && tar xf screenshots.tar -C emulator-screenshots || true
+          [ -f emulator-logcat.txt ] && cp emulator-logcat.txt emulator-screenshots/ || true
+          cp -r app/build/reports/androidTests emulator-screenshots/report 2>/dev/null || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-emulator-screenshots-${{ matrix.api }}
+          path: src/android/emulator-screenshots
+          if-no-files-found: ignore
