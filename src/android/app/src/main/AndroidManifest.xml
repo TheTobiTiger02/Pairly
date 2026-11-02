@@ -105,6 +105,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
             <!-- Pairing QR codes from the Windows app, opened by the camera or another app. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

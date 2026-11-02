@@ -306,5 +306,13 @@
     <string name="faq_private_a">Yes. There’s no account and no cloud. Data travels directly between your devices over an encrypted connection that is pinned to your PC.</string>
     <string name="faq_updates_q">How do updates work?</string>
     <string name="faq_updates_a">Pairly checks GitHub for new versions twice a day and installs them. The first update asks you to confirm; after that it updates silently on Android 12 and newer.</string>
+    <string name="shortcut_scan">Scan PC code</string>
+    <string name="shortcut_scan_long">Scan your PC\'s pairing code</string>
+    <string name="shortcut_clipboard">Send clipboard</string>
+    <string name="shortcut_clipboard_long">Send the clipboard to your PC</string>
+    <string name="shortcut_sync">Sync now</string>
+    <string name="shortcut_sync_long">Sync with your PC now</string>
+    <string name="shortcut_synced">Syncing with your PC…</string>
+    <string name="shortcut_disabled">Pair with a PC first</string>
     <string name="whats_new_title">What’s new in Pairly %1$s</string>
 </resources>

@@ -141,16 +141,28 @@ fun OnboardingScreen(
                             OnboardingStep.Welcome -> WelcomeStep(language, onLanguage) { onStep(current.next()) }
                             OnboardingStep.Tour -> TourStep { onStep(current.next()) }
                             OnboardingStep.InstallPc -> InstallPcStep { onStep(current.next()) }
-                            OnboardingStep.Pair -> PairStep(state, pairing) { onStep(current.next()) }
+                            OnboardingStep.Pair -> PairStep(state, pairing) { onStep(nextUnfinished(current, state)) }
                             OnboardingStep.Clipboard -> ClipboardStep(state) { onStep(current.next()) }
                             OnboardingStep.Done -> DoneStep(state, onFinish)
-                            else -> PermissionStep(current, state) { onStep(current.next()) }
+                            else -> PermissionStep(current, state) { onStep(nextUnfinished(current, state)) }
                         }
                     }
                 }
             }
         }
     }
+}
+
+/**
+ * The step after [step], skipping permission steps whose permission is already granted (Pairly
+ * notifications on Android 12 and older, or a reinstall). The summary still lists them as on.
+ */
+internal fun nextUnfinished(step: OnboardingStep, state: AppState): OnboardingStep {
+    var next = step.next()
+    while (next.feature != null && !next.feature.advanced && state.permissions.isOn(next.feature)) {
+        next = next.next()
+    }
+    return next
 }
 
 /** Scrollable content with the actions pinned to the bottom. */
@@ -203,7 +215,31 @@ private fun WelcomeStep(language: LocaleText.Language, onLanguage: (LocaleText.L
             Text(stringResource(R.string.onboarding_welcome_title), style = MaterialTheme.typography.displaySmall)
             Spacer(Modifier.height(Space.m))
             Text(stringResource(R.string.onboarding_welcome_body), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(Modifier.height(Space.xxxl))
+            Spacer(Modifier.height(Space.xxl))
+            Column(verticalArrangement = Arrangement.spacedBy(Space.m)) {
+                listOf(
+                    Icons.Rounded.NotificationsActive to R.string.tour_notifications_title,
+                    Icons.Rounded.PhotoLibrary to R.string.tour_photos_title,
+                    Icons.Rounded.ContentPaste to R.string.tour_clipboard_title,
+                    Icons.Rounded.ScreenShare to R.string.tour_screen_title
+                ).forEachIndexed { index, (icon, label) ->
+                    // Each row slides in a moment after the previous one.
+                    val shown = remember { Animatable(if (reduce) 1f else 0f) }
+                    LaunchedEffect(Unit) {
+                        delay(250L + index * 90L)
+                        shown.animateTo(1f, androidx.compose.animation.core.tween(320))
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.graphicsLayer { alpha = shown.value; translationX = (1f - shown.value) * 40f }
+                    ) {
+                        FeatureIcon(icon, size = 36.dp)
+                        Spacer(Modifier.width(Space.m))
+                        Text(stringResource(label), style = MaterialTheme.typography.titleMedium)
+                    }
+                }
+            }
+            Spacer(Modifier.height(Space.xxl))
             Text(stringResource(R.string.settings_language), style = MaterialTheme.typography.titleSmall)
             Spacer(Modifier.height(Space.s))
             ChoiceRow(

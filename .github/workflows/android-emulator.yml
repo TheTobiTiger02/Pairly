@@ -50,7 +50,8 @@ jobs:
           working-directory: src/android
           # Screenshots and the log are pulled whether or not the test passed; the last line fails the step.
           script: |
-            ./gradlew :app:connectedDebugAndroidTest || touch test-failed
+            # Keep the app installed after the run so its screenshots can still be pulled.
+            ./gradlew :app:connectedDebugAndroidTest -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true || touch test-failed
             adb exec-out run-as dev.pairly.android tar c files/screenshots > screenshots.tar || true
             adb logcat -d -t 600 > emulator-logcat.txt || true
             test ! -f test-failed

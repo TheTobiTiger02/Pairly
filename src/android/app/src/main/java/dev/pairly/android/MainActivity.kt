@@ -72,7 +72,10 @@ class MainActivity : ComponentActivity(), FeatureActions {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         language = LocaleText.language(this)
-        if (savedInstanceState == null) incomingPairingLink = intent.pairingLink()
+        if (savedInstanceState == null) {
+            incomingPairingLink = intent.pairingLink()
+            handleShortcut(intent)
+        }
         setContent {
             CompositionLocalProvider(LocalFeatureActions provides this) {
                 PairlyApp(
@@ -226,6 +229,39 @@ class MainActivity : ComponentActivity(), FeatureActions {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         intent.pairingLink()?.let { incomingPairingLink = it }
+        handleShortcut(intent)
+    }
+
+    /** Home-screen shortcuts (res/xml/shortcuts.xml). */
+    private fun handleShortcut(intent: Intent) {
+        val paired = dev.pairly.android.network.ConnectionSettings(this).trustKey.isNotBlank()
+        val text = LocaleText.of(this)
+        when (intent.action) {
+            ACTION_SCAN -> if (canScanQr) {
+                // The scanned code goes through the same path as a pairly://pair link from the camera.
+                val options = GmsBarcodeScannerOptions.Builder().setBarcodeFormats(Barcode.FORMAT_QR_CODE).build()
+                GmsBarcodeScanning.getClient(this, options).startScan().addOnSuccessListener { barcode ->
+                    barcode.rawValue?.let { incomingPairingLink = it }
+                }
+            }
+            ACTION_SEND_CLIPBOARD -> if (paired) {
+                startActivity(Intent(this, dev.pairly.android.features.clipboard.ClipboardRelayActivity::class.java))
+            } else {
+                android.widget.Toast.makeText(this, text.getString(R.string.shortcut_disabled), android.widget.Toast.LENGTH_SHORT).show()
+            }
+            ACTION_SYNC -> if (paired) {
+                FeatureSyncController.syncAll(this)
+                android.widget.Toast.makeText(this, text.getString(R.string.shortcut_synced), android.widget.Toast.LENGTH_SHORT).show()
+            } else {
+                android.widget.Toast.makeText(this, text.getString(R.string.shortcut_disabled), android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private companion object {
+        const val ACTION_SCAN = "dev.pairly.android.action.SCAN_PAIRING_CODE"
+        const val ACTION_SEND_CLIPBOARD = "dev.pairly.android.action.SEND_CLIPBOARD"
+        const val ACTION_SYNC = "dev.pairly.android.action.SYNC"
     }
 
     private fun Intent.pairingLink(): String? =
