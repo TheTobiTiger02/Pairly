@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Connection status shown in the app and in the ongoing notification. -->
+<resources>
+    <string name="svc_network_back_paired">Network available. Reconnecting to your PC…</string>
+    <string name="svc_network_back">Network available. Reconnecting…</string>
+    <string name="svc_wifi_lost_paired">Wi-Fi lost. Reconnecting when it’s back…</string>
+    <string name="svc_connection_lost">Connection lost. Reconnecting soon…</string>
+    <string name="svc_finding_paired_pc">Finding your PC…</string>
+    <string name="svc_paired_reconnecting">Reconnecting to your PC…</string>
+    <string name="svc_connecting">Connecting to your PC…</string>
+    <string name="svc_upgrading_pairing">Upgrading the saved pairing to a secure connection…</string>
+    <string name="svc_choose_pc">Choose a PC before connecting.</string>
+    <string name="svc_verifying_pairing">Secure connection open. Verifying the pairing…</string>
+    <string name="svc_cert_mismatch_discovery">The PC’s identity doesn’t match the one you selected. Search again and pick your PC.</string>
+    <string name="svc_pair_timeout">Connection timed out. Keep Pairly open on your PC and try again.</string>
+    <string name="svc_disconnected">Disconnected</string>
+    <string name="svc_incompatible_windows">This PC runs an old version of Pairly. Update it on your PC, then search again.</string>
+    <string name="svc_verifying_pc">Checking the selected PC…</string>
+    <string name="svc_cert_changed">The selected PC’s identity changed. Search again before pairing.</string>
+    <string name="svc_timeout_search">Connection timed out. Keep Pairly open on your PC and search again.</string>
+    <string name="svc_finding_for_upgrade">Finding your PC to upgrade the connection…</string>
+    <string name="svc_legacy_unverified">Your PC couldn’t be verified yet. Trying again…</string>
+    <string name="svc_no_pc_accepted">No PC accepted the saved pairing yet. Searching again…</string>
+    <string name="svc_proof_rejected">Your PC no longer accepts this pairing. Pair again from the PC.</string>
+    <string name="svc_identity_mismatch">The PC’s identity doesn’t match the saved pairing.</string>
+    <string name="svc_session_other_phone">The PC confused this phone with another one. Pair again.</string>
+    <string name="svc_identity_unproven">The PC couldn’t prove its saved identity.</string>
+    <string name="svc_keystore_upgrade">Android couldn’t store the upgraded pairing securely.</string>
+    <string name="svc_try_next_pc">This PC didn’t recognize the pairing. Trying the next one…</string>
+    <string name="svc_code_expired">The pairing code expired. Show a new one on your PC.</string>
+    <string name="svc_cert_search_again">The PC’s identity doesn’t match. Search again and pick your PC.</string>
+    <string name="svc_code_rejected">That code didn’t work. Check it, or show a new one on your PC.</string>
+    <string name="svc_keystore_save">Android couldn’t store this pairing securely.</string>
+    <string name="svc_pair_accepted">Pairing accepted. Finishing up…</string>
+    <string name="svc_retry_clipboard">Retrying clipboard delivery…</string>
+    <string name="svc_clipboard_queued_reconnect">Clipboard queued. Reconnecting to your PC…</string>
+    <string name="svc_reconnecting_paired">Reconnecting to your PC…</string>
+    <string name="svc_pc_found">Found your PC. Reconnecting…</string>
+    <string name="svc_pc_not_reachable">Your PC isn’t reachable yet. Retrying automatically…</string>
+    <string name="svc_timeout_finding">Connection timed out. Finding your PC again…</string>
+    <string name="svc_interrupted_finding">Connection interrupted. Finding your PC again…</string>
+    <string name="svc_removing">Removing this phone from your PC…</string>
+    <string name="svc_forgotten">PC forgotten. Pair again whenever you’re ready.</string>
+    <string name="svc_image_too_large">The image is unavailable or larger than 8 MB.</string>
+    <string name="svc_pc_forgot_us">Your PC removed this phone. Pair again from the PC.</string>
+    <string name="svc_pairing_with">Pairing with %1$s…</string>
+    <string name="svc_reaching">Reaching %1$s…</string>
+    <string name="svc_unreachable">Couldn’t reach %1$s. Put your phone on the same Wi-Fi as the PC and allow Pairly through the Windows firewall, then scan again.</string>
+    <string name="svc_verifying_with">Checking the pairing with %1$s…</string>
+    <string name="svc_connected_to">Connected to %1$s</string>
+    <string name="svc_saved_rejected">Your PC rejected this pairing: %1$s</string>
+    <plurals name="svc_retry_in_seconds">
+        <item quantity="one">PC unavailable. Retrying in %1$d second.</item>
+        <item quantity="other">PC unavailable. Retrying in %1$d seconds.</item>
+    </plurals>
+</resources>

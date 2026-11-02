@@ -8,17 +8,19 @@ import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import dev.pairly.android.MainActivity
 import dev.pairly.android.R
+import dev.pairly.android.ui.LocaleText
 import dev.pairly.android.network.ConnectionSettings
 
 class ClipboardQuickSendTileService : TileService() {
     override fun onStartListening() {
         super.onStartListening()
         val paired = ConnectionSettings(this).trustKey.isNotBlank()
+        val text = LocaleText.of(this)
         qsTile?.apply {
             state = if (paired) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
-            label = getString(R.string.tile_clipboard_label)
+            label = text.getString(R.string.tile_clipboard_label)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                subtitle = getString(if (paired) R.string.tile_clipboard_ready else R.string.tile_clipboard_pair_first)
+                subtitle = text.getString(if (paired) R.string.tile_clipboard_ready else R.string.tile_clipboard_pair_first)
             }
             updateTile()
         }

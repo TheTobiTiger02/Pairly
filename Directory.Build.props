@@ -1,0 +1,13 @@
+<Project>
+  <!--
+    Shared build settings. Release builds pass the real version (-p:Version=1.2.3) from the Release
+    workflow, which derives it from the git tag; local builds are 0.0.0-dev so they never look newer
+    than a published release.
+  -->
+  <PropertyGroup>
+    <VersionPrefix>0.0.0</VersionPrefix>
+    <VersionSuffix>dev</VersionSuffix>
+    <!-- One pin for the Velopack library (Pairly.Windows) and the vpk packaging tool (Release workflow). -->
+    <VelopackVersion>1.2.161</VelopackVersion>
+  </PropertyGroup>
+</Project>

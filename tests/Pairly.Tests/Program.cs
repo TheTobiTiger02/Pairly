@@ -17,6 +17,7 @@ using Pairly.Server.Streaming;
 var tests = new (string Name, Func<Task> Run)[]
 {
     ("protocol round-trips clipboard payload", RunSync(ProtocolRoundTripsClipboardPayload)),
+    ("Windows strings have a German translation for every key", RunSync(WindowsStringsHaveGermanTranslations)),
     ("protocol rejects unsupported versions", RunSync(ProtocolRejectsUnsupportedVersions)),
     ("protocol round-trips release-ready optional payloads", RunSync(ProtocolRoundTripsReleaseReadyPayloads)),
     ("pairing ticket carries active host identity", RunSync(PairingTicketCarriesActiveHostIdentity)),
@@ -2275,6 +2276,41 @@ static void TryDeleteDirectory(string path)
     }
 }
 
+static void WindowsStringsHaveGermanTranslations()
+{
+    // Both resource files must define the same keys with the same {0} placeholders.
+    var folder = FindRepositoryFile(Path.Combine("src", "windows", "Pairly.Windows", "Localization"));
+    static Dictionary<string, string> Read(string path) => System.Xml.Linq.XDocument.Load(path).Root!
+        .Elements("data").ToDictionary(e => (string)e.Attribute("name")!, e => (string?)e.Element("value") ?? string.Empty);
+    var english = Read(Path.Combine(folder, "Strings.resx"));
+    var german = Read(Path.Combine(folder, "Strings.de.resx"));
+    var missing = english.Keys.Except(german.Keys).ToArray();
+    var extra = german.Keys.Except(english.Keys).ToArray();
+    if (missing.Length > 0 || extra.Length > 0)
+    {
+        throw new InvalidOperationException($"German strings missing: {string.Join(", ", missing)}; without English: {string.Join(", ", extra)}");
+    }
+    static string Placeholders(string text) => string.Join(",", System.Text.RegularExpressions.Regex.Matches(text, @"\{\d+(:[^}]*)?\}").Select(m => m.Value).Order());
+    var mismatched = english.Where(pair => Placeholders(pair.Value) != Placeholders(german[pair.Key])).Select(pair => pair.Key).ToArray();
+    if (mismatched.Length > 0)
+    {
+        throw new InvalidOperationException($"Placeholders differ: {string.Join(", ", mismatched)}");
+    }
+}
+
+static string FindRepositoryFile(string relative)
+{
+    for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)
+    {
+        var candidate = Path.Combine(directory.FullName, relative);
+        if (Directory.Exists(candidate) || File.Exists(candidate))
+        {
+            return candidate;
+        }
+    }
+    throw new DirectoryNotFoundException(relative);
+}
+
 sealed class TestTimeProvider(DateTimeOffset start) : TimeProvider
 {
     private DateTimeOffset _now = start;
@@ -2363,3 +2399,4 @@ sealed class BlockingWebSocket : WebSocket
         return _release.Task.WaitAsync(cancellationToken);
     }
 }
+

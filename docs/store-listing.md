@@ -57,3 +57,56 @@ https://github.com/TheTobiTiger02/Pairly/blob/main/PRIVACY.md
 ## Website / support contact
 
 https://github.com/TheTobiTiger02/Pairly/issues
+
+---
+
+# German listing (Deutsch)
+
+In Partner Center: open the submission → **Store listings** → **Manage additional languages** → add **German (de-de)**, then paste the text below. The package already declares German, so the Store offers the listing to German-speaking customers.
+
+## Kurzbeschreibung
+
+Nutze dein Android-Handy direkt am Windows-PC. Lies und beantworte SMS, sieh deine Benachrichtigungen, durchsuche Fotos und Dateien, spiegle und steuere den Bildschirm deines Handys und teile eine Zwischenablage zwischen all deinen Geräten. Alles bleibt in deinem eigenen Netzwerk.
+
+## Beschreibung
+
+Pairly verbindet deine Android-Handys über dein WLAN zu Hause oder im Büro mit deinem Windows-PC, damit du weiterarbeiten kannst, ohne zum Handy greifen zu müssen.
+
+Du koppelst einmal per QR-Code oder kurzem Code. Danach verbindet sich Pairly von selbst, sobald Handy und PC im selben Netzwerk sind, auch nach einem Neustart.
+
+Das kannst du mit Pairly machen:
+
+- Nachrichten: Lies deine SMS-Unterhaltungen und antworte über die Tastatur.
+- Benachrichtigungen: Sieh die Benachrichtigungen deines Handys am PC und schalte Apps stumm, die dich nicht interessieren.
+- Fotos: Durchsuche die Fotos und Videos auf deinem Handy und speichere sie auf dem PC.
+- Dateien: Schicke Dateien in beide Richtungen zwischen Handy und PC.
+- Zwischenablage: Auf einem Gerät kopieren, auf dem anderen einfügen. Text und Bilder werden mit allen verbundenen Handys synchronisiert.
+- Handybildschirm: Spiegle dein Handy in einem Fenster und steuere es mit Maus und Tastatur.
+- Anrufe: Sieh, wer anruft, und nimm Anrufe am PC an oder lehne sie ab.
+- Mehrere Handys: Verbinde mehrere Android-Handys mit einem PC und wechsle zwischen ihnen.
+
+Privatsphäre von Anfang an:
+
+- Kein Konto, keine Cloud, keine Werbung, kein Tracking.
+- Deine Daten fließen nur zwischen deinen eigenen Geräten, über eine verschlüsselte Verbindung, die fest an deinen PC gebunden ist.
+- Jede Funktion fragt zuerst nach ihrer Android-Berechtigung, und du kannst jede einzelne abschalten.
+
+Voraussetzungen: Windows 10 Version 2004 oder neuer und die kostenlose Pairly-App für Android 8.0 oder neuer (erhältlich auf der GitHub-Seite des Projekts). Handy und PC müssen im selben Netzwerk sein.
+
+## Produktfeatures (eines pro Zeile, max. 20)
+
+SMS am PC lesen und beantworten
+Handy-Benachrichtigungen auf dem Desktop
+Fotos vom Handy durchsuchen und speichern
+Dateien zwischen Handy und PC senden
+Gemeinsame Zwischenablage für Text und Bilder
+Handybildschirm spiegeln und steuern
+Anrufe am PC annehmen oder ablehnen
+Mehrere Android-Handys verbinden
+Kein Konto, keine Cloud: bleibt in deinem Netzwerk
+Verschlüsselte, an den PC gebundene Verbindung
+Komplett auf Deutsch und Englisch
+
+## Suchbegriffe (max. 7)
+
+handy, android, sms, zwischenablage, bildschirm spiegeln, benachrichtigungen, dateiübertragung

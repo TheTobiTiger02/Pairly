@@ -21,10 +21,18 @@ internal static class ThemeManager
     /// <summary>Raised after the palette changes so windows can update their native title bar and backdrop.</summary>
     public static event EventHandler? ThemeChanged;
 
+    /// <summary>"System" follows Windows; "Light" and "Dark" override it. High contrast always wins.</summary>
+    public static string Preference { get; set; } = "System";
+
     public static void ApplySystemTheme(ResourceDictionary resources)
     {
         IsHighContrast = SystemParameters.HighContrast;
-        IsDark = !IsHighContrast && !IsWindowsLightTheme();
+        IsDark = !IsHighContrast && Preference switch
+        {
+            "Light" => false,
+            "Dark" => true,
+            _ => !IsWindowsLightTheme()
+        };
         var themeSource = IsHighContrast
             ? "Themes/HighContrast.xaml"
             : IsDark ? "Themes/Dark.xaml" : "Themes/Light.xaml";

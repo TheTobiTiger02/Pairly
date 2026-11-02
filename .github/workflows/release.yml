@@ -1,32 +1,162 @@
 name: Release
 
-# Push a tag like v1.2.3 to build and publish both apps. Windows goes to the Microsoft Store, which
-# signs and updates it; Android is attached to the GitHub release and updates through its in-app updater.
+# One-click release: Actions → Release → Run workflow → pick patch / minor / major.
 #
-# Repository variables (public Partner Center identity): STORE_IDENTITY_NAME, STORE_PUBLISHER,
-# STORE_PUBLISHER_DISPLAY_NAME, STORE_DISPLAY_NAME, STORE_PRODUCT_ID.
-# Secrets: Android signing. Optional, for automatic Store submission: STORE_TENANT_ID,
-# STORE_SELLER_ID, STORE_CLIENT_ID, STORE_CLIENT_SECRET. Without them, upload the -store-msix
-# artifact to Partner Center by hand (see docs/private-release.md).
+# The workflow works out the next version, builds the signed Android APK, the Windows installer
+# (Pairly-Setup.exe, which updates itself through Velopack) and the Microsoft Store package from that
+# one version, publishes a GitHub release with all three, and then submits the Store package to
+# Partner Center. Pushing a tag like v1.2.3 by hand still works and does the same.
+#
+# One-time setup is in docs/releasing.md. In short:
+#   Variables: STORE_IDENTITY_NAME, STORE_PUBLISHER, STORE_PUBLISHER_DISPLAY_NAME, STORE_DISPLAY_NAME,
+#              STORE_PRODUCT_ID
+#   Secrets:   SIGNING_PASSWORD, ANDROID_KEYSTORE_B64, ANDROID_KEY_ALIAS (Android signing)
+#              STORE_TENANT_ID, STORE_SELLER_ID, STORE_CLIENT_ID, STORE_CLIENT_SECRET (Store upload)
 on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Which part of the version goes up
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+      version:
+        description: Or an exact version instead (optional, e.g. 2.0.0)
+        type: string
+        required: false
+        default: ''
+      highlights:
+        description: Optional highlights shown above the change list (one line; leave empty for automatic notes)
+        type: string
+        required: false
+        default: ''
+      store:
+        description: Submit the Windows package to the Microsoft Store
+        type: boolean
+        default: true
   push:
     tags: ['v*.*.*']
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 permissions:
   contents: write
 
 jobs:
-  release:
+  build:
+    name: Build
     runs-on: windows-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      previous: ${{ steps.version.outputs.previous }}
+      store: ${{ steps.store.outputs.enabled }}
     env:
       STORE_IDENTITY_NAME: ${{ vars.STORE_IDENTITY_NAME }}
       STORE_PUBLISHER: ${{ vars.STORE_PUBLISHER }}
       STORE_PUBLISHER_DISPLAY_NAME: ${{ vars.STORE_PUBLISHER_DISPLAY_NAME }}
       STORE_DISPLAY_NAME: ${{ vars.STORE_DISPLAY_NAME }}
       STORE_PRODUCT_ID: ${{ vars.STORE_PRODUCT_ID }}
-      STORE_API_CONFIGURED: ${{ secrets.STORE_CLIENT_ID != '' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # tags and history for the version and the change list
+
+      - name: Work out the version
+        id: version
+        shell: pwsh
+        env:
+          EVENT: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          REF: ${{ github.ref }}
+          BUMP: ${{ inputs.bump }}
+          EXACT: ${{ inputs.version }}
+        run: |
+          $tags = @(git tag --list 'v*' | Where-Object { $_ -match '^v\d+\.\d+\.\d+$' } |
+            Sort-Object { [version] $_.Substring(1) } -Descending)
+
+          if ($env:EVENT -eq 'push') {
+            $version = $env:REF_NAME.Substring(1)
+            $previous = $tags | Where-Object { [version] $_.Substring(1) -lt [version] $version } | Select-Object -First 1
+          } else {
+            if ($env:REF -ne 'refs/heads/main') {
+              throw "Releases are made from main. Pick 'main' in the 'Use workflow from' box (this run used $env:REF)."
+            }
+            $previous = $tags | Select-Object -First 1
+            $current = if ($previous) { [version] $previous.Substring(1) } else { [version] '0.0.0' }
+            if ($env:EXACT) {
+              $version = $env:EXACT.Trim().TrimStart('v')
+            } else {
+              $version = switch ($env:BUMP) {
+                'major' { "$($current.Major + 1).0.0" }
+                'minor' { "$($current.Major).$($current.Minor + 1).0" }
+                default { "$($current.Major).$($current.Minor).$($current.Build + 1)" }
+              }
+            }
+            if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "Version '$version' must look like 1.2.3." }
+            if ([version] $version -le $current) { throw "Version $version must be higher than the latest release $current." }
+            if (git tag --list "v$version") { throw "Tag v$version already exists." }
+          }
+
+          if ($version -notmatch '^(\d+)\.(\d+)\.(\d+)$') { throw "Tag must look like v1.2.3." }
+          if ([int] $Matches[2] -gt 99 -or [int] $Matches[3] -gt 99) {
+            throw 'Minor and patch must be 99 or lower (they form the Android versionCode).'
+          }
+
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "tag=v$version" >> $env:GITHUB_OUTPUT
+          "previous=$previous" >> $env:GITHUB_OUTPUT
+          "### Pairly $version" >> $env:GITHUB_STEP_SUMMARY
+          "Previous release: $(if ($previous) { $previous } else { 'none' })" >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Check the Microsoft Store is ready
+        id: store
+        shell: pwsh
+        env:
+          WANTED: ${{ github.event_name == 'push' || inputs.store }}
+          STORE_TENANT_ID: ${{ secrets.STORE_TENANT_ID }}
+          STORE_SELLER_ID: ${{ secrets.STORE_SELLER_ID }}
+          STORE_CLIENT_ID: ${{ secrets.STORE_CLIENT_ID }}
+          STORE_CLIENT_SECRET: ${{ secrets.STORE_CLIENT_SECRET }}
+        run: |
+          $missing = @('STORE_IDENTITY_NAME', 'STORE_PRODUCT_ID', 'STORE_TENANT_ID', 'STORE_SELLER_ID', 'STORE_CLIENT_ID', 'STORE_CLIENT_SECRET') |
+            Where-Object { -not [Environment]::GetEnvironmentVariable($_) }
+          if ($env:WANTED -ne 'true') {
+            'enabled=false' >> $env:GITHUB_OUTPUT
+            'Microsoft Store: skipped for this run.' >> $env:GITHUB_STEP_SUMMARY
+            exit 0
+          }
+          if ($missing) {
+            'enabled=false' >> $env:GITHUB_OUTPUT
+            "::warning::Microsoft Store upload is not set up (missing: $($missing -join ', ')). See docs/releasing.md."
+            "Microsoft Store: not set up (missing $($missing -join ', ')); see docs/releasing.md." >> $env:GITHUB_STEP_SUMMARY
+            exit 0
+          }
+
+          # Partner Center takes one submission at a time. Stop here, before anything is tagged, if
+          # the previous one is still in certification.
+          $token = (Invoke-RestMethod -Method Post -Uri "https://login.microsoftonline.com/$env:STORE_TENANT_ID/oauth2/token" -Body @{
+            grant_type = 'client_credentials'
+            client_id = $env:STORE_CLIENT_ID
+            client_secret = $env:STORE_CLIENT_SECRET
+            resource = 'https://manage.devcenter.microsoft.com'
+          }).access_token
+          $headers = @{ Authorization = "Bearer $token" }
+          $api = "https://manage.devcenter.microsoft.com/v1.0/my/applications/$env:STORE_PRODUCT_ID"
+          $app = Invoke-RestMethod -Uri $api -Headers $headers
+          if ($app.pendingApplicationSubmission) {
+            $status = (Invoke-RestMethod -Uri "$api/submissions/$($app.pendingApplicationSubmission.id)/status" -Headers $headers).status
+            Write-Host "Pending Store submission: $status"
+            if ($status -in 'CommitStarted', 'PreProcessing', 'Certification', 'Release', 'PendingPublication', 'Publishing') {
+              "Microsoft Store: the previous submission is still **$status**. Wait until it is published, or run again with 'Submit to the Microsoft Store' unticked to release only on GitHub." >> $env:GITHUB_STEP_SUMMARY
+              throw "The previous Store submission is still in '$status'. Nothing was released."
+            }
+          }
+          'enabled=true' >> $env:GITHUB_OUTPUT
+          'Microsoft Store: ready.' >> $env:GITHUB_STEP_SUMMARY
+
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 9.0.x
@@ -36,105 +166,195 @@ jobs:
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Derive versions from tag
-        id: version
+      - name: Install Velopack
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          $tag = '${{ github.ref_name }}'
-          if ($tag -notmatch '^v(\d+)\.(\d+)\.(\d+)$') { throw "Tag '$tag' must look like v1.2.3." }
-          $major = [int] $Matches[1]; $minor = [int] $Matches[2]; $patch = [int] $Matches[3]
-          if ($minor -gt 99 -or $patch -gt 99) { throw 'Minor and patch must be below 100 for the Android versionCode.' }
-          "name=$major.$minor.$patch" >> $env:GITHUB_OUTPUT
-          "package=$major.$minor.$patch.0" >> $env:GITHUB_OUTPUT
-          "code=$($major * 10000 + $minor * 100 + $patch)" >> $env:GITHUB_OUTPUT
+          $props = Get-Content Directory.Build.props -Raw
+          $vpk = [regex]::Match($props, '<VelopackVersion>([^<]+)</VelopackVersion>').Groups[1].Value
+          dotnet tool install -g vpk --version $vpk
+          # The previous release's package lets vpk build a small delta update; the first release has none.
+          vpk download github --repoUrl 'https://github.com/${{ github.repository }}' --token $env:GH_TOKEN --outputDir artifacts/release/velopack
+          if ($LASTEXITCODE -ne 0) { Write-Host 'No previous installer release; building a full package only.' }
+          exit 0
 
       - name: Restore Android signing key
         shell: pwsh
         env:
           ANDROID_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
         run: |
+          if (-not $env:ANDROID_KEYSTORE_B64) { throw 'The ANDROID_KEYSTORE_B64 secret is missing; see docs/releasing.md.' }
           $dir = Join-Path $env:RUNNER_TEMP 'signing'
           New-Item -ItemType Directory -Force -Path $dir | Out-Null
           [IO.File]::WriteAllBytes("$dir\release.p12", [Convert]::FromBase64String($env:ANDROID_KEYSTORE_B64))
-          "SL_ANDROID_KEYSTORE=$dir\release.p12" >> $env:GITHUB_ENV
+          "PAIRLY_SIGNING_KEYSTORE=$dir\release.p12" >> $env:GITHUB_ENV
 
-      - name: Build
+      - name: Build APK, installer and Store package
         shell: pwsh
         env:
-          SL_SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
-          SL_ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          PAIRLY_SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+          PAIRLY_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
         run: |
-          # Until the Partner Center identity is configured, release Android only.
           $windows = if ($env:STORE_IDENTITY_NAME) { 'Store' } else { 'None' }
-          .\scripts\Build-PrivateRelease.ps1 `
-            -PackageVersion '${{ steps.version.outputs.package }}' `
-            -AndroidVersionName '${{ steps.version.outputs.name }}' `
-            -AndroidVersionCode ${{ steps.version.outputs.code }} `
-            -WindowsPackage $windows
+          .\scripts\Build-Release.ps1 -Version '${{ steps.version.outputs.version }}' -WindowsPackage $windows
 
-      - name: Build Windows installer (Velopack)
+      - name: Remove signing material
+        if: always()
         shell: pwsh
+        run: Remove-Item -Recurse -Force (Join-Path $env:RUNNER_TEMP 'signing') -ErrorAction SilentlyContinue
+
+      - name: Collect release files
+        shell: pwsh
+        run: |
+          $version = '${{ steps.version.outputs.version }}'
+          $out = New-Item -ItemType Directory -Force -Path artifacts/upload
+          Copy-Item artifacts/release/android/Pairly.apk $out
+          if (Test-Path artifacts/release/windows/Pairly.msix) { Copy-Item artifacts/release/windows/Pairly.msix $out }
+          # Velopack update feed: this version's packages plus the index installed copies read.
+          Get-ChildItem artifacts/release/velopack -File | Where-Object {
+            $_.Name -in 'Pairly-Setup.exe', 'releases.win.json', 'assets.win.json', 'RELEASES' -or
+            $_.Name -like "PairlyDesktop-$version-*.nupkg"
+          } | Copy-Item -Destination $out
+          Get-ChildItem $out | Format-Table Name, Length
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-files
+          path: artifacts/upload/*
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-files
+          path: files
+
+      - name: Write release notes
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+          PREVIOUS: ${{ needs.build.outputs.previous }}
+          HIGHLIGHTS: ${{ inputs.highlights }}
+          STORE_PRODUCT_ID: ${{ vars.STORE_PRODUCT_ID }}
+          REPO: ${{ github.repository }}
+        run: |
+          range="${PREVIOUS:+$PREVIOUS..}HEAD"
+          {
+            echo "## What's new"
+            echo
+            if [ -n "$HIGHLIGHTS" ]; then echo "$HIGHLIGHTS"; echo; fi
+            # One line per commit since the last release, without merge commits or release chores.
+            git log "$range" --no-merges --pretty=format:'- %s' | grep -viE '^- (bump|release|chore\(release\))' || true
+            echo
+            echo
+            echo "## Download"
+            echo
+            if [ -n "$STORE_PRODUCT_ID" ]; then
+              echo "- **Windows:** [Microsoft Store](https://apps.microsoft.com/detail/$STORE_PRODUCT_ID) (recommended, updates arrive after Store certification) or [Pairly-Setup.exe](https://github.com/$REPO/releases/download/v$VERSION/Pairly-Setup.exe) (updates itself right away)"
+            else
+              echo "- **Windows:** [Pairly-Setup.exe](https://github.com/$REPO/releases/download/v$VERSION/Pairly-Setup.exe) (updates itself)"
+            fi
+            echo "- **Android:** [Pairly.apk](https://github.com/$REPO/releases/download/v$VERSION/Pairly.apk) (updates itself)"
+            if [ -n "$PREVIOUS" ]; then
+              echo
+              echo "**Full changelog:** https://github.com/$REPO/compare/$PREVIOUS...v$VERSION"
+            fi
+          } > notes.md
+          cat notes.md
+
+      - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.build.outputs.tag }}
+          VERSION: ${{ needs.build.outputs.version }}
         run: |
-          dotnet tool install -g vpk --version 1.2.161
-          $out = 'artifacts/release/velopack'
-          # The previous release's package lets vpk produce a small delta update. The first
-          # Velopack release has none, so a failed download is fine.
-          vpk download github --repoUrl 'https://github.com/${{ github.repository }}' --token $env:GH_TOKEN --outputDir $out
-          if ($LASTEXITCODE -ne 0) { Write-Host 'No previous Velopack release; building a full package only.' }
-          .\scripts\Build-Velopack.ps1 -Version '${{ steps.version.outputs.name }}' -OutputDirectory $out
+          # Pairly.msix goes on the release too, so it never expires like workflow artifacts do.
+          gh release create "$TAG" files/* \
+            --target "$GITHUB_SHA" \
+            --title "Pairly $VERSION" \
+            --notes-file notes.md
+          {
+            echo "### Released Pairly $VERSION"
+            echo "- Release page: https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"
+            echo "- Windows installer: https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/Pairly-Setup.exe"
+            echo "- Android APK: https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/Pairly.apk"
+          } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Keep Store package
-        if: env.STORE_IDENTITY_NAME != ''
-        uses: actions/upload-artifact@v4
+  store:
+    name: Submit to Microsoft Store
+    needs: [build, publish]
+    if: needs.build.outputs.store == 'true'
+    runs-on: windows-latest
+    env:
+      STORE_PRODUCT_ID: ${{ vars.STORE_PRODUCT_ID }}
+    steps:
+      - uses: actions/download-artifact@v4
         with:
-          name: Pairly-${{ steps.version.outputs.name }}-store-msix
-          path: artifacts/release/windows/Pairly.msix
+          name: release-files
+          path: files
 
-      - name: Set up Microsoft Store CLI
-        if: env.STORE_API_CONFIGURED == 'true' && env.STORE_PRODUCT_ID != '' && env.STORE_IDENTITY_NAME != ''
-        uses: microsoft/setup-msstore-cli@v1
+      - uses: microsoft/microsoft-store-apppublisher@v1.1
 
-      - name: Submit to Microsoft Store
-        if: env.STORE_API_CONFIGURED == 'true' && env.STORE_PRODUCT_ID != '' && env.STORE_IDENTITY_NAME != ''
+      - name: Upload and submit
         shell: pwsh
         env:
           STORE_TENANT_ID: ${{ secrets.STORE_TENANT_ID }}
           STORE_SELLER_ID: ${{ secrets.STORE_SELLER_ID }}
           STORE_CLIENT_ID: ${{ secrets.STORE_CLIENT_ID }}
           STORE_CLIENT_SECRET: ${{ secrets.STORE_CLIENT_SECRET }}
-        run: |
-          msstore reconfigure --tenantId $env:STORE_TENANT_ID --sellerId $env:STORE_SELLER_ID --clientId $env:STORE_CLIENT_ID --clientSecret $env:STORE_CLIENT_SECRET
-          if ($LASTEXITCODE -ne 0) { throw "msstore reconfigure failed with exit code $LASTEXITCODE." }
-          msstore publish artifacts/release/windows/Pairly.msix -id $env:STORE_PRODUCT_ID
-          if ($LASTEXITCODE -ne 0) { throw "msstore publish failed with exit code $LASTEXITCODE." }
-
-      - name: Publish GitHub release
-        shell: pwsh
-        env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.build.outputs.tag }}
         run: |
-          $store = if ($env:STORE_PRODUCT_ID) {
-            "Windows: [Microsoft Store](https://apps.microsoft.com/detail/$env:STORE_PRODUCT_ID) (recommended; new versions arrive after certification), or Pairly-Setup.exe below, which updates itself right away.`n`n"
-          } else {
-            "Windows: run Pairly-Setup.exe below; it updates itself.`n`n"
-          }
-          $notes = $store + "Android: install Pairly.apk; installed apps update themselves."
-          # Velopack update feed: this version's packages plus the release index installed copies read.
-          $version = '${{ steps.version.outputs.name }}'
-          $velopack = Get-ChildItem artifacts/release/velopack -File | Where-Object {
-            $_.Name -in 'Pairly-Setup.exe', 'releases.win.json', 'assets.win.json', 'RELEASES' -or
-            $_.Name -like "PairlyDesktop-$version-*.nupkg"
-          } | ForEach-Object { $_.FullName }
-          gh release create '${{ github.ref_name }}' `
-            artifacts/release/android/Pairly.apk `
-            @velopack `
-            --title 'Pairly ${{ steps.version.outputs.name }}' `
-            --notes $notes `
-            --generate-notes
+          $ErrorActionPreference = 'Stop'
+          msstore reconfigure --tenantId $env:STORE_TENANT_ID --sellerId $env:STORE_SELLER_ID --clientId $env:STORE_CLIENT_ID --clientSecret $env:STORE_CLIENT_SECRET
+          if ($LASTEXITCODE -ne 0) { throw "msstore reconfigure failed ($LASTEXITCODE)." }
 
-      - name: Remove signing material
-        if: always()
+          # Upload the package into a draft, fill in "What's new", then submit.
+          msstore publish (Resolve-Path files/Pairly.msix).Path -id $env:STORE_PRODUCT_ID --noCommit
+          if ($LASTEXITCODE -ne 0) { throw "msstore publish failed ($LASTEXITCODE)." }
+
+          try {
+            $body = (gh release view $env:TAG --repo $env:GITHUB_REPOSITORY --json body --jq .body) -join "`n"
+            $section = ($body -split "`n## ")[0] -replace "^## What's new\s*", ''
+            $lines = $section -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+            $notes = ($lines -join "`n")
+            if (-not $notes) { $notes = 'Bug fixes and improvements.' }
+            if ($notes.Length -gt 1500) { $notes = $notes.Substring(0, 1497) + '...' }
+
+            $raw = (msstore submission get $env:STORE_PRODUCT_ID) -join "`n"
+            $json = $raw.Substring($raw.IndexOf('{'), $raw.LastIndexOf('}') - $raw.IndexOf('{') + 1)
+            $submission = $json | ConvertFrom-Json
+            foreach ($language in $submission.Listings.PSObject.Properties.Name) {
+              $text = if ($language -like 'de*') { "Fehlerbehebungen und Verbesserungen.`n`n$notes" } else { $notes }
+              if ($text.Length -gt 1500) { $text = $text.Substring(0, 1497) + '...' }
+              $submission.Listings.$language.BaseListing.ReleaseNotes = $text
+            }
+            msstore submission update $env:STORE_PRODUCT_ID ($submission | ConvertTo-Json -Depth 100 -Compress)
+            if ($LASTEXITCODE -ne 0) { throw "submission update failed ($LASTEXITCODE)." }
+          } catch {
+            Write-Host "::warning::Could not fill in the Store's What's new text: $_. Submitting without it."
+          }
+
+          msstore submission publish $env:STORE_PRODUCT_ID
+          if ($LASTEXITCODE -ne 0) { throw "msstore submission publish failed ($LASTEXITCODE)." }
+          "### Microsoft Store`nSubmitted $env:TAG. Certification usually takes 1–3 business days; the Store then updates installed copies." >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Explain a failed Store upload
+        if: failure()
         shell: pwsh
-        run: Remove-Item -Recurse -Force (Join-Path $env:RUNNER_TEMP 'signing') -ErrorAction SilentlyContinue
+        run: |
+          @"
+          ### ❌ Microsoft Store upload failed
+          The GitHub release (APK and installer) is already published; only the Store is behind.
+          To retry: download **Pairly.msix** from the release and in Partner Center choose **Update** on the
+          latest submission → **Packages** → replace the package → **Submit**. Or fix the cause shown above and
+          re-run this job from the run page (**Re-run failed jobs**).
+          "@ >> $env:GITHUB_STEP_SUMMARY

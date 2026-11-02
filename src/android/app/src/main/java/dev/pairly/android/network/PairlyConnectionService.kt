@@ -15,11 +15,14 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.util.Base64
+import androidx.annotation.PluralsRes
+import androidx.annotation.StringRes
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import dev.pairly.android.MainActivity
 import dev.pairly.android.R
+import dev.pairly.android.ui.LocaleText
 import dev.pairly.android.diagnostics.LinkDiagnostics
 import dev.pairly.android.features.apps.AppCatalog
 import dev.pairly.android.features.files.FileReceiver
@@ -165,9 +168,9 @@ class PairlyConnectionService : Service() {
                     retryIndex = 0
                     rediscoverSavedHostOrSchedule(
                         statusText = if (settings.trustKey.isNotBlank()) {
-                            "Network available. Reconnecting to paired PC..."
+                            t(R.string.svc_network_back_paired)
                         } else {
-                            "Network available. Reconnecting..."
+                            t(R.string.svc_network_back)
                         }
                     )
                 }
@@ -185,9 +188,9 @@ class PairlyConnectionService : Service() {
                     resetStaleSocket()
                     rediscoverSavedHostOrSchedule(
                         statusText = if (settings.trustKey.isNotBlank()) {
-                            "Wi-Fi lost. Paired, reconnecting..."
+                            t(R.string.svc_wifi_lost_paired)
                         } else {
-                            "Connection lost. Reconnecting soon..."
+                            t(R.string.svc_connection_lost)
                         }
                     )
                 }
@@ -225,7 +228,7 @@ class PairlyConnectionService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        ensureForeground(PairlyConnection.status)
+        ensureForeground(PairlyConnection.connectionState.detail.ifBlank { t(R.string.connection_disconnected) })
         if (settings.autoConnectEnabled && settings.trustKey.isNotBlank()) {
             ConnectionWatchdog.schedule(this)
         }
@@ -266,22 +269,22 @@ class PairlyConnectionService : Service() {
                     manualDisconnect = false
                     enqueueClipboard(PendingClipboardCopy(filePath = file.absolutePath, fileName = fileName, revision = ClipboardSyncController.ordering.revision()))
                 } else {
-                    publishStatus("Shared image is unavailable or exceeds the 8 MiB clipboard limit.")
+                    updateNotification(t(R.string.svc_image_too_large))
                     runCatching { file.delete() }
                 }
             }
             ACTION_CONNECT, null -> {
                 intent?.getStringExtra(EXTRA_HOST)?.takeIf { it.isNotBlank() }?.let { settings.host = it }
                 if (settings.savedPairingRejected && settings.trustKey.isNotBlank()) {
-                    publishStatus("PC forgot this saved pairing. Open a new pairing ticket on the PC and pair again.")
+                    publishState(ConnectionPhase.Rejected, t(R.string.svc_pc_forgot_us))
                     return START_STICKY
                 }
                 settings.autoConnectEnabled = true
                 manualDisconnect = false
                 if (settings.host.isBlank() && settings.hostId.isNotBlank()) {
-                    rediscoverSavedHostOrSchedule("Finding your paired PC...")
+                    rediscoverSavedHostOrSchedule(t(R.string.svc_finding_paired_pc))
                 } else {
-                    connectNow(if (settings.trustKey.isNotBlank()) "Paired, reconnecting..." else "Connecting to PC...")
+                    connectNow(if (settings.trustKey.isNotBlank()) t(R.string.svc_paired_reconnecting) else t(R.string.svc_connecting))
                 }
             }
         }
@@ -309,7 +312,7 @@ class PairlyConnectionService : Service() {
         super.onDestroy()
     }
 
-    private fun connectNow(statusText: String = "Connecting to PC...") {
+    private fun connectNow(statusText: String = t(R.string.svc_connecting)) {
         val savedSecret = settings.trustKey
         if (savedSecret.isNotBlank() && settings.hostId.isBlank() && pendingMigrationCandidate == null) {
             discoverLegacyHostForSecureMigration()
@@ -318,7 +321,7 @@ class PairlyConnectionService : Service() {
         if (savedSecret.isNotBlank() && settings.hostId.isNotBlank() &&
             (!settings.useTls || settings.certificateFingerprint.isBlank())
         ) {
-            rediscoverSavedHostOrSchedule("Upgrading the saved pairing to a secure connection...")
+            rediscoverSavedHostOrSchedule(t(R.string.svc_upgrading_pairing))
             return
         }
 
@@ -334,9 +337,9 @@ class PairlyConnectionService : Service() {
 
         if (endpoint.isBlank()) {
             if (settings.hostId.isNotBlank()) {
-                rediscoverSavedHostOrSchedule("Finding your paired PC...")
+                rediscoverSavedHostOrSchedule(t(R.string.svc_finding_paired_pc))
             } else {
-                publishState(ConnectionPhase.Disconnected, "Choose a PC before connecting.")
+                publishState(ConnectionPhase.Disconnected, t(R.string.svc_choose_pc))
             }
             return
         }
@@ -359,7 +362,7 @@ class PairlyConnectionService : Service() {
                     retryIndex = 0
                     PairlyConnection.isTransportConnected = true
                     PairlyConnection.isConnected = false
-                    publishState(ConnectionPhase.Authenticating, "Secure connection opened. Verifying saved pairing...")
+                    publishState(ConnectionPhase.Authenticating, t(R.string.svc_verifying_pairing))
                     LinkDiagnostics.markConnected()
                     acquireLocks()
                     if (!pendingPairingCode.isNullOrBlank()) {
@@ -400,9 +403,9 @@ class PairlyConnectionService : Service() {
                             lastTransportStatus.contains("certificate", ignoreCase = true) ||
                             lastTransportStatus.contains("SSL", ignoreCase = true)
                         ) {
-                            "Certificate mismatch. The PC identity does not match the selected discovery."
+                            t(R.string.svc_cert_mismatch_discovery)
                         } else {
-                            "Connection timed out. Keep the active Windows app open and try pairing again."
+                            t(R.string.svc_pair_timeout)
                         }
                         pendingPairingCode = null
                         pendingPairingCandidate = null
@@ -412,7 +415,7 @@ class PairlyConnectionService : Service() {
                     } else if (!manualDisconnect && settings.autoConnectEnabled) {
                         rediscoverSavedHostOrSchedule()
                     } else {
-                        publishState(ConnectionPhase.Disconnected, "Disconnected")
+                        publishState(ConnectionPhase.Disconnected, t(R.string.svc_disconnected))
                     }
                 }
             }
@@ -453,7 +456,7 @@ class PairlyConnectionService : Service() {
             pendingPairingCandidate = null
             publishState(
                 ConnectionPhase.Rejected,
-                "Incompatible Windows version. Update or close the old Windows app, then search again."
+                t(R.string.svc_incompatible_windows)
             )
             return
         }
@@ -463,7 +466,7 @@ class PairlyConnectionService : Service() {
             return
         }
 
-        publishState(ConnectionPhase.Discovering, "Verifying the selected PC identity...")
+        publishState(ConnectionPhase.Discovering, t(R.string.svc_verifying_pc))
         serviceScope.launch {
             val validation = PairingCandidatePolicy.validate(
                 selected,
@@ -475,7 +478,7 @@ class PairlyConnectionService : Service() {
                     pendingPairingCandidate = verified
                     settings.rememberPairingCandidate(verified)
                     PairlyConnection.host = settings.endpoint
-                    connectNow("Pairing with ${verified.name}...")
+                    connectNow(t(R.string.svc_pairing_with, verified.name))
                     return@post
                 }
 
@@ -483,11 +486,11 @@ class PairlyConnectionService : Service() {
                 pendingPairingCandidate = null
                 val detail = when (validation.failure) {
                     PairingCandidateFailure.INCOMPATIBLE_WINDOWS ->
-                        "Incompatible Windows version. Update or close the old Windows app, then search again."
+                        t(R.string.svc_incompatible_windows)
                     PairingCandidateFailure.CERTIFICATE_MISMATCH ->
-                        "Certificate mismatch. The selected PC identity changed; search again before pairing."
+                        t(R.string.svc_cert_changed)
                     PairingCandidateFailure.TIMEOUT, null ->
-                        "Connection timed out. Keep only the active Windows app open and search again."
+                        t(R.string.svc_timeout_search)
                 }
                 publishState(ConnectionPhase.Rejected, detail)
             }
@@ -501,7 +504,7 @@ class PairlyConnectionService : Service() {
      */
     private fun connectToScannedPc(selected: DiscoveredPc, addresses: List<String>) {
         val port = selected.securePort ?: return
-        publishState(ConnectionPhase.Discovering, "Reaching ${selected.name}...")
+        publishState(ConnectionPhase.Discovering, t(R.string.svc_reaching, selected.name))
         serviceScope.launch {
             val reachable = addresses.firstOrNull { address ->
                 runCatching {
@@ -516,7 +519,7 @@ class PairlyConnectionService : Service() {
                     pendingPairingCandidate = candidate
                     settings.rememberPairingCandidate(candidate)
                     PairlyConnection.host = settings.endpoint
-                    connectNow("Pairing with ${candidate.name}...")
+                    connectNow(t(R.string.svc_pairing_with, candidate.name))
                     return@post
                 }
 
@@ -524,7 +527,7 @@ class PairlyConnectionService : Service() {
                 pendingPairingCandidate = null
                 publishState(
                     ConnectionPhase.Rejected,
-                    "Couldn't reach ${selected.name}. Connect your phone to the same Wi-Fi as the PC and allow Pairly through Windows Firewall, then scan again."
+                    t(R.string.svc_unreachable, selected.name)
                 )
             }
         }
@@ -533,7 +536,7 @@ class PairlyConnectionService : Service() {
     private fun discoverLegacyHostForSecureMigration() {
         if (discoveringLegacyHost || verifyingLegacyCandidates || manualDisconnect) return
         discoveringLegacyHost = true
-        publishState(ConnectionPhase.Discovering, "Finding the previously paired PC for a secure upgrade...")
+        publishState(ConnectionPhase.Discovering, t(R.string.svc_finding_for_upgrade))
         val lastHost = EndpointFormatter.hostOnly(settings.host)
         serviceScope.launch {
             val candidates = LegacyMigrationPolicy.secureCandidates(
@@ -549,7 +552,7 @@ class PairlyConnectionService : Service() {
                     verifyingLegacyCandidates = true
                     verifyNextLegacyCandidate()
                 } else {
-                    scheduleReconnect(statusText = "The legacy PC identity could not be verified yet. Retrying safely...")
+                    scheduleReconnect(statusText = t(R.string.svc_legacy_unverified))
                 }
             }
         }
@@ -567,12 +570,12 @@ class PairlyConnectionService : Service() {
             verifyingLegacyCandidates = false
             pendingMigrationCandidate = null
             scheduleReconnect(
-                statusText = "No discovered PC accepted the saved pairing proof. Retrying discovery safely..."
+                statusText = t(R.string.svc_no_pc_accepted)
             )
             return
         }
         pendingMigrationCandidate = candidate
-        connectNow("Verifying the saved pairing with ${candidate.name}...")
+        connectNow(t(R.string.svc_verifying_with, candidate.name))
     }
 
     private fun handleHostMessage(message: String): String {
@@ -646,7 +649,7 @@ class PairlyConnectionService : Service() {
                         settings.rememberRejectedSavedPairing(errorMessage)
                         PairlyConnection.isConnected = false
                         PairlyConnection.isTransportConnected = false
-                        publishState(ConnectionPhase.Rejected, "The PC rejected the saved pairing proof.")
+                        publishState(ConnectionPhase.Rejected, t(R.string.svc_proof_rejected))
                         PairlyConnection.client.disconnect("Authentication rejected")
                         "Saved pairing proof was rejected by the PC."
                     } else if (errorMessage.contains("Trust key", ignoreCase = true)) {
@@ -678,7 +681,7 @@ class PairlyConnectionService : Service() {
             }
             PairlyConnection.isConnected = false
             PairlyConnection.isTransportConnected = false
-            publishState(ConnectionPhase.Rejected, "The PC identity did not match the saved pairing.")
+            publishState(ConnectionPhase.Rejected, t(R.string.svc_identity_mismatch))
             PairlyConnection.client.disconnect("Host identity mismatch")
             return "PC identity verification failed"
         }
@@ -703,7 +706,7 @@ class PairlyConnectionService : Service() {
                 return "Session device identity did not match; trying the next secure PC"
             }
             PairlyConnection.client.disconnect("Session device mismatch")
-            publishState(ConnectionPhase.Rejected, "The authenticated PC session named a different phone.")
+            publishState(ConnectionPhase.Rejected, t(R.string.svc_session_other_phone))
             return "Session device identity did not match"
         }
 
@@ -714,7 +717,7 @@ class PairlyConnectionService : Service() {
                     return "Legacy pairing migration identity did not match; trying the next secure PC"
                 }
                 PairlyConnection.client.disconnect("Migration identity mismatch")
-                publishState(ConnectionPhase.Rejected, "The PC could not prove the expected saved identity.")
+                publishState(ConnectionPhase.Rejected, t(R.string.svc_identity_unproven))
                 return "Legacy pairing migration identity did not match"
             }
             val stored = settings.rememberTrustedConnection(
@@ -736,7 +739,7 @@ class PairlyConnectionService : Service() {
                 PairlyConnection.isConnected = false
                 PairlyConnection.isTransportConnected = false
                 PairlyConnection.client.disconnect("Migration storage failed")
-                publishState(ConnectionPhase.Rejected, "Android Keystore could not secure the upgraded pairing.")
+                publishState(ConnectionPhase.Rejected, t(R.string.svc_keystore_upgrade))
                 return "Secure pairing migration could not be stored"
             }
             pendingMigrationCandidate = null
@@ -756,7 +759,7 @@ class PairlyConnectionService : Service() {
         PairlyConnection.client.disconnect(reason)
         publishState(
             ConnectionPhase.Reconnecting,
-            "This PC did not recognize the saved pairing. Trying the next secure PC..."
+            t(R.string.svc_try_next_pc)
         )
         verifyNextLegacyCandidate()
     }
@@ -804,7 +807,7 @@ class PairlyConnectionService : Service() {
         PairlyConnection.isTransportConnected = true
         PairlyConnection.isConnected = true
         startHeartbeat()
-        publishState(ConnectionPhase.Ready, "Connected to ${settings.pcDisplayName.ifBlank { "paired PC" }}.")
+        publishState(ConnectionPhase.Ready, t(R.string.svc_connected_to, settings.pcDisplayName.ifBlank { t(R.string.paired_pc_fallback) }))
         sendInitialDeviceState(deviceId)
         flushPendingClipboard()
         ClipboardSyncController.start(this)
@@ -824,16 +827,16 @@ class PairlyConnectionService : Service() {
                 stopHeartbeat()
                 PairlyConnection.isConnected = false
                 PairlyConnection.isTransportConnected = false
-                publishState(ConnectionPhase.Rejected, "Saved pairing was rejected by the PC: $reason")
+                publishState(ConnectionPhase.Rejected, t(R.string.svc_saved_rejected, reason))
                 PairlyConnection.client.disconnect("Saved pairing rejected")
                 "Saved pairing rejected by PC: $reason"
             } else {
                 pendingPairingCode = null
                 pendingPairingCandidate = null
                 val detail = when (errorCode) {
-                    "pairing_code_expired" -> "Pairing code expired. Create a new code on the active Windows app."
-                    "host_identity_mismatch" -> "Certificate mismatch. Search again and select the verified PC."
-                    else -> "Pairing code was rejected. Create a new code on the active Windows app."
+                    "pairing_code_expired" -> t(R.string.svc_code_expired)
+                    "host_identity_mismatch" -> t(R.string.svc_cert_search_again)
+                    else -> t(R.string.svc_code_rejected)
                 }
                 publishState(ConnectionPhase.Rejected, detail)
                 detail
@@ -861,7 +864,7 @@ class PairlyConnectionService : Service() {
                 pendingPairingCode = null
                 PairlyConnection.isConnected = false
                 PairlyConnection.isTransportConnected = false
-                publishState(ConnectionPhase.Rejected, "Android Keystore could not save this pairing securely.")
+                publishState(ConnectionPhase.Rejected, t(R.string.svc_keystore_save))
                 PairlyConnection.client.disconnect("Pairing secret storage failed")
                 return "Pairing was accepted, but Android Keystore could not save it securely."
             }
@@ -873,7 +876,7 @@ class PairlyConnectionService : Service() {
         PairlyConnection.host = settings.endpoint
         PairlyConnection.isTransportConnected = true
         PairlyConnection.isConnected = false
-        publishState(ConnectionPhase.Authenticating, "Pairing accepted. Finishing the secure session...")
+        publishState(ConnectionPhase.Authenticating, t(R.string.svc_pair_accepted))
         return "Pairing accepted. Waiting for secure session readiness."
     }
 
@@ -1442,9 +1445,9 @@ class PairlyConnectionService : Service() {
             manager.createNotificationChannel(
                 NotificationChannel(
                     channelId,
-                    getString(R.string.mirror_request_channel_name),
+                    t(R.string.mirror_request_channel_name),
                     NotificationManager.IMPORTANCE_HIGH
-                ).apply { description = getString(R.string.mirror_request_channel_description) }
+                ).apply { description = t(R.string.mirror_request_channel_description) }
             )
         }
 
@@ -1460,8 +1463,8 @@ class PairlyConnectionService : Service() {
             MIRROR_PERMISSION_NOTIFICATION_ID,
             NotificationCompat.Builder(this, channelId)
                 .setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle(getString(R.string.mirror_request_notification_title))
-                .setContentText(getString(R.string.mirror_request_notification_text))
+                .setContentTitle(t(R.string.mirror_request_notification_title))
+                .setContentText(t(R.string.mirror_request_notification_text))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_EVENT)
                 .setAutoCancel(true)
@@ -1609,7 +1612,7 @@ class PairlyConnectionService : Service() {
                     mainHandler.postDelayed({
                         if (pendingClipboard === copy && clipboardAwaitingConfirmation == copy.itemId) {
                             resetStaleSocket()
-                            scheduleReconnect(immediate = true, statusText = "Retrying clipboard delivery...")
+                            scheduleReconnect(immediate = true, statusText = t(R.string.svc_retry_clipboard))
                         }
                     }, 30_000L)
                 } else if (copy.automatic && copy.revision != ClipboardSyncController.ordering.revision()) {
@@ -1617,7 +1620,7 @@ class PairlyConnectionService : Service() {
                 } else {
                     LinkDiagnostics.record(LinkDiagnostics.Category.CLIPBOARD, "clipboard.publication.failed", "item=${copy.itemId}: ${result.exceptionOrNull()?.message}", LinkDiagnostics.Severity.WARNING)
                     resetStaleSocket()
-                    scheduleReconnect(statusText = "Clipboard is queued. Reconnecting to your paired PC...")
+                    scheduleReconnect(statusText = t(R.string.svc_clipboard_queued_reconnect))
                 }
                 if (result.isSuccess) flushPendingClipboard()
             }
@@ -1664,9 +1667,9 @@ class PairlyConnectionService : Service() {
         publishState(
             ConnectionPhase.Reconnecting,
             statusText ?: if (delay == 0L) {
-                "Reconnecting to your paired PC..."
+                t(R.string.svc_reconnecting_paired)
             } else {
-                "PC unavailable. Retrying in ${((delay + 999L) / 1000L).coerceAtLeast(1L)} seconds."
+                tq(R.plurals.svc_retry_in_seconds, ((delay + 999L) / 1000L).coerceAtLeast(1L).toInt())
             }
         )
         mainHandler.postDelayed(retryRunnable, delay)
@@ -1682,7 +1685,7 @@ class PairlyConnectionService : Service() {
         if (discoveringSavedHost) return
 
         discoveringSavedHost = true
-        publishState(ConnectionPhase.Discovering, statusText ?: "Finding your paired PC...")
+        publishState(ConnectionPhase.Discovering, statusText ?: t(R.string.svc_finding_paired_pc))
         val pinnedFingerprint = settings.certificateFingerprint
         serviceScope.launch {
             val match = findTrustedHost(trustedHostId, pinnedFingerprint)
@@ -1697,9 +1700,9 @@ class PairlyConnectionService : Service() {
                         secure = match.securePort != null
                     )
                     retryIndex = 0
-                    scheduleReconnect(immediate = true, statusText = "Paired PC found. Reconnecting...")
+                    scheduleReconnect(immediate = true, statusText = t(R.string.svc_pc_found))
                 } else {
-                    scheduleReconnect(statusText = "Paired PC is not reachable yet. Retrying automatically...")
+                    scheduleReconnect(statusText = t(R.string.svc_pc_not_reachable))
                 }
             }
         }
@@ -1761,7 +1764,7 @@ class PairlyConnectionService : Service() {
         releaseLocks()
         ClipboardSyncController.stop()
         clearPendingClipboard()
-        publishState(ConnectionPhase.Disconnected, "Disconnected")
+        publishState(ConnectionPhase.Disconnected, t(R.string.svc_disconnected))
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
@@ -1802,7 +1805,7 @@ class PairlyConnectionService : Service() {
             publishStatus("Connection heartbeat timed out. Reconnecting...")
             resetStaleSocket()
             if (canAutoReconnect()) {
-                rediscoverSavedHostOrSchedule("Connection timed out. Finding the paired PC again...")
+                rediscoverSavedHostOrSchedule(t(R.string.svc_timeout_finding))
             }
             return
         }
@@ -1817,7 +1820,7 @@ class PairlyConnectionService : Service() {
             publishStatus("Connection heartbeat could not be sent. Reconnecting...")
             resetStaleSocket()
             if (canAutoReconnect()) {
-                rediscoverSavedHostOrSchedule("Connection was interrupted. Finding the paired PC again...")
+                rediscoverSavedHostOrSchedule(t(R.string.svc_interrupted_finding))
             }
         }
     }
@@ -1843,10 +1846,16 @@ class PairlyConnectionService : Service() {
         PairlyConnection.client.cancel()
     }
 
+    /** Internal progress for diagnostics (English, never shown in the UI or the notification). */
     private fun publishStatus(value: String) {
         PairlyConnection.updateStatus(value)
-        updateNotification(value)
     }
+
+    /** User-facing text in the app's chosen language (see [LocaleText]). */
+    private fun t(@StringRes id: Int, vararg args: Any): String = LocaleText.of(this).getString(id, *args)
+
+    private fun tq(@PluralsRes id: Int, count: Int): String =
+        LocaleText.of(this).resources.getQuantityString(id, count, count)
 
     private fun publishState(phase: ConnectionPhase, value: String) {
         PairlyConnection.updateState(phase, value)
@@ -1866,7 +1875,7 @@ class PairlyConnectionService : Service() {
             val requestId = UUID.randomUUID().toString().replace("-", "")
             if (PairlyConnection.send(ProtocolJson.deviceForget(settings.deviceId, requestId))) {
                 pendingForgetRequestId = requestId
-                publishState(ConnectionPhase.Disconnected, "Removing this phone from the paired PC...")
+                publishState(ConnectionPhase.Disconnected, t(R.string.svc_removing))
                 mainHandler.postDelayed(forgetFallbackRunnable, FORGET_CONFIRM_TIMEOUT_MS)
                 return
             }
@@ -1895,7 +1904,7 @@ class PairlyConnectionService : Service() {
         endpointStore.clear()
         pendingPairingCode = null
         disconnect()
-        publishState(ConnectionPhase.Disconnected, "PC forgotten. Pair again whenever you are ready.")
+        publishState(ConnectionPhase.Disconnected, t(R.string.svc_forgotten))
     }
 
     private fun ensureForeground(status: String) {
@@ -1936,12 +1945,12 @@ class PairlyConnectionService : Service() {
 
         return NotificationCompat.Builder(this, ensureChannel())
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(getString(R.string.app_name))
+            .setContentTitle(t(R.string.app_name))
             .setContentText(status)
             .setContentIntent(openIntent)
             .setOngoing(true)
-            .addAction(R.drawable.ic_notification, getString(R.string.notification_action_send_clipboard), sendClipboardIntent)
-            .addAction(R.drawable.ic_notification, getString(R.string.notification_action_disconnect), disconnectIntent)
+            .addAction(R.drawable.ic_notification, t(R.string.notification_action_send_clipboard), sendClipboardIntent)
+            .addAction(R.drawable.ic_notification, t(R.string.notification_action_disconnect), disconnectIntent)
             .build()
     }
 
@@ -1949,7 +1958,7 @@ class PairlyConnectionService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                getString(R.string.connection_channel_name),
+                t(R.string.connection_channel_name),
                 NotificationManager.IMPORTANCE_LOW
             )
             getSystemService(NotificationManager::class.java).createNotificationChannel(channel)

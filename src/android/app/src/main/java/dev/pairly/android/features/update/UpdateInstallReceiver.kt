@@ -12,6 +12,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.IntentCompat
 import dev.pairly.android.R
+import dev.pairly.android.ui.LocaleText
 
 /** Receives PackageInstaller session results for [AppUpdater]. */
 class UpdateInstallReceiver : BroadcastReceiver() {
@@ -33,9 +34,10 @@ class UpdateInstallReceiver : BroadcastReceiver() {
 
     private fun notifyConfirmationNeeded(context: Context, confirm: Intent, version: String) {
         val manager = context.getSystemService(NotificationManager::class.java)
+        val text = LocaleText.of(context)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             manager.createNotificationChannel(
-                NotificationChannel(CHANNEL_ID, "App updates", NotificationManager.IMPORTANCE_DEFAULT)
+                NotificationChannel(CHANNEL_ID, text.getString(R.string.update_channel_name), NotificationManager.IMPORTANCE_DEFAULT)
             )
         }
         val open = PendingIntent.getActivity(
@@ -46,8 +48,8 @@ class UpdateInstallReceiver : BroadcastReceiver() {
         )
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("Pairly update ready")
-            .setContentText(if (version.isBlank()) "Tap to install." else "Tap to install $version.")
+            .setContentTitle(text.getString(R.string.update_ready_title))
+            .setContentText(if (version.isBlank()) text.getString(R.string.update_ready_text) else text.getString(R.string.update_ready_text_version, version.removePrefix("v")))
             .setContentIntent(open)
             .setAutoCancel(true)
             .build()

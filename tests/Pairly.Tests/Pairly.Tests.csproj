@@ -16,6 +16,10 @@
 
   <ItemGroup>
     <Compile Include="..\..\src\windows\Pairly.Windows\WindowsClipboardSync.cs" Link="WindowsClipboardSync.cs" />
+    <!-- WindowsClipboardSync reports its status through the app's localized strings. -->
+    <Compile Include="..\..\src\windows\Pairly.Windows\Localization\Localization.cs" Link="Localization.cs" />
+    <EmbeddedResource Include="..\..\src\windows\Pairly.Windows\Localization\Strings.resx" Link="Strings.resx"
+                      LogicalName="Pairly.Windows.Localization.Strings.resources" />
     <ProjectReference Include="..\..\src\windows\Pairly.Media\Pairly.Media.csproj" />
   </ItemGroup>
 

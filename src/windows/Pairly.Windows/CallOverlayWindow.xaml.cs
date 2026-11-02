@@ -3,6 +3,8 @@ using System.Net.Http.Json;
 using System.Windows;
 using Pairly.Protocol;
 
+using Pairly.Windows.Localization;
+
 namespace Pairly.Windows;
 
 /// <summary>
@@ -40,7 +42,7 @@ public partial class CallOverlayWindow : Window
             ShowCaller(callerName, number);
         }
 
-        StateText.Text = "Call in progress";
+        StateText.Text = L.T("call_in_progress");
         HintText.Visibility = Visibility.Visible;
         SilenceButton.Visibility = Visibility.Collapsed;
         DeclineButton.Visibility = Visibility.Collapsed;
@@ -52,7 +54,7 @@ public partial class CallOverlayWindow : Window
     private void ShowCaller(string callerName, string number)
     {
         CallerNameText.Text = string.IsNullOrWhiteSpace(callerName)
-            ? string.IsNullOrWhiteSpace(number) ? "Unknown caller" : number
+            ? string.IsNullOrWhiteSpace(number) ? L.T("unknown_caller") : number
             : callerName;
         CallerNumberText.Text = string.IsNullOrWhiteSpace(callerName) ? string.Empty : number;
         CallerNumberText.Visibility = string.IsNullOrWhiteSpace(CallerNumberText.Text) ? Visibility.Collapsed : Visibility.Visible;
@@ -73,19 +75,19 @@ public partial class CallOverlayWindow : Window
                 new CallActionPayload(_sessionId, action));
             if (!response.IsSuccessStatusCode)
             {
-                StateText.Text = "Phone not connected";
+                StateText.Text = L.T("phone_not_connected");
                 button.IsEnabled = true;
             }
         }
         catch (HttpRequestException)
         {
-            StateText.Text = "Phone not connected";
+            StateText.Text = L.T("phone_not_connected");
             button.IsEnabled = true;
         }
 
         if (action == "silence")
         {
-            StateText.Text = "Incoming call (silenced)";
+            StateText.Text = L.T("incoming_call_silenced");
         }
     }
 }

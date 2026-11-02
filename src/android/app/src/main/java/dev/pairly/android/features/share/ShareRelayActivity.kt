@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import dev.pairly.android.R
+import dev.pairly.android.ui.LocaleText
 import dev.pairly.android.features.clipboard.ClipboardImagePreparer
 import dev.pairly.android.features.clipboard.ClipboardSyncController
 import dev.pairly.android.network.ConnectionSettings
@@ -46,7 +47,7 @@ class ShareRelayActivity : Activity() {
                     PairlyConnectionService.sendClipboardImage(this, it.file.absolutePath, it.fileName)
                     finishWithToast(R.string.share_image_queued)
                 }.onFailure {
-                    Toast.makeText(this, it.message ?: getString(R.string.share_not_relayed), Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, it.message ?: LocaleText.of(this).getString(R.string.share_not_relayed), Toast.LENGTH_LONG).show()
                     finish()
                 }
             }

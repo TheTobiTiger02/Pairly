@@ -23,7 +23,6 @@
     <Company>Pairly</Company>
     <Authors>Pairly</Authors>
     <Copyright>Copyright (c) 2026 Pairly</Copyright>
-    <VersionPrefix>1.0.1.1</VersionPrefix>
     <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>
 
@@ -47,7 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="QRCoder" Version="1.6.0" />
-    <PackageReference Include="Velopack" Version="1.2.161" />
+    <PackageReference Include="Velopack" Version="$(VelopackVersion)" />
   </ItemGroup>
 
 </Project>

@@ -7,6 +7,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Pairly.Protocol;
 
+using Pairly.Windows.Localization;
+
 namespace Pairly.Windows;
 
 /// <summary>
@@ -232,12 +234,12 @@ public partial class MainWindow
                 JsonOptions);
             if (!response.IsSuccessStatusCode)
             {
-                StatusText.Text = "The phone is not connected, so the media command was not sent.";
+                StatusText.Text = L.T("the_phone_is_not_connected_so_the_media_comm");
             }
         }
         catch (HttpRequestException ex)
         {
-            StatusText.Text = UserFacingError("The media command could not be sent.", ex);
+            StatusText.Text = UserFacingError(L.T("the_media_command_could_not_be_sent"), ex);
         }
     }
 
