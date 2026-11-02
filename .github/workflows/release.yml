@@ -332,6 +332,8 @@ jobs:
             $raw = (msstore submission get $env:STORE_PRODUCT_ID) -join "`n"
             $json = $raw.Substring($raw.IndexOf('{'), $raw.LastIndexOf('}') - $raw.IndexOf('{') + 1)
             $submission = $json | ConvertFrom-Json
+            # Partner Center needs a listing for every language the package declares (en-us and de-de).
+            Write-Host "Store listing languages: $($submission.Listings.PSObject.Properties.Name -join ', ')"
             foreach ($language in $submission.Listings.PSObject.Properties.Name) {
               $text = if ($language -like 'de*') { "Fehlerbehebungen und Verbesserungen.`n`n$notes" } else { $notes }
               if ($text.Length -gt 1500) { $text = $text.Substring(0, 1497) + '...' }
@@ -345,7 +347,55 @@ jobs:
 
           msstore submission publish $env:STORE_PRODUCT_ID
           if ($LASTEXITCODE -ne 0) { throw "msstore submission publish failed ($LASTEXITCODE)." }
-          "### Microsoft Store`nSubmitted $env:TAG. Certification usually takes 1–3 business days; the Store then updates installed copies." >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Wait for Partner Center to accept the submission
+        shell: pwsh
+        env:
+          STORE_TENANT_ID: ${{ secrets.STORE_TENANT_ID }}
+          STORE_CLIENT_ID: ${{ secrets.STORE_CLIENT_ID }}
+          STORE_CLIENT_SECRET: ${{ secrets.STORE_CLIENT_SECRET }}
+          TAG: ${{ needs.build.outputs.tag }}
+        run: |
+          # A commit only starts the submission. Partner Center then checks it (package, listings,
+          # languages) and either moves it to certification or sends it back to draft with errors.
+          $token = (Invoke-RestMethod -Method Post -Uri "https://login.microsoftonline.com/$env:STORE_TENANT_ID/oauth2/token" -Body @{
+            grant_type = 'client_credentials'
+            client_id = $env:STORE_CLIENT_ID
+            client_secret = $env:STORE_CLIENT_SECRET
+            resource = 'https://manage.devcenter.microsoft.com'
+          }).access_token
+          $headers = @{ Authorization = "Bearer $token" }
+          $api = "https://manage.devcenter.microsoft.com/v1.0/my/applications/$env:STORE_PRODUCT_ID"
+          $submissionId = (Invoke-RestMethod -Uri $api -Headers $headers).pendingApplicationSubmission.id
+          if (-not $submissionId) {
+            "### Microsoft Store`nSubmitted $env:TAG." >> $env:GITHUB_STEP_SUMMARY
+            exit 0
+          }
+
+          $accepted = 'Certification', 'Release', 'PendingPublication', 'Publishing', 'Published'
+          $rejected = 'CommitFailed', 'PreProcessingFailed', 'CertificationFailed', 'ReleaseFailed', 'PendingCommit', 'Canceled'
+          $deadline = (Get-Date).AddMinutes(20)
+          do {
+            Start-Sleep -Seconds 30
+            $result = Invoke-RestMethod -Uri "$api/submissions/$submissionId/status" -Headers $headers
+            Write-Host "Partner Center: $($result.status)"
+          } while ($result.status -notin ($accepted + $rejected) -and (Get-Date) -lt $deadline)
+
+          if ($result.status -in $accepted) {
+            "### Microsoft Store`n✅ $env:TAG is in certification ($($result.status)). That usually takes 1–3 business days; the Store then updates installed copies." >> $env:GITHUB_STEP_SUMMARY
+            exit 0
+          }
+          if ($result.status -notin $rejected) {
+            Write-Host "::warning::Partner Center is still checking the submission ($($result.status)). Look at it in Partner Center later."
+            "### Microsoft Store`n⏳ Still being checked by Partner Center ($($result.status)). Look at the submission in Partner Center later." >> $env:GITHUB_STEP_SUMMARY
+            exit 0
+          }
+
+          $errors = @($result.statusDetails.errors | ForEach-Object { "- **$($_.code)**: $($_.details)" })
+          "### Microsoft Store rejected the submission ($($result.status))" >> $env:GITHUB_STEP_SUMMARY
+          if ($errors) { $errors >> $env:GITHUB_STEP_SUMMARY } else { 'Partner Center gave no details; open the draft to see what is marked Incomplete.' >> $env:GITHUB_STEP_SUMMARY }
+          $errors | ForEach-Object { Write-Host "::error::$_" }
+          throw "Partner Center rejected the submission: $($result.status)."
 
       - name: Explain a failed Store upload
         if: failure()
@@ -354,7 +404,11 @@ jobs:
           @"
           ### ❌ Microsoft Store upload failed
           The GitHub release (APK and installer) is already published; only the Store is behind.
-          To retry: download **Pairly.msix** from the release and in Partner Center choose **Update** on the
-          latest submission → **Packages** → replace the package → **Submit**. Or fix the cause shown above and
-          re-run this job from the run page (**Re-run failed jobs**).
+
+          **Most likely fix, no new release needed:** in Partner Center, open Pairly's draft submission, complete
+          whatever is marked **Incomplete** (for example a Store listing for a language the app supports, such as
+          German), then select **Submit for certification**. The draft already contains this version's package.
+          If the upload itself failed (no draft with this version): fix the cause shown above and re-run this job
+          from the run page (**Re-run failed jobs**), or download **Pairly.msix** from the release and in Partner
+          Center choose **Update** → **Packages** → replace the package → **Submit for certification**.
           "@ >> $env:GITHUB_STEP_SUMMARY

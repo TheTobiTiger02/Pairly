@@ -15,7 +15,7 @@ The workflow then:
 
 Installed apps pick the release up on their own: the Android app and the `.exe` install update themselves from GitHub, and the Store updates its copies after certification (usually 1–3 business days). The README's download buttons always point at the latest release.
 
-If the Store step fails, the GitHub release is still published, and the run summary explains how to retry. **Re-run failed jobs** on the run page repeats only the Store upload.
+If the Store step fails, the GitHub release is still published, and the run summary explains how to retry. The workflow waits until Partner Center has checked the submission; if Partner Center rejects it (for example because a Store listing is incomplete), the summary lists its errors. The package is then already in a draft: complete what Partner Center marks **Incomplete** and select **Submit for certification**, no new release needed. If the upload itself failed, **Re-run failed jobs** on the run page repeats only the Store upload.
 
 > Releases are made from `main`. Pushing a tag by hand (`git tag v1.2.3 && git push origin v1.2.3`) still works and does the same thing.
 
@@ -80,6 +80,8 @@ Pairly is already listed as `9NDLWS4D52HM`. To let the workflow submit updates b
    ```
 
    It asks for each value: the package identity and Store ID become repository variables, and the four Entra values become secrets (typed hidden, never printed). Press Enter to skip a value that is already set.
+
+7. **Add the German Store listing.** The package supports German, so Partner Center rejects submissions until a German listing exists. In the latest submission choose **Store listings → Add/remove languages → German**, paste the German text from [store-listing.md](store-listing.md), upload a screenshot, and save.
 
 That's it. The next **Run workflow** submits to the Store. When the client secret expires (the expiry date is shown in Entra), create a new one and run `Set-StoreSecrets.ps1` again, entering only `STORE_CLIENT_SECRET`.
 

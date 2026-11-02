@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Long-press the Pairly icon on the home screen. All shortcuts open MainActivity, which keeps the
+     clipboard relay private to the app. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="scan"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_scan"
+        android:shortcutShortLabel="@string/shortcut_scan"
+        android:shortcutLongLabel="@string/shortcut_scan_long">
+        <intent
+            android:action="dev.pairly.android.action.SCAN_PAIRING_CODE"
+            android:targetPackage="dev.pairly.android"
+            android:targetClass="dev.pairly.android.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="clipboard"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_clipboard"
+        android:shortcutShortLabel="@string/shortcut_clipboard"
+        android:shortcutLongLabel="@string/shortcut_clipboard_long">
+        <intent
+            android:action="dev.pairly.android.action.SEND_CLIPBOARD"
+            android:targetPackage="dev.pairly.android"
+            android:targetClass="dev.pairly.android.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="sync"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_sync"
+        android:shortcutShortLabel="@string/shortcut_sync"
+        android:shortcutLongLabel="@string/shortcut_sync_long">
+        <intent
+            android:action="dev.pairly.android.action.SYNC"
+            android:targetPackage="dev.pairly.android"
+            android:targetClass="dev.pairly.android.MainActivity" />
+    </shortcut>
+</shortcuts>

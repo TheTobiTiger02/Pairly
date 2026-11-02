@@ -306,5 +306,13 @@
     <string name="faq_private_a">Ja. Es gibt kein Konto und keine Cloud. Die Daten gehen direkt zwischen deinen Geräten hin und her, über eine verschlüsselte Verbindung, die fest an deinen PC gebunden ist.</string>
     <string name="faq_updates_q">Wie funktionieren Updates?</string>
     <string name="faq_updates_a">Pairly sucht zweimal täglich auf GitHub nach neuen Versionen und installiert sie. Beim ersten Update musst du bestätigen; danach aktualisiert es sich ab Android 12 still.</string>
+    <string name="shortcut_scan">PC-Code scannen</string>
+    <string name="shortcut_scan_long">Kopplungscode des PCs scannen</string>
+    <string name="shortcut_clipboard">Zwischenablage senden</string>
+    <string name="shortcut_clipboard_long">Zwischenablage an den PC senden</string>
+    <string name="shortcut_sync">Jetzt abgleichen</string>
+    <string name="shortcut_sync_long">Jetzt mit dem PC abgleichen</string>
+    <string name="shortcut_synced">Gleiche mit deinem PC ab …</string>
+    <string name="shortcut_disabled">Kopple zuerst einen PC</string>
     <string name="whats_new_title">Neu in Pairly %1$s</string>
 </resources>

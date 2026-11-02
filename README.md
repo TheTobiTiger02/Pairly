@@ -98,6 +98,8 @@ The Android app ships four candidate designs (Expressive, Minimal, Dark vibrant,
 
 <img src="docs/screenshots/android-designs.png" width="820" alt="The four Android design candidates">
 
+Side-by-side sheets for every screen, light and dark, and the two Windows layouts are in [docs/design-comparison](docs/design-comparison/README.md).
+
 ### Releasing
 
 **Actions → Release → Run workflow → patch / minor / major.** That builds and publishes the APK, the Windows installer and the Store package, and submits to the Microsoft Store. One-time setup and details are in [docs/releasing.md](docs/releasing.md). Never replace the Android signing key: installed apps can't update across a key change.

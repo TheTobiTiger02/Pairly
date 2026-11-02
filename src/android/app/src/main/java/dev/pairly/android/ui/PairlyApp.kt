@@ -82,7 +82,7 @@ fun PairlyApp(
         wasPaired = state.hasPairing
         if (justPaired && !prefs.onboardingDone && prefs.onboardingStep == OnboardingStep.Pair) {
             delay(1_200)
-            viewModel.updatePrefs { it.copy(onboardingStep = OnboardingStep.Pair.next()) }
+            viewModel.updatePrefs { it.copy(onboardingStep = dev.pairly.android.ui.onboarding.nextUnfinished(OnboardingStep.Pair, state)) }
         }
     }
 
