@@ -94,8 +94,24 @@ Record RTT, available bitrate, encoded/decoded FPS, packet loss, freezes, jitter
 
 ## UI and accessibility gate
 
-Windows: test 980Ã—640, 1280Ã—720, and a wide desktop at 100%, 150%, and 200% scaling; light, dark, high contrast, keyboard-only focus, and reduced motion.
+Windows: test 980×640, 1280×720, and a wide desktop at 100%, 150%, and 200% scaling; light, dark, high contrast, keyboard-only focus, and reduced motion.
 
 Android: test API 26, 29, 33, 34, and 36 on phone and tablet widths; light/dark theme, 200% font size, display scaling, TalkBack traversal, first-run onboarding, permission denial, permanently denied permission, and recovery actions.
 
 Photos and notifications must stay scoped to the selected phone. Verify stable scroll during incremental updates, grouped ordering, loading/empty/error states, multi-select photo actions, reply/dismiss notification actions, offline snapshot reconciliation, and the thumbnail-cache memory cap.
+
+## Redesign and localization gate
+
+CI renders every Android screen (all four designs, light and dark, English and German) as the `android-screenshots` artifact and every Windows page (both layouts, light and dark, English and German, setup, tour, What's new) as the `windows-screenshots` artifact. Skim both before tagging. A Windows page that fails to load fails CI.
+
+Then check by hand on real devices:
+
+- **Android fresh install:** welcome → tour → install PC app → QR pairing → every permission step (grant one, skip one, deny one twice to reach the App info fallback) → optional Shizuku guide → summary. Kill the app mid-setup and confirm it resumes on the same step. On Android 13+ with a sideloaded APK, notification access shows the "Restricted setting" hint.
+- **Android update over a paired install:** no onboarding, What's new appears once, Home shows "Finish setting up" for anything missing.
+- **Android design preview:** tap **Settings → Version** seven times, switch all four styles and both navigation modes, then hide the preview again.
+- **Android language:** switch System / English / Deutsch in Settings (Android 13+ also under system per-app language); the connection notification follows.
+- **Windows fresh install:** setup wizard (language, features, QR to the APK, pairing, preferences, summary) → tour. Close Pairly mid-setup; setup starts again next time until finished.
+- **Windows update over a paired install:** no setup; What's new, then the tour, each once.
+- **Windows layouts:** click the version under **Settings → General → About** seven times, switch Navigation pane / Tabs on top; the phone card, now playing and notifications move with the layout and keep working (device picker, quick actions, reply, mute, dismiss).
+- **Windows theme and language:** Theme System/Light/Dark and Language Windows/English/Deutsch apply immediately; status messages after the switch use the new language.
+- **Help:** replay setup and the tour from Help on both platforms.
