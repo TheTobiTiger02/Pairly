@@ -81,11 +81,15 @@ Pairly is already listed as `9NDLWS4D52HM`. To let the workflow submit updates b
 
    It asks for each value: the package identity and Store ID become repository variables, and the four Entra values become secrets (typed hidden, never printed). Press Enter to skip a value that is already set.
 
-7. **Add the German Store listing.** The package supports German, so Partner Center rejects submissions until a German listing exists. In the latest submission choose **Store listings → Add/remove languages → German**, paste the German text from [store-listing.md](store-listing.md), upload a screenshot, and save.
+7. **Add the German Store listing.** The package supports German, so Partner Center rejects submissions until a German listing exists. In the latest submission choose **Store listings → Add/remove languages → German** and save. Then run **Actions → Store listing**, which fills in the text and screenshots for every language.
 
 That's it. The next **Run workflow** submits to the Store. When the client secret expires (the expiry date is shown in Entra), create a new one and run `Set-StoreSecrets.ps1` again, entering only `STORE_CLIENT_SECRET`.
 
 The listing text, including a German translation, is in [store-listing.md](store-listing.md). Listing changes (text, screenshots, new languages) are made in Partner Center; the workflow only replaces the package and the **What's new** text.
+
+### Store listing (text and screenshots)
+
+The description, features, search terms and captioned screenshots come from `store/listing.json` and the Windows app's demo mode. **Actions → Store listing → Run workflow** puts them into a draft submission for you to review and submit. See [store-listing.md](store-listing.md).
 
 ### What the workflow reads
 

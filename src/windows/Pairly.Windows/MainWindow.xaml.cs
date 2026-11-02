@@ -130,7 +130,7 @@ public partial class MainWindow : Window
 
         Loaded += async (_, _) =>
         {
-            var hostStarted = await StartEmbeddedHostAsync();
+            var hostStarted = !App.DemoMode && await StartEmbeddedHostAsync();
             InitializeTrayIcon();
             if (hostStarted)
             {
@@ -145,7 +145,11 @@ public partial class MainWindow : Window
                 }
                 await RefreshFromHostAsync(showErrors: true);
             }
-            if (App.ScreenshotDirectory is not null)
+            if (App.DemoMode)
+            {
+                await RunStoreScreenshotsAsync();
+            }
+            else if (App.ScreenshotDirectory is not null)
             {
                 await RunScreenshotsAsync();
                 return;
@@ -1152,6 +1156,12 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (App.DemoMode)
+        {
+            SmsMessagesList.ItemsSource = DemoMessages(thread.ThreadId, _demoLanguage == "de", DemoNow);
+            return;
+        }
+
         try
         {
             var messages = await _host.GetFromJsonAsync<SmsMessagePayload[]>(
@@ -1899,6 +1909,11 @@ public partial class MainWindow : Window
 
     private async Task RefreshFromHostAsync(bool showErrors)
     {
+        if (App.DemoMode)
+        {
+            return;
+        }
+
         if (_refreshInProgress)
         {
             return;
@@ -2305,6 +2320,7 @@ public partial class MainWindow : Window
 
     private void StartPhotoThumbnailPrefetch(IReadOnlyList<MediaItemViewModel> photos)
     {
+        if (App.DemoMode) return;
         _photoPrefetchCts?.Cancel();
         _photoPrefetchCts?.Dispose();
         _photoPrefetchCts = new CancellationTokenSource();
@@ -2392,6 +2408,7 @@ public partial class MainWindow : Window
 
     private async Task LoadStorageDirectoryAsync(string deviceId, string path)
     {
+        if (App.DemoMode) return;
         try
         {
             var response = await _host.PostAsJsonAsync($"v1/devices/{Uri.EscapeDataString(deviceId)}/storage/list", new StorageListRequestPayload(Guid.NewGuid().ToString(), path));
@@ -2766,6 +2783,14 @@ internal sealed class MediaItemViewModel : INotifyPropertyChanged
     /// The decoded thumbnail, fetched the first time a visible tile asks for it. Loading it here
     /// instead of binding the URL keeps decode size small and only touches tiles on screen.
     /// </summary>
+    /// <summary>Demo mode: a picture drawn in code instead of one loaded from the phone.</summary>
+    internal void SetPreview(System.Windows.Media.ImageSource image)
+    {
+        _thumbnail = image;
+        _thumbnailRequested = true;
+        OnPropertyChanged(nameof(Thumbnail));
+    }
+
     public System.Windows.Media.ImageSource? Thumbnail
     {
         get
