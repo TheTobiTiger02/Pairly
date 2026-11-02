@@ -33,7 +33,7 @@ public partial class MainWindow
         AboutVersionButton.Content = CurrentVersion() ?? "dev";
         DesignPreviewCard.Visibility = _preferences.DesignPreviewUnlocked ? Visibility.Visible : Visibility.Collapsed;
         SyncChoiceCombos();
-        ApplyLayout(_preferences.Layout);
+        SelectPage(MainTabs.SelectedIndex);
         MainTabs.SelectedIndex = HomeTabIndex;
         UpdateGreeting();
         LocalizationSource.Instance.LanguageChanged += (_, _) => RefreshLocalizedCodeText();
@@ -73,50 +73,12 @@ public partial class MainWindow
         HomeGreetingText.Text = L.T(hour < 5 ? "greeting_evening" : hour < 12 ? "greeting_morning" : hour < 18 ? "greeting_afternoon" : "greeting_evening");
     }
 
-    // --- Layout ---------------------------------------------------------------------------------
+    // --- Navigation -----------------------------------------------------------------------------
 
-    /// <summary>"Pane": navigation on the left. "Tabs": tabs on top, phone and notifications on the left.</summary>
-    private void ApplyLayout(string layout)
-    {
-        var tabs = string.Equals(layout, "Tabs", StringComparison.Ordinal);
-        NavPane.Visibility = tabs ? Visibility.Collapsed : Visibility.Visible;
-        SidePanel.Visibility = tabs ? Visibility.Visible : Visibility.Collapsed;
-        TopTabsPanel.Visibility = tabs ? Visibility.Visible : Visibility.Collapsed;
-        TopTabsActions.Visibility = tabs ? Visibility.Visible : Visibility.Collapsed;
-
-        MoveInto(DeviceCard, tabs ? SideDeviceHost : NavDeviceHost);
-        MoveInto(NowPlayingCard, tabs ? SideNowPlayingHost : HomeNowPlayingHost);
-        MoveInto(NotificationsSection, tabs ? SideNotificationsHost : NotificationsPageHost);
-        NowPlayingCard.Margin = tabs ? new Thickness(0, 8, 0, 0) : new Thickness(0);
-
-        if (tabs && MainTabs.SelectedIndex == NotificationsTabIndex)
-        {
-            SelectPage(HomeTabIndex);
-        }
-        else
-        {
-            SelectPage(MainTabs.SelectedIndex);
-        }
-    }
-
-    private static void MoveInto(FrameworkElement element, ContentControl host)
-    {
-        if (ReferenceEquals(host.Content, element))
-        {
-            return;
-        }
-        if (element.Parent is ContentControl previous)
-        {
-            previous.Content = null;
-        }
-        host.Content = element;
-    }
-
-    /// <summary>Shows a page and checks its navigation item in whichever layout is active.</summary>
+    /// <summary>Shows a page and checks its item in the navigation pane.</summary>
     private void SelectPage(int index)
     {
-        var tabs = TopTabsPanel.Visibility == Visibility.Visible;
-        var roots = tabs ? new FrameworkElement[] { TopTabsPanel, TopTabsActions } : new FrameworkElement[] { NavPane };
+        var roots = new FrameworkElement[] { NavPane };
         // The logical tree exists from the constructor on; the visual tree only after the window loads.
         var item = roots.SelectMany(LogicalDescendants).OfType<RadioButton>()
             .FirstOrDefault(button => button.GroupName.StartsWith("MainNavigation", StringComparison.Ordinal) && button.Tag?.ToString() == index.ToString());
@@ -181,7 +143,7 @@ public partial class MainWindow
         SelectByTag(OnboardingThemeCombo, _preferences.Theme);
         SelectByTag(LanguageCombo, _preferences.Language);
         SelectByTag(OnboardingLanguageCombo, _preferences.Language);
-        SelectByTag(LayoutCombo, _preferences.Layout);
+        SelectByTag(DarkLookCombo, _preferences.DarkLook);
         _syncingChoices = false;
     }
 
@@ -217,19 +179,23 @@ public partial class MainWindow
         SyncChoiceCombos();
     }
 
-    private void LayoutCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    /// <summary>Design preview: the dark-mode candidates, the same three the phone app offers.</summary>
+    private void DarkLookCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_syncingChoices || !IsInitialized)
         {
             return;
         }
-        _preferences.Layout = SelectedTag(sender) is "Tabs" ? "Tabs" : "Pane";
+        _preferences.DarkLook = SelectedTag(sender) is { Length: > 0 } look ? look : "Graphite";
+        _preferences.Theme = "Dark";
         _preferences.Save();
-        ApplyLayout(_preferences.Layout);
-        SelectPage(SettingsTabIndex);
+        ThemeManager.DarkLook = _preferences.DarkLook;
+        ThemeManager.Preference = _preferences.Theme;
+        ThemeManager.ApplySystemTheme(System.Windows.Application.Current.Resources);
+        SyncChoiceCombos();
     }
 
-    /// <summary>Clicking the version seven times reveals the design preview (layout switch).</summary>
+    /// <summary>Clicking the version seven times reveals the design preview (dark-mode candidates).</summary>
     private void AboutVersion_Click(object sender, RoutedEventArgs e)
     {
         if (_preferences.DesignPreviewUnlocked)
@@ -308,18 +274,17 @@ public partial class MainWindow
 
     private void ShowTour()
     {
-        var tabs = string.Equals(_preferences.Layout, "Tabs", StringComparison.Ordinal);
         var steps = new List<CoachMarkOverlay.Step>
         {
             new(DeviceCard, L.T("tour_phone_title"), L.T("tour_phone_body")),
-            new(tabs ? TopTabsPanel : NavItemsPanel, L.T("tour_pages_title"), L.T("tour_pages_body")),
-            new(tabs ? DeviceQuickActions : HomeQuickActions, L.T("tour_actions_title"), L.T("tour_actions_body")),
-            new(tabs ? NotificationsSection : NavNotifications, L.T("tour_notifications_title"), L.T("tour_notifications_body")),
-            new(tabs ? TopTabsActions : NavFooterPanel, L.T("tour_help_title"), L.T("tour_help_body"))
+            new(NavItemsPanel, L.T("tour_pages_title"), L.T("tour_pages_body")),
+            new(HomeQuickActions, L.T("tour_actions_title"), L.T("tour_actions_body")),
+            new(NavNotifications, L.T("tour_notifications_title"), L.T("tour_notifications_body")),
+            new(NavFooterPanel, L.T("tour_help_title"), L.T("tour_help_body"))
         };
         _tour = new CoachMarkOverlay(steps, L.T("action_back"), L.T("action_next"), L.T("action_done"), L.T("action_skip_tour"), L.T("tour_counter"));
         Grid.SetRowSpan(_tour, 2);
-        Grid.SetColumnSpan(_tour, 3);
+        Grid.SetColumnSpan(_tour, 2);
         Panel.SetZIndex(_tour, 30);
         _tour.Finished += (_, _) =>
         {

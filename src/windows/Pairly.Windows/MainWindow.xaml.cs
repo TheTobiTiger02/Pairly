@@ -363,15 +363,8 @@ public partial class MainWindow : Window
 
     private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        // Narrow windows keep every feature: panes slim down and the tabs drop their labels.
+        // Narrow windows keep every feature: the pane slims down.
         NavPane.Width = ActualWidth < 1000 ? 272 : 292;
-        SidePanel.Width = ActualWidth < 1180 ? 312 : 340;
-        var labelVisibility = ActualWidth < 1120 ? Visibility.Collapsed : Visibility.Visible;
-        HomeTabLabel.Visibility = labelVisibility;
-        MessagesTabLabel.Visibility = labelVisibility;
-        PhotosTabLabel.Visibility = labelVisibility;
-        FilesTabLabel.Visibility = labelVisibility;
-        AppsTabLabel.Visibility = labelVisibility;
         BrandTitleText.Visibility = ActualWidth < 1040 ? Visibility.Collapsed : Visibility.Visible;
         HomeQuickActions.Columns = ActualWidth < 1180 ? 2 : 4;
     }

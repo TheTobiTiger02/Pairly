@@ -18,8 +18,8 @@ internal sealed class DesktopPreferences
     /// <summary>"" follows Windows; "en" or "de".</summary>
     public string Language { get; set; } = string.Empty;
 
-    /// <summary>"Pane" (navigation pane on the left) or "Tabs" (tabs on top, phone panel on the left).</summary>
-    public string Layout { get; set; } = "Pane";
+    /// <summary>Dark-mode candidate while the final one is chosen: "Graphite", "Navy" or "Black".</summary>
+    public string DarkLook { get; set; } = "Graphite";
 
     public bool OnboardingCompleted { get; set; }
     public bool TourCompleted { get; set; }

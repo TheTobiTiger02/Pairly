@@ -99,7 +99,6 @@
   <data name="delete_failed" xml:space="preserve"><value>Löschen fehlgeschlagen: {0}</value></data>
   <data name="design_preview_taps_left" xml:space="preserve"><value>Noch {0} Klicks bis zur Design-Vorschau.</value></data>
   <data name="design_preview_unlocked" xml:space="preserve"><value>Design-Vorschau freigeschaltet. Du findest sie unter Einstellungen &gt; Allgemein &gt; Info.</value></data>
-  <data name="design_preview_window_layout" xml:space="preserve"><value>Design-Vorschau: Fensteraufbau</value></data>
   <data name="desktop_socket_connected" xml:space="preserve"><value>Desktop-Verbindung steht.</value></data>
   <data name="desktop_socket_reconnecting" xml:space="preserve"><value>Desktop-Verbindung wird neu aufgebaut.</value></data>
   <data name="details" xml:space="preserve"><value>Details</value></data>
@@ -224,7 +223,6 @@
   <data name="my_phone_can_t_find_this_pc" xml:space="preserve"><value>Mein Handy findet diesen PC nicht</value></data>
   <data name="name" xml:space="preserve"><value>Name</value></data>
   <data name="native" xml:space="preserve"><value>Nativ</value></data>
-  <data name="navigation_pane" xml:space="preserve"><value>Navigationsleiste</value></data>
   <data name="need_a_hand" xml:space="preserve"><value>Brauchst du Hilfe?</value></data>
   <data name="need_the_app" xml:space="preserve"><value>Brauchst du die App?</value></data>
   <data name="needs_attention" xml:space="preserve"><value>braucht Aufmerksamkeit</value></data>
@@ -446,7 +444,6 @@
   <data name="stream_details" xml:space="preserve"><value>Übertragungsdetails</value></data>
   <data name="sync" xml:space="preserve"><value>Synchronisieren</value></data>
   <data name="sync_phone_data" xml:space="preserve"><value>Handydaten synchronisieren</value></data>
-  <data name="tabs_on_top" xml:space="preserve"><value>Tabs oben</value></data>
   <data name="take_the_tour" xml:space="preserve"><value>Tour starten</value></data>
   <data name="the_app_list_could_not_be_loaded" xml:space="preserve"><value>Die App-Liste konnte nicht geladen werden.</value></data>
   <data name="the_embedded_host_is_not_running_yet" xml:space="preserve"><value>Der Dienst läuft noch nicht.</value></data>
@@ -494,7 +491,6 @@
   <data name="trusted_device_s" xml:space="preserve"><value>{0} vertrauenswürdige(s) Gerät(e), {1}, {2}.</value></data>
   <data name="trusted_device_storage" xml:space="preserve"><value>Speicher für vertrauenswürdige Geräte</value></data>
   <data name="try_again" xml:space="preserve"><value>Erneut versuchen</value></data>
-  <data name="try_both_layouts_only_you_see_this_option" xml:space="preserve"><value>Probiere beide Aufbauten aus. Nur du siehst diese Option.</value></data>
   <data name="type_or_paste_text_to_send_to_your_phones" xml:space="preserve"><value>Text eingeben oder einfügen, um ihn an deine Handys zu senden</value></data>
   <data name="unavailable" xml:space="preserve"><value>Nicht verfügbar</value></data>
   <data name="unknown_caller" xml:space="preserve"><value>Unbekannter Anrufer</value></data>
@@ -515,7 +511,6 @@
   <data name="what_s_new" xml:space="preserve"><value>Was ist neu</value></data>
   <data name="what_you_can_do" xml:space="preserve"><value>Was du machen kannst</value></data>
   <data name="whats_new_title" xml:space="preserve"><value>Neu in Pairly {0}</value></data>
-  <data name="window_layout" xml:space="preserve"><value>Fensteraufbau</value></data>
   <data name="windows_startup_registration_could_not_be_up" xml:space="preserve"><value>Der Windows-Autostart konnte für diesen Benutzer nicht geändert werden.</value></data>
   <data name="yes_there_s_no_account_and_no_cloud_data_goe" xml:space="preserve"><value>Ja. Es gibt kein Konto und keine Cloud. Die Daten gehen direkt zwischen deinen Geräten hin und her, über eine verschlüsselte Verbindung, die fest an diesen PC gebunden ist.</value></data>
   <data name="yesterday" xml:space="preserve"><value>Gestern</value></data>
@@ -535,4 +530,9 @@
   <data name="received_files_hint" xml:space="preserve"><value>Von deinem Handy geteilt. Gespeichert unter Downloads\Pairly.</value></data>
   <data name="file_received" xml:space="preserve"><value>Datei empfangen</value></data>
   <data name="file_received_detail" xml:space="preserve"><value>{0} liegt unter Downloads\Pairly.</value></data>
+  <data name="design_preview_dark_look" xml:space="preserve"><value>Designvorschau: Aussehen im dunklen Modus</value></data>
+  <data name="dark_look_hint" xml:space="preserve"><value>Probier die Kandidaten für den dunklen Modus aus (die Handy-App hat dieselben drei). Nur du siehst diese Option.</value></data>
+  <data name="dark_look_graphite" xml:space="preserve"><value>Graphit</value></data>
+  <data name="dark_look_navy" xml:space="preserve"><value>Marine</value></data>
+  <data name="dark_look_black" xml:space="preserve"><value>Schwarz</value></data>
 </root>
