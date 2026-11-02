@@ -21,6 +21,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.UiScrollable
+import androidx.test.uiautomator.UiSelector
 import androidx.test.uiautomator.Until
 import org.junit.After
 import org.junit.Before
@@ -28,7 +30,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
-import java.util.regex.Pattern
 
 /**
  * Drives the real app on an emulator: first-run setup, the main screens, the design preview and
@@ -157,9 +158,12 @@ class AppSmokeTest {
         screenshot("feature-control")
         click(R.string.action_open_settings)
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-        check(device.wait(Until.hasObject(By.textContains("Pairly").pkg(Pattern.compile("^(?!dev\\.pairly).*"))), 15_000)) {
-            "Accessibility settings did not show Pairly."
+        check(device.wait(Until.hasObject(By.pkg("com.android.settings")), 15_000)) { "Settings did not open." }
+        // Pairly may be listed below the fold (Downloaded apps), so scroll to it if needed.
+        if (!device.hasObject(By.textContains("Pairly"))) {
+            runCatching { UiScrollable(UiSelector().scrollable(true)).scrollTextIntoView("Pairly") }
         }
+        check(device.wait(Until.hasObject(By.textContains("Pairly")), 5_000)) { "Accessibility settings did not show Pairly." }
         device.takeScreenshot(File(context.filesDir, "screenshots/%02d-accessibility-settings.png".format(++shot)))
         device.pressBack()
         waitFor(R.string.feature_why_title)

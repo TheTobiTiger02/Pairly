@@ -135,11 +135,13 @@ public sealed class FileShareReceiver
     /// <summary>Keeps only a plain file name: no folders, no reserved characters, no reserved device names.</summary>
     public static string SafeFileName(string? name)
     {
-        var candidate = Path.GetFileName((name ?? string.Empty).Replace('\\', '/').Split('/').Last()).Trim().Trim('.');
+        // Last path segment only, then every character Windows forbids (':' would otherwise read as a drive or a stream).
+        var candidate = (name ?? string.Empty).Replace('\\', '/').Split('/').Last();
         foreach (var invalid in Path.GetInvalidFileNameChars().Concat(new[] { '<', '>', ':', '"', '|', '?', '*' }))
         {
             candidate = candidate.Replace(invalid, '_');
         }
+        candidate = candidate.Trim().Trim('.');
 
         var stem = Path.GetFileNameWithoutExtension(candidate).ToUpperInvariant();
         string[] reserved = ["CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "LPT1", "LPT2", "LPT3"];
