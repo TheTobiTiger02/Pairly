@@ -46,12 +46,14 @@ import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -86,10 +88,13 @@ import dev.pairly.android.ui.theme.Space
 fun PairlyBackground(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
     val style = Pairly.style
     val base = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
-    Box(
-        modifier.then(style.backgroundBrush?.let { base.background(it) } ?: base),
-        content = content
-    )
+    // Text outside a Material Surface would otherwise default to black, unreadable in dark themes.
+    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
+        Box(
+            modifier.then(style.backgroundBrush?.let { base.background(it) } ?: base),
+            content = content
+        )
+    }
 }
 
 /** The variant's card: tonal (Expressive), outlined (Minimal), glowing border (Dark vibrant) or frosted (Glass). */
@@ -107,7 +112,10 @@ fun PairlyCard(
     box = if (brush != null) box.background(brush) else box.background(style.cardColor)
     style.cardBorder?.let { box = box.border(it, shape) }
     if (onClick != null) box = box.clickable(role = Role.Button, onClick = onClick)
-    Column(box.animateContentSize(style.spring()).padding(contentPadding), content = content)
+    val contentColor = if (brush != null) style.onHero else MaterialTheme.colorScheme.onSurface
+    CompositionLocalProvider(LocalContentColor provides contentColor) {
+        Column(box.animateContentSize(style.spring()).padding(contentPadding), content = content)
+    }
 }
 
 @Composable

@@ -88,6 +88,12 @@ android {
     }
 }
 
+tasks.withType<Test>().configureEach {
+    // Optional Maven mirror for Robolectric's Android runtime jars (-ProbolectricRepoUrl=...), for
+    // environments where Maven Central rate-limits downloads.
+    providers.gradleProperty("robolectricRepoUrl").orNull?.let { systemProperty("robolectric.dependency.repo.url", it) }
+}
+
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8)

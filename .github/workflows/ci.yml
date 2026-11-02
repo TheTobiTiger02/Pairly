@@ -30,5 +30,14 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
-      - name: Build and unit test
-        run: ./gradlew :app:assembleDebug :app:testDebugUnitTest :server:assembleRelease :app:lintVitalRelease
+      - name: Build, unit test and render screenshots
+        # recordRoborazziDebug runs every unit test and renders each screen in every design
+        # variant, light and dark, English and German.
+        run: ./gradlew :app:assembleDebug :app:recordRoborazziDebug :server:assembleRelease :app:lintVitalRelease
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-screenshots
+          path: src/android/app/build/outputs/roborazzi
+          if-no-files-found: ignore

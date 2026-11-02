@@ -19,6 +19,8 @@ Messages, notifications, photos, files, a shared clipboard and your phone's scre
 
 <img src="docs/store-screenshot-1.png" width="820" alt="Pairly on Windows">
 
+<img src="docs/screenshots/android.png" width="820" alt="Pairly on Android: welcome, a guided setup step, home and the shared clipboard">
+
 </div>
 
 ## What you can do
@@ -89,6 +91,12 @@ cd src\android
 ```
 
 Launch only `Pairly.Windows.exe`; it owns the embedded host.
+
+### Design preview
+
+The Android app ships four candidate designs (Expressive, Minimal, Dark vibrant, Glass) and two navigation styles (bottom bar, dashboard). Unlock the switcher by tapping **Settings → Version** seven times. The Windows app can switch between a left navigation pane and top tabs the same way (click the version seven times). CI renders every Android screen in every design, light and dark, English and German, and attaches them to each run as the `android-screenshots` artifact.
+
+<img src="docs/screenshots/android-designs.png" width="820" alt="The four Android design candidates">
 
 ### Releasing
 

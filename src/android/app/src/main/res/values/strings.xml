@@ -226,7 +226,7 @@
     <string name="home_not_paired_detail">Pair once, and Pairly reconnects on its own</string>
     <string name="home_finish_setup">Finish setting up</string>
     <string name="home_finish_setup_detail">%1$d of %2$d features are on</string>
-    <string name="home_action_clipboard">Send clipboard</string>
+    <string name="home_action_clipboard">Clipboard</string>
     <string name="home_synced">Sent your latest photos, messages and notifications to your PC.</string>
     <string name="settings_title">Settings</string>
     <string name="settings_connection">Connection</string>

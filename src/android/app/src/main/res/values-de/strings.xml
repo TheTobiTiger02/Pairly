@@ -58,7 +58,7 @@
     <string name="action_reconnect">Jetzt neu verbinden</string>
     <string name="action_forget_pc">Diesen PC vergessen</string>
     <string name="action_forget">Vergessen</string>
-    <string name="action_sync_now">Jetzt synchronisieren</string>
+    <string name="action_sync_now">Jetzt abgleichen</string>
     <string name="action_paste">Einfügen</string>
     <string name="action_send">Senden</string>
     <string name="connection_disconnected">Offline</string>
@@ -226,7 +226,7 @@
     <string name="home_not_paired_detail">Einmal koppeln, danach verbindet sich Pairly von selbst</string>
     <string name="home_finish_setup">Einrichtung abschließen</string>
     <string name="home_finish_setup_detail">%1$d von %2$d Funktionen sind an</string>
-    <string name="home_action_clipboard">Zwischenablage senden</string>
+    <string name="home_action_clipboard">Zwischen­ablage</string>
     <string name="home_synced">Neueste Fotos, Nachrichten und Benachrichtigungen an deinen PC gesendet.</string>
     <string name="settings_title">Einstellungen</string>
     <string name="settings_connection">Verbindung</string>

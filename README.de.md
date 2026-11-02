@@ -18,6 +18,8 @@ Nachrichten, Benachrichtigungen, Fotos, Dateien, eine gemeinsame Zwischenablage 
 
 <img src="docs/store-screenshot-1.png" width="820" alt="Pairly unter Windows">
 
+<img src="docs/screenshots/android.png" width="820" alt="Pairly auf Android: Willkommen, ein Einrichtungsschritt, Startseite und gemeinsame Zwischenablage">
+
 </div>
 
 ## Was du damit machen kannst

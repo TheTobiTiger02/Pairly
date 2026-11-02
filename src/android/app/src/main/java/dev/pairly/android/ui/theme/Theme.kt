@@ -28,6 +28,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.Hyphens
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -228,7 +230,8 @@ private fun typography(variant: DesignVariant): Typography {
     }
     val tracking = if (variant == DesignVariant.Expressive) (-0.6).sp else (-0.2).sp
     fun style(size: Int, line: Int, weight: FontWeight, letter: androidx.compose.ui.unit.TextUnit = 0.sp) =
-        TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = weight, fontSize = size.sp, lineHeight = line.sp, letterSpacing = letter)
+        // Hyphenation keeps long German words ("Zwischenablage") from breaking mid-syllable in tight spots.
+        TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = weight, fontSize = size.sp, lineHeight = line.sp, letterSpacing = letter, hyphens = Hyphens.Auto, lineBreak = LineBreak.Paragraph)
     return Typography(
         displayLarge = style(48, 56, heading, tracking),
         displayMedium = style(40, 48, heading, tracking),

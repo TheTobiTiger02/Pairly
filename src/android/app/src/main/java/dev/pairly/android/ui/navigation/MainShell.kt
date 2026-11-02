@@ -31,6 +31,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
@@ -142,7 +143,8 @@ fun MainShell(
                                 selected = route == tab.route,
                                 onClick = { nav.navigateTab(tab.route) },
                                 icon = { Icon(tab.icon, contentDescription = null) },
-                                label = { Text(stringResource(tab.label)) }
+                                label = { Text(stringResource(tab.label)) },
+                                colors = NavigationBarItemDefaults.colors(indicatorColor = MaterialTheme.colorScheme.primaryContainer)
                             )
                         }
                     }

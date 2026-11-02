@@ -83,7 +83,7 @@ fun PairingContent(state: AppState, callbacks: PairingCallbacks, modifier: Modif
     val actions = LocalFeatureActions.current
     var showCodeEntry by rememberSaveable { mutableStateOf(!actions.canScanQr) }
     var scanError by remember { mutableStateOf(false) }
-    val busy = state.connection.phase in setOf(ConnectionPhase.Discovering, ConnectionPhase.Connecting, ConnectionPhase.Authenticating)
+    val busy = state.connection.phase in setOf(ConnectionPhase.Connecting, ConnectionPhase.Authenticating)
 
     Column(modifier, verticalArrangement = Arrangement.spacedBy(Space.l)) {
         PairlyCard(Modifier.fillMaxWidth()) {
