@@ -100,6 +100,8 @@ dependencies {
     implementation("dev.rikka.shizuku:provider:13.1.5")
     // QR scanning UI from Google Play services: no camera permission or camera code in the app.
     implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
+    // The scanner pulls in Fragment 1.0; Activity Result APIs need 1.3+ (release lint enforces it).
+    implementation("androidx.fragment:fragment-ktx:1.8.5")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test:runner:1.6.2")
