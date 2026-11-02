@@ -17,6 +17,9 @@ using Pairly.Server.Streaming;
 var tests = new (string Name, Func<Task> Run)[]
 {
     ("protocol round-trips clipboard payload", RunSync(ProtocolRoundTripsClipboardPayload)),
+    ("file share saves verified files to the share folder", RunSync(FileShareSavesVerifiedFiles)),
+    ("file share rejects damaged, oversized and foreign transfers", RunSync(FileShareRejectsBadTransfers)),
+    ("file share keeps only a safe file name", RunSync(FileShareKeepsSafeFileNames)),
     ("Windows strings have a German translation for every key", RunSync(WindowsStringsHaveGermanTranslations)),
     ("protocol rejects unsupported versions", RunSync(ProtocolRejectsUnsupportedVersions)),
     ("protocol round-trips release-ready optional payloads", RunSync(ProtocolRoundTripsReleaseReadyPayloads)),
@@ -108,6 +111,80 @@ static Func<Task> RunSync(Action action) => () =>
     action();
     return Task.CompletedTask;
 };
+
+static void FileShareSavesVerifiedFiles()
+{
+    var folder = Path.Combine(Path.GetTempPath(), "pairly-share-" + Guid.NewGuid().ToString("N"));
+    try
+    {
+        var receiver = new Pairly.Server.FileShareReceiver(folder);
+        var bytes = System.Text.Encoding.UTF8.GetBytes("hello from the phone, in two chunks");
+        var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes));
+        for (var round = 0; round < 2; round++)
+        {
+            var id = "t" + round;
+            AssertTrue(receiver.Begin("phone-1", new FileShareStartPayload(id, "notes.txt", bytes.Length)).Accepted, "start accepted");
+            AssertTrue(receiver.Append("phone-1", new FileShareChunkPayload(id, 0, Convert.ToBase64String(bytes[..10]))).Accepted, "chunk 0");
+            AssertTrue(receiver.Append("phone-1", new FileShareChunkPayload(id, 1, Convert.ToBase64String(bytes[10..]))).Accepted, "chunk 1");
+            var done = receiver.Complete("phone-1", "phone-1", new FileShareCompletePayload(id, hash.ToLowerInvariant()));
+            AssertTrue(done.Accepted && done.Saved is not null, "complete saved");
+            AssertEqual(round == 0 ? "notes.txt" : "notes (2).txt", done.Saved!.FileName);
+            AssertEqual(bytes.Length, File.ReadAllBytes(done.Saved.FilePath).Length);
+        }
+
+        AssertEqual(0, Directory.GetFiles(folder, "*.partial", SearchOption.AllDirectories).Length);
+        AssertEqual(0, receiver.ActiveTransfers);
+
+        var envelope = ProtocolEnvelope.Create(ProtocolMessageTypes.FileShareStart, "phone-1", 1, new FileShareStartPayload("x", "a.pdf", 3, "application/pdf", 1, 2));
+        var json = JsonProtocolSerializer.Serialize(envelope);
+        var parsed = JsonProtocolSerializer.Deserialize(json).ReadPayload<FileShareStartPayload>()!;
+        AssertEqual("a.pdf", parsed.FileName);
+        AssertEqual(2, parsed.Total);
+        AssertTrue(ProtocolValidator.Validate(JsonProtocolSerializer.Deserialize(json)).IsValid, "file share start is a known type");
+    }
+    finally
+    {
+        if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
+    }
+}
+
+static void FileShareRejectsBadTransfers()
+{
+    var folder = Path.Combine(Path.GetTempPath(), "pairly-share-" + Guid.NewGuid().ToString("N"));
+    try
+    {
+        var receiver = new Pairly.Server.FileShareReceiver(folder);
+        AssertFalse(receiver.Begin("phone-1", new FileShareStartPayload("big", "huge.bin", Pairly.Server.FileShareReceiver.MaxFileBytes + 1)).Accepted, "oversized rejected");
+
+        AssertTrue(receiver.Begin("phone-1", new FileShareStartPayload("t", "a.txt", 3)).Accepted, "start");
+        AssertFalse(receiver.Append("phone-2", new FileShareChunkPayload("t", 0, Convert.ToBase64String("abc"u8.ToArray()))).Accepted, "other phone cannot write");
+        AssertFalse(receiver.Append("phone-1", new FileShareChunkPayload("t", 1, Convert.ToBase64String("abc"u8.ToArray()))).Accepted, "out of order rejected");
+        AssertEqual(0, receiver.ActiveTransfers);
+
+        AssertTrue(receiver.Begin("phone-1", new FileShareStartPayload("h", "b.txt", 3)).Accepted, "start 2");
+        AssertTrue(receiver.Append("phone-1", new FileShareChunkPayload("h", 0, Convert.ToBase64String("abc"u8.ToArray()))).Accepted, "chunk");
+        AssertFalse(receiver.Complete("phone-1", "phone-1", new FileShareCompletePayload("h", new string('0', 64))).Accepted, "bad hash rejected");
+        AssertEqual(0, Directory.GetFiles(folder).Length);
+
+        AssertTrue(receiver.Begin("phone-1", new FileShareStartPayload("c", "c.txt", 3)).Accepted, "start 3");
+        receiver.CancelSession("phone-1");
+        AssertEqual(0, receiver.ActiveTransfers);
+        AssertEqual(0, Directory.GetFiles(folder).Length);
+    }
+    finally
+    {
+        if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
+    }
+}
+
+static void FileShareKeepsSafeFileNames()
+{
+    AssertEqual("passwd", Pairly.Server.FileShareReceiver.SafeFileName("../../etc/passwd"));
+    AssertEqual("evil.exe", Pairly.Server.FileShareReceiver.SafeFileName("C:\\Windows\\evil.exe"));
+    AssertEqual("a_b.txt", Pairly.Server.FileShareReceiver.SafeFileName("a:b.txt"));
+    AssertEqual("shared-file.txt", Pairly.Server.FileShareReceiver.SafeFileName("CON.txt"));
+    AssertEqual("shared-file", Pairly.Server.FileShareReceiver.SafeFileName(""));
+}
 
 static void ProtocolRoundTripsClipboardPayload()
 {

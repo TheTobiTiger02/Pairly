@@ -5,13 +5,14 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
+using Color = System.Windows.Media.Color;
 using Pairly.Windows.Localization;
 
 namespace Pairly.Windows;
 
 /// <summary>
-/// <c>Pairly.Windows.exe --render-screenshots &lt;folder&gt;</c> renders every page in both layouts,
-/// light and dark, English and German, plus setup, the tour and What's new, then exits. CI runs it
+/// <c>Pairly.Windows.exe --render-screenshots &lt;folder&gt;</c> renders every page in light and in each
+/// dark-mode candidate, English and German, plus setup, the tour and What's new, then exits. CI runs it
 /// so a broken page (for example a missing resource) fails the build and the images can be reviewed.
 /// </summary>
 public partial class MainWindow
@@ -69,54 +70,52 @@ public partial class MainWindow
             foreach (var language in new[] { "en", "de" })
             {
                 LocalizationSource.Instance.SetLanguage(language);
-                foreach (var theme in language == "en" ? new[] { "Light", "Dark" } : new[] { "Light" })
+                var looks = language == "en"
+                    ? new[] { ("Light", "Graphite", "light"), ("Dark", "Graphite", "dark-graphite"), ("Dark", "Navy", "dark-navy"), ("Dark", "Black", "dark-black") }
+                    : new[] { ("Light", "Graphite", "light") };
+                foreach (var (theme, darkLook, look) in looks)
                 {
                     ThemeManager.Preference = theme;
+                    ThemeManager.DarkLook = darkLook;
                     ThemeManager.ApplySystemTheme(System.Windows.Application.Current.Resources);
-                    foreach (var layout in language == "en" ? new[] { "Pane", "Tabs" } : new[] { "Pane" })
+                    var prefix = $"{language}-{look}";
+                    // The extra dark candidates only need the pages that show the most surface.
+                    var full = look is "light" or "dark-graphite";
+                    foreach (var (page, name) in ScreenshotPages)
                     {
-                        _preferences.Layout = layout;
-                        ApplyLayout(layout);
-                        var prefix = $"{language}-{theme.ToLowerInvariant()}-{layout.ToLowerInvariant()}";
-                        foreach (var (page, name) in ScreenshotPages)
-                        {
-                            if (layout == "Tabs" && page == NotificationsTabIndex)
-                            {
-                                continue;
-                            }
-                            SelectPage(page);
-                            await Settle();
-                            Save($"{prefix}-{name}");
-                        }
+                        if (!full && name is not ("home" or "settings" or "messages")) continue;
+                        SelectPage(page);
+                        await Settle();
+                        Save($"{prefix}-{name}");
+                    }
 
-                        if (layout == "Pane")
+                    if (full)
+                    {
+                        foreach (var step in OnboardingSequence)
                         {
-                            foreach (var step in OnboardingSequence)
+                            if (PairingOverlay.Visibility != Visibility.Visible)
                             {
-                                if (PairingOverlay.Visibility != Visibility.Visible)
-                                {
-                                    ShowPairingPanel(step, onboarding: true);
-                                }
-                                SetPairingStep(step);
-                                await Settle(step == PairingStep.Pair ? 1500 : 250);
-                                Save($"{prefix}-setup-{(int)step}-{step.ToString().ToLowerInvariant()}");
+                                ShowPairingPanel(step, onboarding: true);
                             }
-                            ClosePairingPanel();
+                            SetPairingStep(step);
+                            await Settle(step == PairingStep.Pair ? 1500 : 250);
+                            Save($"{prefix}-setup-{(int)step}-{step.ToString().ToLowerInvariant()}");
                         }
+                        ClosePairingPanel();
 
                         SelectPage(HomeTabIndex);
                         StartTour();
                         await Settle(400);
                         Save($"{prefix}-tour");
                         _tour?.Close();
-                    }
 
-                    WhatsNewTitle.Text = L.F("whats_new_title", "1.4.0");
-                    WhatsNewList.ItemsSource = new[] { "A cleaner window with a navigation pane", "German translation", "A guided setup and tour" };
-                    WhatsNewOverlay.Visibility = Visibility.Visible;
-                    await Settle();
-                    Save($"{language}-{theme.ToLowerInvariant()}-whats-new");
-                    WhatsNewOverlay.Visibility = Visibility.Collapsed;
+                        WhatsNewTitle.Text = L.F("whats_new_title", "1.6.0");
+                        WhatsNewList.ItemsSource = new[] { "Files and photos from your phone land in Downloads\\Pairly", "A calmer look that matches the phone app", "Clearer setup" };
+                        WhatsNewOverlay.Visibility = Visibility.Visible;
+                        await Settle();
+                        Save($"{prefix}-whats-new");
+                        WhatsNewOverlay.Visibility = Visibility.Collapsed;
+                    }
                 }
             }
         }
@@ -140,13 +139,13 @@ public partial class MainWindow
     }
 
     /// <summary>
-    /// Uses the window like a person would: presses the setup buttons, the tour, and the layout,
+    /// Uses the window like a person would: presses the setup buttons, the tour, and the dark look,
     /// theme and language choices, and checks after each step that the expected thing happened.
     /// Preferences are restored afterwards so a local run leaves nothing changed.
     /// </summary>
     private async Task RunClickThroughAsync(Func<int, Task> settle, List<string> failures)
     {
-        var saved = (_preferences.Theme, _preferences.Language, _preferences.Layout, _preferences.OnboardingCompleted, _preferences.TourCompleted, _preferences.MinimizeToTray);
+        var saved = (_preferences.Theme, _preferences.Language, _preferences.DarkLook, _preferences.OnboardingCompleted, _preferences.TourCompleted, _preferences.MinimizeToTray);
         void Expect(bool condition, string what)
         {
             if (!condition)
@@ -161,7 +160,6 @@ public partial class MainWindow
         try
         {
             LanguageCombo.SelectedIndex = 1; // English
-            ApplyLayoutChoice(0);
             await settle(250);
 
             // Setup, start to finish, without pairing a phone.
@@ -204,14 +202,12 @@ public partial class MainWindow
             await settle(150);
             Expect(MainTabs.SelectedIndex == 0 && NavMessages.IsChecked == true, "Messages to open from the navigation pane");
 
-            // Layout, theme and language through the real controls in Settings.
-            ApplyLayoutChoice(1);
-            await settle(250);
-            Expect(Shown(TopTabsPanel) && !Shown(NavPane), "Tabs on top to switch the layout");
-            Expect(SideDeviceHost.Content == DeviceCard, "the phone card to move to the side panel");
-            ApplyLayoutChoice(0);
-            await settle(250);
-            Expect(Shown(NavPane) && NavDeviceHost.Content == DeviceCard, "Navigation pane to switch back");
+            // Dark-mode candidate, theme and language through the real controls in Settings.
+            DarkLookCombo.SelectedIndex = 1; // Navy
+            await settle(150);
+            Expect(ThemeManager.IsDark && (TryFindResource("WindowBrush") as SolidColorBrush)?.Color == Color.FromRgb(0x0D, 0x12, 0x20), "Navy to switch the dark look");
+            DarkLookCombo.SelectedIndex = 0; // Graphite
+            await settle(150);
 
             ThemeCombo.SelectedIndex = 2; // Dark
             await settle(150);
@@ -229,13 +225,8 @@ public partial class MainWindow
         }
         finally
         {
-            (_preferences.Theme, _preferences.Language, _preferences.Layout, _preferences.OnboardingCompleted, _preferences.TourCompleted, _preferences.MinimizeToTray) = saved;
+            (_preferences.Theme, _preferences.Language, _preferences.DarkLook, _preferences.OnboardingCompleted, _preferences.TourCompleted, _preferences.MinimizeToTray) = saved;
             _preferences.Save();
         }
-    }
-
-    private void ApplyLayoutChoice(int index)
-    {
-        LayoutCombo.SelectedIndex = index;
     }
 }

@@ -137,55 +137,16 @@
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition x:Name="NavPaneColumn" Width="Auto" />
-            <ColumnDefinition x:Name="SidePanelColumn" Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <!-- Title bar: brand, tabs (top-tabs layout), host status, help, settings and caption buttons. -->
-        <Grid Grid.ColumnSpan="3">
+        <!-- Title bar: brand, host status and caption buttons. -->
+        <Grid Grid.ColumnSpan="2">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0" HorizontalAlignment="Left">
                 <controls:BrandMark Width="18" Height="18" />
                 <TextBlock x:Name="BrandTitleText" Text="Pairly" FontSize="12" Margin="12,0,0,1" VerticalAlignment="Center" />
             </StackPanel>
 
-            <StackPanel x:Name="TopTabsPanel" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center"
-                        KeyboardNavigation.TabNavigation="Once" KeyboardNavigation.DirectionalNavigation="Cycle" Visibility="Collapsed">
-                <RadioButton x:Name="HomeTab" GroupName="MainNavigationTabs" Tag="5" Style="{StaticResource TopTabButton}"
-                             Checked="Navigate_Click" AutomationProperties.Name="{l:Loc home}" ToolTip="{l:Loc home}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE80F;" Style="{StaticResource TabGlyph}" />
-                        <TextBlock x:Name="HomeTabLabel" Text="{l:Loc home}" Style="{StaticResource TabLabel}" />
-                    </StackPanel>
-                </RadioButton>
-                <RadioButton x:Name="MessagesNav" GroupName="MainNavigationTabs" Tag="0" Style="{StaticResource TopTabButton}"
-                             Checked="Navigate_Click" AutomationProperties.Name="{l:Loc messages}" ToolTip="{l:Loc messages}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE8BD;" Style="{StaticResource TabGlyph}" />
-                        <TextBlock x:Name="MessagesTabLabel" Text="{l:Loc messages}" Style="{StaticResource TabLabel}" />
-                    </StackPanel>
-                </RadioButton>
-                <RadioButton GroupName="MainNavigationTabs" Tag="1" Style="{StaticResource TopTabButton}"
-                             Checked="Navigate_Click" AutomationProperties.Name="{l:Loc photos}" ToolTip="{l:Loc photos}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xEB9F;" Style="{StaticResource TabGlyph}" />
-                        <TextBlock x:Name="PhotosTabLabel" Text="{l:Loc photos}" Style="{StaticResource TabLabel}" />
-                    </StackPanel>
-                </RadioButton>
-                <RadioButton GroupName="MainNavigationTabs" Tag="2" Style="{StaticResource TopTabButton}"
-                             Checked="Navigate_Click" AutomationProperties.Name="{l:Loc files}" ToolTip="{l:Loc files}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE8B7;" Style="{StaticResource TabGlyph}" />
-                        <TextBlock x:Name="FilesTabLabel" Text="{l:Loc files}" Style="{StaticResource TabLabel}" />
-                    </StackPanel>
-                </RadioButton>
-                <RadioButton GroupName="MainNavigationTabs" Tag="3" Style="{StaticResource TopTabButton}"
-                             Checked="Navigate_Click" AutomationProperties.Name="{l:Loc apps}" ToolTip="{l:Loc apps}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE71D;" Style="{StaticResource TabGlyph}" />
-                        <TextBlock x:Name="AppsTabLabel" Text="{l:Loc apps}" Style="{StaticResource TabLabel}" />
-                    </StackPanel>
-                </RadioButton>
-            </StackPanel>
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
                 <Border Style="{StaticResource StatusPill}" VerticalAlignment="Center" Margin="0,8,8,0"
@@ -197,18 +158,6 @@
                                    Foreground="{DynamicResource TextSecondaryBrush}" />
                     </StackPanel>
                 </Border>
-                <StackPanel x:Name="TopTabsActions" Orientation="Horizontal" Visibility="Collapsed">
-                    <RadioButton x:Name="HelpTab" GroupName="MainNavigationTabs" Tag="7" Style="{StaticResource TopTabButton}"
-                                 Width="40" Padding="0" Margin="0,6,2,0" VerticalAlignment="Top" Checked="Navigate_Click"
-                                 AutomationProperties.Name="{l:Loc help}" ToolTip="{l:Loc help}">
-                        <TextBlock Text="&#xE897;" Style="{StaticResource TabGlyph}" />
-                    </RadioButton>
-                    <RadioButton x:Name="SettingsNav" GroupName="MainNavigationTabs" Tag="4" Style="{StaticResource TopTabButton}"
-                                 Width="40" Padding="0" Margin="0,6,6,0" VerticalAlignment="Top" Checked="Navigate_Click"
-                                 AutomationProperties.Name="{l:Loc settings}" ToolTip="{l:Loc settings}">
-                        <TextBlock Text="&#xE713;" Style="{StaticResource TabGlyph}" />
-                    </RadioButton>
-                </StackPanel>
                 <controls:CaptionButtons />
             </StackPanel>
         </Grid>
@@ -434,20 +383,9 @@
             </StackPanel>
         </Grid>
 
-        <!-- Top-tabs layout: the phone, now playing and notifications stay visible on the left. -->
-        <Grid x:Name="SidePanel" Grid.Row="1" Grid.Column="1" Width="340" Margin="12,4,12,12" Visibility="Collapsed">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-            <ContentControl x:Name="SideDeviceHost" Focusable="False" IsTabStop="False" />
-            <ContentControl x:Name="SideNowPlayingHost" Grid.Row="1" Focusable="False" IsTabStop="False" />
-            <ContentControl x:Name="SideNotificationsHost" Grid.Row="2" Focusable="False" IsTabStop="False" Margin="0,10,0,0" />
-        </Grid>
 
         <!-- Content layer: the selected page, with a status line for messages from any page. -->
-        <Grid Grid.Row="1" Grid.Column="2">
+        <Grid Grid.Row="1" Grid.Column="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
@@ -1062,14 +1000,15 @@
                                         <Border x:Name="DesignPreviewCard" Style="{StaticResource SettingsCard}" Visibility="Collapsed">
                                             <DockPanel>
                                                 <TextBlock Text="&#xE8A9;" Style="{StaticResource SettingsCardGlyph}" />
-                                                <ComboBox x:Name="LayoutCombo" DockPanel.Dock="Right" VerticalAlignment="Center" Margin="16,0,0,0" MinWidth="200"
-                                                          SelectionChanged="LayoutCombo_SelectionChanged" AutomationProperties.Name="{l:Loc window_layout}">
-                                                    <ComboBoxItem Tag="Pane" Content="{l:Loc navigation_pane}" />
-                                                    <ComboBoxItem Tag="Tabs" Content="{l:Loc tabs_on_top}" />
+                                                <ComboBox x:Name="DarkLookCombo" DockPanel.Dock="Right" VerticalAlignment="Center" Margin="16,0,0,0" MinWidth="200"
+                                                          SelectionChanged="DarkLookCombo_SelectionChanged" AutomationProperties.Name="{l:Loc design_preview_dark_look}">
+                                                    <ComboBoxItem Tag="Graphite" Content="{l:Loc dark_look_graphite}" />
+                                                    <ComboBoxItem Tag="Navy" Content="{l:Loc dark_look_navy}" />
+                                                    <ComboBoxItem Tag="Black" Content="{l:Loc dark_look_black}" />
                                                 </ComboBox>
                                                 <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="{l:Loc design_preview_window_layout}" Style="{StaticResource SettingsCardTitle}" />
-                                                    <TextBlock Text="{l:Loc try_both_layouts_only_you_see_this_option}" Style="{StaticResource SettingsCardDescription}" />
+                                                    <TextBlock Text="{l:Loc design_preview_dark_look}" Style="{StaticResource SettingsCardTitle}" />
+                                                    <TextBlock Text="{l:Loc dark_look_hint}" Style="{StaticResource SettingsCardDescription}" />
                                                 </StackPanel>
                                             </DockPanel>
                                         </Border>
@@ -1408,6 +1347,34 @@
                                     </StackPanel>
                                 </Button>
                             </UniformGrid>
+
+                            <Border x:Name="ReceivedFilesCard" Style="{StaticResource PageCard}" Padding="20,16" Margin="0,16,0,0" Visibility="Collapsed">
+                                <StackPanel>
+                                    <DockPanel>
+                                        <Button DockPanel.Dock="Right" Content="{l:Loc open_folder}" Style="{StaticResource SecondaryButton}"
+                                                Click="OpenReceivedFolder_Click" AutomationProperties.Name="{l:Loc open_folder}" />
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="{l:Loc received_from_phone}" Style="{StaticResource SubtitleText}" />
+                                            <TextBlock Text="{l:Loc received_files_hint}" Style="{StaticResource CaptionText}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </DockPanel>
+                                    <ItemsControl x:Name="ReceivedFilesList" Margin="0,12,0,0" Focusable="False">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Style="{StaticResource SubtleButton}" HorizontalContentAlignment="Stretch" Padding="8,6" Click="OpenReceivedFile_Click" Tag="{Binding FilePath}"
+                                                        AutomationProperties.Name="{Binding FileName}">
+                                                    <DockPanel>
+                                                        <TextBlock DockPanel.Dock="Left" Text="&#xE8A5;" Style="{StaticResource IconGlyph}" FontSize="16"
+                                                                   Foreground="{DynamicResource AccentBrush}" Margin="0,0,12,0" />
+                                                        <TextBlock DockPanel.Dock="Right" Text="{Binding SizeText}" Style="{StaticResource CaptionText}" VerticalAlignment="Center" />
+                                                        <TextBlock Text="{Binding FileName}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                                    </DockPanel>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
 
                             <ContentControl x:Name="HomeNowPlayingHost" Focusable="False" IsTabStop="False" Margin="0,8,0,0">
                                     <Border x:Name="NowPlayingCard" Style="{StaticResource PageCard}" Padding="12" Margin="0,8,0,0" Visibility="Collapsed">

@@ -202,6 +202,25 @@ object ProtocolJson {
             .put("contentHash", contentHash)
     )
 
+    fun fileShareStart(deviceId: String, transferId: String, fileName: String, byteCount: Long, contentType: String?, index: Int, total: Int): String =
+        envelope(
+            "file.share.start",
+            deviceId,
+            JSONObject()
+                .put("transferId", transferId)
+                .put("fileName", fileName)
+                .put("byteCount", byteCount)
+                .put("contentType", contentType ?: JSONObject.NULL)
+                .put("index", index)
+                .put("total", total)
+        )
+
+    fun fileShareChunk(deviceId: String, transferId: String, chunkIndex: Int, base64: String): String =
+        envelope("file.share.chunk", deviceId, JSONObject().put("transferId", transferId).put("chunkIndex", chunkIndex).put("base64", base64))
+
+    fun fileShareComplete(deviceId: String, transferId: String, contentHash: String): String =
+        envelope("file.share.complete", deviceId, JSONObject().put("transferId", transferId).put("contentHash", contentHash))
+
     fun clipboardAck(
         deviceId: String,
         itemId: String,

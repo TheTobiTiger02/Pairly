@@ -275,6 +275,7 @@ public sealed class PairlyServer
         services.AddHostedService(provider => provider.GetRequiredService<Networking.EndpointEnumerator>());
         services.AddSingleton<Streaming.StreamTicketStore>();
         services.AddSingleton<Streaming.FilePushService>();
+        services.AddSingleton<FileShareReceiver>();
         services.AddSingleton<Adb.AdbMirrorLauncher>();
         services.AddSingleton<Streaming.MirrorStreamHub>();
         services.AddSingleton<Streaming.StreamListener>();

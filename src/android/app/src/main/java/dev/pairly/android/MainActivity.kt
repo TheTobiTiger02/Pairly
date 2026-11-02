@@ -3,6 +3,10 @@ package dev.pairly.android
 import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.Context
+import dev.pairly.android.ui.features.restrictedNow
+import dev.pairly.android.ui.features.RestrictedState
+import dev.pairly.android.ui.features.RestrictedSettings
+import dev.pairly.android.ui.features.AccessibilityRoute
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -50,7 +54,12 @@ class MainActivity : ComponentActivity(), FeatureActions {
         afterPermissionResult()
     }
     private val smsPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { grants ->
-        FeaturePermissionState.rememberSmsResult(this, grants.values.all { it })
+        val granted = grants.values.all { it }
+        FeaturePermissionState.rememberSmsResult(this, granted)
+        // Denied without a dialog while restricted settings are blocked: Android stopped it, not the user.
+        if (!granted && grants.keys.none(::shouldShowRequestPermissionRationale) && RestrictedSettings.state(this) != RestrictedState.Allowed) {
+            RestrictedSettings.attempted[Feature.Messages] = true
+        }
         afterPermissionResult()
     }
     private val postNotificationPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -105,6 +114,9 @@ class MainActivity : ComponentActivity(), FeatureActions {
     // --- FeatureActions -------------------------------------------------------------------------
 
     override fun enable(feature: Feature) {
+        if (feature != Feature.Messages && feature.restrictedNow && RestrictedSettings.state(this) == RestrictedState.Blocked) {
+            RestrictedSettings.attempted[feature] = true
+        }
         when (feature) {
             Feature.AppAlerts -> {
                 val permission = FeaturePermissionState.postNotificationPermission()
@@ -125,7 +137,7 @@ class MainActivity : ComponentActivity(), FeatureActions {
                 if (permissions.any(::deniedForGood)) openAppInfo() else photosPermissionLauncher.launch(permissions)
             }
             Feature.Files -> requestAllFilesAccess()
-            Feature.RemoteControl -> start(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+            Feature.RemoteControl -> openAccessibilitySettings()
             Feature.Mirroring -> start(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
             Feature.Background -> {
                 // Already exempt from Android's battery optimization? Then the remaining risk on a
@@ -199,6 +211,18 @@ class MainActivity : ComponentActivity(), FeatureActions {
             if (start(detail)) return
         }
         start(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+    }
+
+    /** Straight to Pairly's switch where the phone allows it, else as close as possible (see [AccessibilityRoute]). */
+    private fun openAccessibilitySettings() {
+        for (route in AccessibilityRoute.candidates(this)) {
+            try {
+                startActivity(route.intent)
+                return
+            } catch (_: ActivityNotFoundException) {
+            } catch (_: SecurityException) {
+            }
+        }
     }
 
     private fun openAppNotificationSettings() {

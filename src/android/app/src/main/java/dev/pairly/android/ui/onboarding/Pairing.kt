@@ -23,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Computer
 import androidx.compose.material.icons.rounded.QrCodeScanner
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.WifiFind
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +31,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -162,6 +164,8 @@ fun ConnectionNotice(connection: ConnectionState, modifier: Modifier = Modifier)
 @Composable
 private fun CodeEntry(state: AppState, callbacks: PairingCallbacks, busy: Boolean) {
     var code by rememberSaveable { mutableStateOf("") }
+    var searched by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(state.isDiscovering) { if (state.isDiscovering) searched = true }
     var manualHost by rememberSaveable { mutableStateOf(callbacks.savedManualAddress) }
     var selectedName by rememberSaveable { mutableStateOf<String?>(null) }
     val compatible = state.discoveredPcs.filter { it.isSecurePairingCompatible }
@@ -191,6 +195,12 @@ private fun CodeEntry(state: AppState, callbacks: PairingCallbacks, busy: Boolea
             }
         }
 
+        AnimatedVisibility(
+            searched && !state.isDiscovering && state.discoveredPcs.isEmpty(),
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) { NotFoundHelp() }
+
         Text(stringResource(R.string.onboarding_pair_code), style = MaterialTheme.typography.titleMedium)
         CodeBoxes(code = code, onCodeChange = { code = it })
         PrimaryButton(
@@ -217,6 +227,27 @@ private fun CodeEntry(state: AppState, callbacks: PairingCallbacks, busy: Boolea
                 shape = MaterialTheme.shapes.medium
             )
         }
+    }
+}
+
+/** After a search found nothing: the usual reasons, most likely first. */
+@Composable
+private fun NotFoundHelp() {
+    PairlyCard(Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Rounded.WifiFind, contentDescription = null, tint = Pairly.style.warning)
+            Spacer(Modifier.width(Space.m))
+            Text(stringResource(R.string.pair_not_found_title), style = MaterialTheme.typography.titleSmall)
+        }
+        Spacer(Modifier.height(Space.m))
+        NumberedSteps(
+            listOf(
+                stringResource(R.string.pair_not_found_app),
+                stringResource(R.string.pair_not_found_wifi),
+                stringResource(R.string.pair_not_found_vpn),
+                stringResource(R.string.pair_not_found_address)
+            )
+        )
     }
 }
 

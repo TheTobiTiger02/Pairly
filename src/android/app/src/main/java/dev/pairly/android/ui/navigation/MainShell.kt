@@ -1,20 +1,17 @@
 package dev.pairly.android.ui.navigation
 
+import android.net.Uri
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -39,10 +36,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -56,7 +56,6 @@ import dev.pairly.android.ui.AppState
 import dev.pairly.android.ui.LocaleText
 import dev.pairly.android.ui.UiPrefs
 import dev.pairly.android.ui.components.AppIcon
-import dev.pairly.android.ui.components.DetailTopBar
 import dev.pairly.android.ui.features.Feature
 import dev.pairly.android.ui.features.FeatureDetailCallbacks
 import dev.pairly.android.ui.features.FeatureDetailScreen
@@ -70,8 +69,6 @@ import dev.pairly.android.ui.home.HomeScreen
 import dev.pairly.android.ui.onboarding.PairingCallbacks
 import dev.pairly.android.ui.settings.SettingsCallbacks
 import dev.pairly.android.ui.settings.SettingsScreen
-import dev.pairly.android.ui.theme.DesignVariant
-import dev.pairly.android.ui.theme.NavStyle
 import dev.pairly.android.ui.theme.Pairly
 
 object Routes {
@@ -105,12 +102,14 @@ class ShellCallbacks(
     val setClipboardSync: (Boolean) -> Unit,
     val readClipboard: () -> String,
     val sendClipboard: (String) -> Boolean,
+    /** Sends photos or files to the PC's Downloads\\Pairly folder. */
+    val sendFiles: (List<Uri>) -> Unit,
     val updatePrefs: ((UiPrefs) -> UiPrefs) -> Unit,
     val setLanguage: (LocaleText.Language) -> Unit,
     val replayOnboarding: () -> Unit
 )
 
-/** The app after onboarding: one set of screens, shown with a bottom bar or as a dashboard. */
+/** The app after onboarding: Home, Features, Help and Settings in a bottom bar (a rail on wide screens). */
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun MainShell(
@@ -122,8 +121,12 @@ fun MainShell(
 ) {
     val entry by nav.currentBackStackEntryAsState()
     val route = entry?.destination?.route
-    val bottomBar = prefs.navStyle == NavStyle.BottomBar
     val style = Pairly.style
+    val haptics = LocalHapticFeedback.current
+    val selectTab: (String) -> Unit = { target ->
+        if (target != route) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        nav.navigateTab(target)
+    }
 
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val wide = maxWidth >= 720.dp
@@ -131,19 +134,17 @@ fun MainShell(
             containerColor = Color.Transparent,
             bottomBar = {
                 AnimatedVisibility(
-                    visible = bottomBar && !wide && route in Routes.topLevel,
+                    visible = !wide && route in Routes.topLevel,
                     enter = slideInVertically { it } + fadeIn(),
                     exit = slideOutVertically { it } + fadeOut()
                 ) {
-                    NavigationBar(
-                        containerColor = if (style.variant == DesignVariant.Glass) style.cardColor else MaterialTheme.colorScheme.surfaceContainer
-                    ) {
+                    NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
                         tabs.forEach { tab ->
                             NavigationBarItem(
                                 selected = route == tab.route,
-                                onClick = { nav.navigateTab(tab.route) },
+                                onClick = { selectTab(tab.route) },
                                 icon = { Icon(tab.icon, contentDescription = null) },
-                                label = { Text(stringResource(tab.label)) },
+                                label = { Text(stringResource(tab.label), maxLines = 1, overflow = TextOverflow.Ellipsis) },
                                 colors = NavigationBarItemDefaults.colors(indicatorColor = MaterialTheme.colorScheme.primaryContainer)
                             )
                         }
@@ -152,7 +153,7 @@ fun MainShell(
             }
         ) { padding ->
             Row(Modifier.fillMaxSize().padding(padding)) {
-                if (bottomBar && wide) {
+                if (wide) {
                     NavigationRail(Modifier.fillMaxHeight(), containerColor = Color.Transparent) {
                         Spacer(Modifier.height(16.dp))
                         AppIcon(Modifier.size(40.dp))
@@ -160,7 +161,7 @@ fun MainShell(
                         tabs.forEach { tab ->
                             NavigationRailItem(
                                 selected = route == tab.route,
-                                onClick = { nav.navigateTab(tab.route) },
+                                onClick = { selectTab(tab.route) },
                                 icon = { Icon(tab.icon, contentDescription = null) },
                                 label = { Text(stringResource(tab.label)) }
                             )
@@ -169,7 +170,7 @@ fun MainShell(
                 }
                 SharedTransitionLayout(Modifier.weight(1f)) {
                     CompositionLocalProvider(LocalSharedScope provides this) {
-                        PairlyNavHost(nav, state, prefs, language, callbacks, helpIsTab = bottomBar)
+                        PairlyNavHost(nav, state, prefs, language, callbacks)
                     }
                 }
             }
@@ -187,45 +188,33 @@ private fun NavHostController.navigateTab(route: String) {
 
 private fun isTop(entry: NavBackStackEntry) = entry.destination.route in Routes.topLevel
 
+/** Tab to tab (in either direction, including back to Home): fade-through. Anything deeper: slide. */
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.betweenTabs() = isTop(initialState) && isTop(targetState)
+
 @Composable
 private fun PairlyNavHost(
     nav: NavHostController,
     state: AppState,
     prefs: UiPrefs,
     language: LocaleText.Language,
-    callbacks: ShellCallbacks,
-    helpIsTab: Boolean
+    callbacks: ShellCallbacks
 ) {
     val style = Pairly.style
-    val reduce = style.reduceMotion
-
-    // Tabs fade through each other; deeper screens slide in from the side and back out.
     val enter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
-        when {
-            reduce -> fadeIn(tween(120))
-            isTop(initialState) && isTop(targetState) -> fadeIn(tween(220, delayMillis = 60)) + scaleIn(tween(220, delayMillis = 60), initialScale = 0.97f)
-            else -> slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, style.offsetSpring()) { it / 4 } + fadeIn()
-        }
+        if (betweenTabs()) Motion.fadeThroughIn(style) else Motion.slideIn(style, forward = true)
     }
     val exit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
-        when {
-            reduce -> fadeOut(tween(120))
-            isTop(initialState) && isTop(targetState) -> fadeOut(tween(90))
-            else -> slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, style.offsetSpring()) { it / 4 } + fadeOut()
-        }
+        if (betweenTabs()) Motion.fadeThroughOut(style) else Motion.slideOut(style, forward = true)
     }
     val popEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
-        if (reduce) fadeIn(tween(120))
-        else slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, style.offsetSpring()) { it / 4 } + fadeIn()
+        if (betweenTabs()) Motion.fadeThroughIn(style) else Motion.slideIn(style, forward = false)
     }
     val popExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
-        if (reduce) fadeOut(tween(120))
-        else slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, style.offsetSpring()) { it / 4 } + scaleOut(targetScale = 0.98f) + fadeOut()
+        if (betweenTabs()) Motion.fadeThroughOut(style) else Motion.slideOut(style, forward = false)
     }
 
     val openFeature: (Feature) -> Unit = { nav.navigate(Routes.feature(it)) }
-    val openHelp: () -> Unit = { if (helpIsTab) nav.navigateTab(Routes.HELP) else nav.navigate(Routes.HELP) }
-    val openSettings: () -> Unit = { nav.navigate(Routes.SETTINGS) }
+    val openHelp: () -> Unit = { nav.navigateTab(Routes.HELP) }
 
     NavHost(
         navController = nav,
@@ -238,14 +227,15 @@ private fun PairlyNavHost(
         composable(Routes.HOME) {
             CompositionLocalProvider(LocalAnimatedScope provides this) {
                 HomeScreen(
-                    state, prefs.navStyle,
+                    state,
                     HomeCallbacks(
                         openFeature = openFeature,
-                        openSettings = openSettings,
                         openHelp = openHelp,
                         openPairing = { nav.navigate(Routes.PAIR) },
                         reconnect = callbacks.reconnect,
-                        syncNow = callbacks.syncNow
+                        syncNow = callbacks.syncNow,
+                        sendClipboard = { callbacks.sendClipboard(callbacks.readClipboard()) },
+                        sendFiles = callbacks.sendFiles
                     )
                 )
             }
@@ -275,28 +265,24 @@ private fun PairlyNavHost(
                 HelpCallbacks(
                     replayOnboarding = callbacks.replayOnboarding,
                     openShizukuGuide = { nav.navigate(Routes.SHIZUKU) },
-                    back = if (helpIsTab) null else ({ nav.popBackStack() })
+                    back = null
                 )
             )
         }
         composable(Routes.SETTINGS) {
-            Column(Modifier.fillMaxSize()) {
-                if (!helpIsTab) DetailTopBar(stringResource(R.string.nav_settings)) { nav.popBackStack() }
-                SettingsScreen(
-                    state, prefs, language,
-                    SettingsCallbacks(
-                        setAutoConnect = callbacks.setAutoConnect,
-                        reconnect = callbacks.reconnect,
-                        pairAnother = { nav.navigate(Routes.PAIR) },
-                        forget = callbacks.forget,
-                        updatePrefs = callbacks.updatePrefs,
-                        setLanguage = callbacks.setLanguage,
-                        openHelp = openHelp,
-                        replayOnboarding = callbacks.replayOnboarding
-                    ),
-                    showTitle = helpIsTab
+            SettingsScreen(
+                state, prefs, language,
+                SettingsCallbacks(
+                    setAutoConnect = callbacks.setAutoConnect,
+                    reconnect = callbacks.reconnect,
+                    pairAnother = { nav.navigate(Routes.PAIR) },
+                    forget = callbacks.forget,
+                    updatePrefs = callbacks.updatePrefs,
+                    setLanguage = callbacks.setLanguage,
+                    openHelp = openHelp,
+                    replayOnboarding = callbacks.replayOnboarding
                 )
-            }
+            )
         }
     }
 }

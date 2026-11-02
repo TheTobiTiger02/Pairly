@@ -22,6 +22,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import dev.pairly.android.MainActivity
 import dev.pairly.android.R
+import dev.pairly.android.features.share.FileShareSender
 import dev.pairly.android.ui.LocaleText
 import dev.pairly.android.diagnostics.LinkDiagnostics
 import dev.pairly.android.features.apps.AppCatalog
@@ -591,6 +592,10 @@ class PairlyConnectionService : Service() {
                     val result = appCatalog.launch(payload.optString("requestId"), payload.optString("packageName"))
                     PairlyConnection.send(ProtocolJson.envelope("apps.launch.result", settings.deviceId, result))
                     "App launch: ${result.optString("status")}"
+                }
+                "file.share.result" -> {
+                    FileShareSender.onResult(envelope.optJSONObject("payload") ?: JSONObject())
+                    "File share result"
                 }
                 "file.push.start" -> fileReceiver.accept(
                     envelope.optJSONObject("payload") ?: JSONObject(),

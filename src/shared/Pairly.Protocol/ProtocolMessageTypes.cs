@@ -62,6 +62,12 @@ public static class ProtocolMessageTypes
     public const string MediaSessionCommand = "media.session.command";
     public const string FilePushStart = "file.push.start";
     public const string FilePushResult = "file.push.result";
+    // Phone → PC file sharing (Android share sheet / Home): start → chunks → complete, with results back.
+    public const string FileShareStart = "file.share.start";
+    public const string FileShareChunk = "file.share.chunk";
+    public const string FileShareComplete = "file.share.complete";
+    public const string FileShareResult = "file.share.result";
+    public const string FileShareReceived = "file.share.received";
     public const string AppsListRequest = "apps.list.request";
     public const string AppsListResponse = "apps.list.response";
     public const string AppsLaunch = "apps.launch";
@@ -84,6 +90,11 @@ public static class ProtocolMessageTypes
         ContentTransferStart,
         ContentTransferChunk,
         ContentTransferComplete,
+        FileShareStart,
+        FileShareChunk,
+        FileShareComplete,
+        FileShareResult,
+        FileShareReceived,
         MediaIndexRequest,
         MediaIndexPage,
         MediaContentRequest,

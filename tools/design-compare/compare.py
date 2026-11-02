@@ -1,22 +1,20 @@
-"""Side-by-side comparison sheets of the design candidates.
+"""Side-by-side comparison sheets: the Glass design in light mode and its three dark-mode candidates.
 
   python tools/design-compare/compare.py --android src/android/app/build/outputs/roborazzi \
       --windows artifacts/windows-screenshots --out docs/design-comparison
 
-Android input: the Roborazzi output (`./gradlew :app:recordRoborazziDebug`), one folder per
-<variant>-<mode>-<language>. Windows input: `Pairly.Windows.exe --render-screenshots <folder>`.
+Android input: the Roborazzi output (`./gradlew :app:recordRoborazziDebug`), one folder per case
+(light-en, dark-graphite-en, …). Windows input: `Pairly.Windows.exe --render-screenshots <folder>`.
 Either input is optional.
 """
 import argparse
 import os
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
-VARIANTS = [("expressive", "Expressive"), ("minimal", "Minimal"), ("darkvibrant", "Dark vibrant"), ("glass", "Glass")]
+DARK = [("graphite", "Graphite"), ("navy", "Navy"), ("black", "Black")]
 ANDROID_SCREENS = [
-    ("home-bottom-bar", "Home"), ("home-dashboard", "Home, dashboard navigation"),
-    ("onboarding-00-welcome", "Setup: welcome"), ("onboarding-05-notifications", "Setup: a permission step"),
-    ("onboarding-14-done", "Setup: summary"), ("features", "Features"), ("feature-detail", "Feature page"),
-    ("feature-clipboard", "Shared clipboard"), ("settings", "Settings"),
+    ("home", "Home"), ("onboarding-00-welcome", "Setup: welcome"), ("onboarding-05-notifications", "Setup: a permission step"),
+    ("features", "Features"), ("feature-blocked", "When Android blocks a permission"), ("settings", "Settings"),
 ]
 BG = (241, 243, 247)
 INK = (24, 26, 33)
@@ -55,6 +53,9 @@ def framed(path, width, radius, bezel):
 def sheet(title, subtitle, columns, rows, out, width=300, radius=26, bezel=8, top_gap=6):
     """columns: header texts; rows: (row label, [image path or None per column])."""
     cells = [[framed(p, width, radius, bezel) if p and os.path.exists(p) else None for p in paths] for _, paths in rows]
+    if not any(c for r in cells for c in r):
+        print("skipped (no screenshots):", out)
+        return
     cell_w = max(c.width for r in cells for c in r if c)
     cell_h = max(c.height for r in cells for c in r if c)
     label_w = 120 if any(label for label, _ in rows) else 30
@@ -81,38 +82,35 @@ def sheet(title, subtitle, columns, rows, out, width=300, radius=26, bezel=8, to
 
 
 def android(root, out):
-    def shot(variant, mode, screen, lang="en"):
-        # Dark vibrant is always dark, so its light row shows the dark rendering too.
-        mode = "dark" if variant == "darkvibrant" else mode
-        return os.path.join(root, f"{variant}-{mode}-{lang}", f"{screen}.png")
+    def shot(case, screen):
+        return os.path.join(root, case, f"{screen}.png")
 
-    columns = [name for _, name in VARIANTS]
-    sheet("Pick a design: Home", "The four Android design candidates. Dark vibrant is always dark. Switch in the app: Settings > Version (tap 7x) > Design preview.",
-          columns, [(mode.title(), [shot(v, mode, "home-bottom-bar") for v, _ in VARIANTS]) for mode in ("light", "dark")],
-          os.path.join(out, "android-00-overview.png"))
+    columns = [name for _, name in DARK]
+    sheet("Pick a dark mode: Home", "Three dark-mode candidates for the Glass design. Try them in the app: Settings > Version (tap 7x) > Design preview.",
+          columns, [("Home", [shot(f"dark-{d}-en", "home") for d, _ in DARK]), ("Settings", [shot(f"dark-{d}-en", "settings") for d, _ in DARK])],
+          os.path.join(out, "android-00-dark-candidates.png"))
     for index, (screen, name) in enumerate(ANDROID_SCREENS, start=1):
-        sheet(name, "Expressive, Minimal, Dark vibrant and Glass, light and dark.", columns,
-              [(mode.title(), [shot(v, mode, screen) for v, _ in VARIANTS]) for mode in ("light", "dark")],
+        sheet(name, "Light mode, then each dark-mode candidate.", ["Light"] + columns,
+              [("", [shot("light-en", screen)] + [shot(f"dark-{d}-en", screen) for d, _ in DARK])],
               os.path.join(out, f"android-{index:02d}-{screen}.png"), width=260)
-    sheet("Navigation: bottom bar or dashboard", "The same Home screen with each navigation style, per design (light).", columns,
-          [("Bottom bar", [shot(v, "light", "home-bottom-bar") for v, _ in VARIANTS]),
-           ("Dashboard", [shot(v, "light", "home-dashboard") for v, _ in VARIANTS])],
-          os.path.join(out, "android-20-navigation.png"), width=260)
-    sheet("English and German", "Expressive, light: the same screens in both languages.", ["Home", "Permission step", "Settings"],
-          [(lang, [shot("expressive", "light", s, code) for s in ("home-bottom-bar", "onboarding-05-notifications", "settings")])
-           for code, lang in (("en", "English"), ("de", "Deutsch"))],
-          os.path.join(out, "android-21-languages.png"), width=260)
+    sheet("English, German and the largest font size", "Light mode: the same screens in English, in German, and in German at 200% font size.",
+          ["Home", "Permission step", "Settings"],
+          [(label, [shot(case, s) for s in ("home", "onboarding-05-notifications", "settings")])
+           for case, label in (("light-en", "English"), ("light-de", "Deutsch"), ("light-de-large", "200 %"))],
+          os.path.join(out, "android-20-languages-and-font-size.png"), width=260)
 
 
 def windows(root, out):
-    def shot(theme, layout, page, lang="en"):
-        return os.path.join(root, f"{lang}-{theme}-{layout}-{page}.png")
+    def shot(look, page, lang="en"):
+        return os.path.join(root, f"{lang}-{look}-{page}.png")
 
+    looks = ["light"] + [f"dark-{d}" for d, _ in DARK]
     for page, name in (("home", "Home"), ("settings", "Settings"), ("messages", "Messages")):
-        sheet(f"Windows layout: {name}", "Navigation pane (default) or tabs on top. Switch in the app: Settings > General > About, click the version 7x.",
-              ["Navigation pane", "Tabs on top"],
-              [(theme.title(), [shot(theme, "pane", page), shot(theme, "tabs", page)]) for theme in ("light", "dark")],
+        sheet(f"Windows: {name}", "Light mode and the three dark-mode candidates (the same as on the phone). Try them: Settings > General > About, click the version 7x.",
+              ["Light", "Graphite"], [("", [shot(looks[0], page), shot(looks[1], page)])],
               os.path.join(out, f"windows-{page}.png"), width=760, radius=10, bezel=0, top_gap=14)
+        sheet(f"Windows: {name}, dark candidates", "Navy and Black.", ["Navy", "Black"], [("", [shot(looks[2], page), shot(looks[3], page)])],
+              os.path.join(out, f"windows-{page}-dark.png"), width=760, radius=10, bezel=0, top_gap=14)
 
 
 if __name__ == "__main__":
