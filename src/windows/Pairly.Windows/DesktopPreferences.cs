@@ -11,6 +11,22 @@ internal sealed class DesktopPreferences
         "desktop-preferences.json");
 
     public bool MinimizeToTray { get; set; } = true;
+
+    /// <summary>"System", "Light" or "Dark".</summary>
+    public string Theme { get; set; } = "System";
+
+    /// <summary>"" follows Windows; "en" or "de".</summary>
+    public string Language { get; set; } = string.Empty;
+
+    /// <summary>"Pane" (navigation pane on the left) or "Tabs" (tabs on top, phone panel on the left).</summary>
+    public string Layout { get; set; } = "Pane";
+
+    public bool OnboardingCompleted { get; set; }
+    public bool TourCompleted { get; set; }
+    public bool DesignPreviewUnlocked { get; set; }
+
+    /// <summary>The version whose "What's new" was last shown.</summary>
+    public string LastSeenVersion { get; set; } = string.Empty;
     public HashSet<string> MutedNotificationPackages { get; set; } = new(StringComparer.Ordinal);
 
     public static DesktopPreferences Load()

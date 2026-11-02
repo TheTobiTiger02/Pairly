@@ -51,7 +51,7 @@ public partial class MainWindow : Window
     private CancellationTokenSource? _photoPrefetchCts;
     private NotificationViewModel[] _allNotifications = Array.Empty<NotificationViewModel>();
     private readonly HashSet<string> _mutedNotificationPackages = new(StringComparer.Ordinal);
-    private readonly DesktopPreferences _preferences = DesktopPreferences.Load();
+    private readonly DesktopPreferences _preferences = App.Preferences;
     private Window? _activeMirrorWindow;
     private Controls.VirtualizingWrapPanel? _photoGridPanel;
 
@@ -87,6 +87,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         WindowBackdrop.Attach(this);
+        InitializeShell();
         AppVersionText.Text = $"Pairly {typeof(MainWindow).Assembly.GetName().Version?.ToString(3)}";
         InitializeUpdates();
 
@@ -141,6 +142,11 @@ public partial class MainWindow : Window
                     mirrorStreams.AudioStreamReady += OnMirrorAudioReady;
                 }
                 await RefreshFromHostAsync(showErrors: true);
+            }
+            if (App.ScreenshotDirectory is not null)
+            {
+                await RunScreenshotsAsync();
+                return;
             }
             if (App.StartHidden)
             {
@@ -206,28 +212,6 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OpenPairingPanel_Click(object sender, RoutedEventArgs e)
-    {
-        DevicePickerToggle.IsChecked = false;
-        ShowPairingPanel(PairingStep.Pair);
-    }
-
-    private void ClosePairingPanel_Click(object sender, RoutedEventArgs e) => ClosePairingPanel();
-
-    private void PairingShowGetApp_Click(object sender, RoutedEventArgs e) => SetPairingStep(PairingStep.GetApp);
-
-    private void PairingPrimary_Click(object sender, RoutedEventArgs e)
-    {
-        if (_pairingStep == PairingStep.GetApp)
-        {
-            SetPairingStep(PairingStep.Pair);
-        }
-        else
-        {
-            ClosePairingPanel();
-        }
-    }
-
     private void CopyInstallLink_Click(object sender, RoutedEventArgs e)
     {
         Clipboard.SetText(PairingQr.AndroidApkUrl);
@@ -236,53 +220,6 @@ public partial class MainWindow : Window
 
     private void OpenReleasePage_Click(object sender, RoutedEventArgs e) =>
         Process.Start(new ProcessStartInfo(PairingQr.ReleasePageUrl) { UseShellExecute = true });
-
-    private void ShowPairingPanel(PairingStep step)
-    {
-        PairingOverlay.Visibility = Visibility.Visible;
-        SetPairingStep(step);
-        PairingPanel.Focus();
-    }
-
-    private void ClosePairingPanel()
-    {
-        PairingOverlay.Visibility = Visibility.Collapsed;
-        _pairingTimer?.Stop();
-        _pairingTicket = null;
-    }
-
-    private void SetPairingStep(PairingStep step)
-    {
-        _pairingStep = step;
-        PairingGetAppStep.Visibility = step == PairingStep.GetApp ? Visibility.Visible : Visibility.Collapsed;
-        PairingPairStep.Visibility = step == PairingStep.Pair ? Visibility.Visible : Visibility.Collapsed;
-        PairingDoneStep.Visibility = step == PairingStep.Done ? Visibility.Visible : Visibility.Collapsed;
-        PairingStep2Indicator.Opacity = step >= PairingStep.Pair ? 1 : 0.45;
-        PairingStep3Indicator.Opacity = step == PairingStep.Done ? 1 : 0.45;
-
-        PairingBackButton.Visibility = step == PairingStep.Pair ? Visibility.Visible : Visibility.Collapsed;
-        PairingSecondaryButton.Visibility = step == PairingStep.Done ? Visibility.Collapsed : Visibility.Visible;
-        PairingPrimaryButton.Visibility = step == PairingStep.Pair ? Visibility.Collapsed : Visibility.Visible;
-        PairingPrimaryButton.Content = step == PairingStep.GetApp ? "I have the app" : "Start using Pairly";
-
-        if (step == PairingStep.GetApp)
-        {
-            InstallQrImage.Source ??= PairingQr.Render(PairingQr.AndroidApkUrl);
-            _pairingTimer?.Stop();
-        }
-        else if (step == PairingStep.Pair)
-        {
-            var addresses = GetLocalIPv4Addresses();
-            PairingAddressesText.Text = addresses.Length == 0
-                ? "This PC has no network address right now."
-                : $"This PC's addresses: {string.Join(", ", addresses)}";
-            _ = StartPairingAsync();
-        }
-        else
-        {
-            _pairingTimer?.Stop();
-        }
-    }
 
     private async Task StartPairingAsync()
     {
@@ -396,7 +333,7 @@ public partial class MainWindow : Window
             }
 
             PairingDoneTitle.Text = $"Paired with {paired.DisplayName}";
-            SetPairingStep(PairingStep.Done);
+            OnPhonePaired();
             await RefreshFromHostAsync(showErrors: false);
         }
         catch (Exception ex)
@@ -424,14 +361,17 @@ public partial class MainWindow : Window
 
     private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        // Narrow windows keep every feature: the phone pane slims down and the tabs drop their labels.
-        LeftPaneColumn.Width = new GridLength(ActualWidth < 1180 ? 312 : 340);
-        var labelVisibility = ActualWidth < 1080 ? Visibility.Collapsed : Visibility.Visible;
+        // Narrow windows keep every feature: panes slim down and the tabs drop their labels.
+        NavPane.Width = ActualWidth < 1120 ? 256 : 292;
+        SidePanel.Width = ActualWidth < 1180 ? 312 : 340;
+        var labelVisibility = ActualWidth < 1120 ? Visibility.Collapsed : Visibility.Visible;
+        HomeTabLabel.Visibility = labelVisibility;
         MessagesTabLabel.Visibility = labelVisibility;
         PhotosTabLabel.Visibility = labelVisibility;
         FilesTabLabel.Visibility = labelVisibility;
         AppsTabLabel.Visibility = labelVisibility;
         BrandTitleText.Visibility = ActualWidth < 1040 ? Visibility.Collapsed : Visibility.Visible;
+        HomeQuickActions.Columns = ActualWidth < 1180 ? 2 : 4;
     }
 
     private static IEnumerable<T> FindVisualChildren<T>(System.Windows.DependencyObject root) where T : System.Windows.DependencyObject
@@ -1975,11 +1915,10 @@ public partial class MainWindow : Window
             var devicesData = await _host.GetFromJsonAsync<LinkedDevice[]>("v1/devices", JsonOptions)
                 ?? Array.Empty<LinkedDevice>();
 
-            if (devicesData.Length == 0 && !_firstRunPairingShown && !App.StartHidden)
+            if (!_firstRunPairingShown && !App.StartHidden && App.ScreenshotDirectory is null)
             {
-                // First run starts with installing the phone app; pairing follows from there.
                 _firstRunPairingShown = true;
-                ShowPairingPanel(PairingStep.GetApp);
+                OnFirstDeviceList(devicesData.Length);
             }
 
             if (devicesData.Length > 0 && !StartupRegistration.IsEnabled)
@@ -2755,8 +2694,11 @@ public partial class MainWindow : Window
 
 internal enum PairingStep
 {
+    Welcome,
+    Features,
     GetApp,
     Pair,
+    Preferences,
     Done
 }
 

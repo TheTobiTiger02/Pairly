@@ -2,8 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'claude/**']
   pull_request:
+  workflow_dispatch:
 
 jobs:
   windows:
@@ -17,6 +18,24 @@ jobs:
         run: dotnet build Pairly.sln --configuration Release
       - name: Test harness
         run: dotnet run --project tests/Pairly.Tests/Pairly.Tests.csproj --configuration Release --no-build
+      - name: Render every page (fails on broken XAML)
+        shell: pwsh
+        run: |
+          $out = Join-Path $PWD 'artifacts/windows-screenshots'
+          $exe = 'src/windows/Pairly.Windows/bin/Release/net9.0-windows10.0.19041.0/Pairly.Windows.exe'
+          $process = Start-Process $exe -ArgumentList '--render-screenshots', "`"$out`"" -PassThru
+          if (-not $process.WaitForExit(600000)) { $process.Kill(); throw 'Rendering timed out.' }
+          $result = Join-Path $out 'result.txt'
+          if (Test-Path $result) { Get-Content $result }
+          if ($process.ExitCode -ne 0) { throw "Rendering failed with exit code $($process.ExitCode)." }
+          Get-ChildItem $out -Filter *.png | Measure-Object | ForEach-Object { "Rendered $($_.Count) screenshots." }
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-screenshots
+          path: artifacts/windows-screenshots
+          if-no-files-found: ignore
 
   android:
     runs-on: ubuntu-latest
