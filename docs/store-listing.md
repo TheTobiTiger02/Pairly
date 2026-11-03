@@ -5,7 +5,18 @@ The listing text and screenshots live in the repository and are uploaded by a wo
 - **Text:** [`store/listing.json`](../store/listing.json). Each language (`en-us`, `de-de`) has a short description, description, features (up to 20), search terms (up to 7) and a headline for each screenshot.
 - **Screenshots:** rendered by the Windows app's demo mode (`Pairly.Windows.exe --render-store-screenshots <folder>`), which uses invented content with no real phone. `tools/store-listing/compose.py` adds the headlines. Output is 1920×1080.
 
-## Update the listing
+## Update the listing (Import listings, reliable)
+
+Partner Center didn't keep listing changes made through the submission API for Pairly, so use its own import:
+
+1. Edit `store/listing.json` if needed, then run **Actions → Store listing** with **Upload to Partner Center** unticked.
+2. Download the run's **store-listing-import** artifact and unzip it. It holds `listingData.csv` and the screenshots.
+3. In Partner Center, open a draft submission (**Update** if there is none) → **Store listings → Import listings**, and select the unzipped folder.
+4. Check **Store listings → English** and **German**, then **Submit for certification**.
+
+`store/listing-template.csv` is an export from Partner Center (**Export listings**). Replace it with a fresh export if Partner Center adds fields.
+
+## Update the listing (API upload)
 
 1. Edit `store/listing.json` if the text should change.
 2. **Actions → Store listing → Run workflow.**
