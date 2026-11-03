@@ -30,7 +30,7 @@ object ClipboardShizukuAccess {
         @Suppress("DEPRECATION")
         val version = app.packageManager.getPackageInfo(app.packageName, 0).versionCode
         Shizuku.UserServiceArgs(ComponentName(app, ClipboardShizukuService::class.java))
-            .daemon(false).processNameSuffix("clipboard").version(version * 100 + 2)
+            .daemon(false).processNameSuffix("clipboard").version(version * 100 + 3)
     }
     private val refreshLoop = object : Runnable {
         override fun run() {
@@ -89,6 +89,8 @@ object ClipboardShizukuAccess {
     } }
     fun healthy(helper: IClipboardShizuku) { main.post {
         if (shell === helper && lifecycle.healthy(lifecycle.generation)) publishState()
+        // Shizuku is up: let mirroring start without Android's prompt (if the user wants that).
+        if (shell === helper) context?.let { dev.pairly.android.features.mirror.ScreenCaptureAccess.syncInBackground(it) }
     } }
     private fun unbind() {
         connection?.let { runCatching { Shizuku.unbindUserService(args, it, true) } }
