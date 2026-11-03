@@ -234,10 +234,10 @@ jobs:
           $app = Invoke-RestMethod -Uri $api -Headers $headers
           $out = [System.Collections.Generic.List[string]]::new()
           function Show($name, $id) {
-            if (-not $id) { $out.Add("## $name: none"); return }
+            if (-not $id) { $out.Add("## $($name): none"); return }
             $sub = Invoke-RestMethod -Uri "$api/submissions/$id" -Headers $headers
             $status = (Invoke-RestMethod -Uri "$api/submissions/$id/status" -Headers $headers).status
-            $out.Add("## $name ($id): $status, upload URL present: $([bool]$sub.fileUploadUrl)")
+            $out.Add("## $($name) ($id): $status, upload URL present: $([bool]$sub.fileUploadUrl)")
             $out.Add("Top-level fields: $(($sub.PSObject.Properties.Name) -join ', ')")
             foreach ($lang in $sub.listings.PSObject.Properties) {
               $b = $lang.Value.baseListing
