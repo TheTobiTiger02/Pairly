@@ -21,11 +21,15 @@ def main():
     parser.add_argument("--listing", default="store/listing.json")
     parser.add_argument("--screenshots", required=True)
     parser.add_argument("--out", required=True)
+    parser.add_argument("--name", help="CSV file name; Partner Center reads the app and submission from the export's name "
+                        "(listingData-<app>-<submission>.csv), so keep the name of the export you are importing into. "
+                        "Defaults to the template's file name.")
     args = parser.parse_args()
 
     listings = json.load(open(args.listing, encoding="utf-8"))["listings"]
     with open(args.template, encoding="utf-8-sig", newline="") as handle:
-        rows = list(csv.reader(handle))
+        raw = handle.read()
+    rows = list(csv.reader(io.StringIO(raw)))
     header = rows[0]
     columns = {name: index for index, name in enumerate(header)}
 
@@ -34,7 +38,8 @@ def main():
         if language not in columns:
             raise SystemExit(f"The export has no '{language}' column; add the language in Partner Center first.")
         values = {
-            "Description": listing["description"].replace("\n", "\r\n"),
+            # Line breaks inside a field stay "\n", as in Partner Center's own export.
+            "Description": listing["description"],
             "ShortDescription": listing["shortDescription"],
         }
         for index in range(1, 21):
@@ -66,9 +71,13 @@ def main():
 
     buffer = io.StringIO()
     csv.writer(buffer, lineterminator="\r\n").writerows(rows)
-    with open(os.path.join(args.out, "listingData.csv"), "w", encoding="utf-8-sig", newline="") as handle:
-        handle.write(buffer.getvalue())
-    print(os.path.join(args.out, "listingData.csv"))
+    text = buffer.getvalue()
+    if not raw.endswith("\n"):
+        text = text[:-2]  # the export has no line break after its last row
+    name = args.name or os.path.basename(args.template)
+    with open(os.path.join(args.out, name), "w", encoding="utf-8-sig", newline="") as handle:
+        handle.write(text)
+    print(os.path.join(args.out, name))
 
 
 if __name__ == "__main__":

@@ -9,6 +9,7 @@ The listing text and screenshots live in the repository and are uploaded by a wo
 
 Partner Center didn't keep listing changes made through the submission API for Pairly, so use its own import:
 
+1. In Partner Center, start a draft (**Update**) if there is none. Partner Center only imports a file named after its draft (`listingData-<app>-<submission>.csv`), and the workflow names it after the open draft.
 1. Edit `store/listing.json` if needed, then run **Actions → Store listing** with **Upload to Partner Center** unticked.
 2. Download the run's **store-listing-import** artifact and unzip it. It holds `listingData.csv` and the screenshots.
 3. In Partner Center, open a draft submission (**Update** if there is none) → **Store listings → Import listings**, and select the unzipped folder.

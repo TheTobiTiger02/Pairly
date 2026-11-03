@@ -59,7 +59,28 @@ jobs:
           python tools/store-listing/compose.py --raw artifacts/store-raw --listing store/listing.json --out artifacts/store-screenshots
       - name: Build the Import listings package
         shell: pwsh
-        run: python tools/store-listing/import_csv.py --template store/listing-template.csv --screenshots artifacts/store-screenshots --out artifacts/store-listing-import
+        env:
+          STORE_PRODUCT_ID: ${{ vars.STORE_PRODUCT_ID }}
+          STORE_TENANT_ID: ${{ secrets.STORE_TENANT_ID }}
+          STORE_CLIENT_ID: ${{ secrets.STORE_CLIENT_ID }}
+          STORE_CLIENT_SECRET: ${{ secrets.STORE_CLIENT_SECRET }}
+        run: |
+          # Partner Center reads the app and submission from the file name
+          # (listingData-<app>-<submission>.csv), so name it after the open draft when there is one.
+          $name = 'listingData.csv'
+          if ($env:STORE_CLIENT_SECRET -and $env:STORE_PRODUCT_ID) {
+            try {
+              $token = (Invoke-RestMethod -Method Post -Uri "https://login.microsoftonline.com/$env:STORE_TENANT_ID/oauth2/token" -Body @{
+                grant_type = 'client_credentials'; client_id = $env:STORE_CLIENT_ID; client_secret = $env:STORE_CLIENT_SECRET; resource = 'https://manage.devcenter.microsoft.com'
+              }).access_token
+              $app = Invoke-RestMethod -Uri "https://manage.devcenter.microsoft.com/v1.0/my/applications/$env:STORE_PRODUCT_ID" -Headers @{ Authorization = "Bearer $token" }
+              if ($app.pendingApplicationSubmission.id) { $name = "listingData-$env:STORE_PRODUCT_ID-$($app.pendingApplicationSubmission.id).csv" }
+            } catch { Write-Host "::warning::Could not read the open draft: $($_.Exception.Message)" }
+          }
+          if ($name -eq 'listingData.csv') {
+            Write-Host "::warning::No open draft in Partner Center. Start one (Update), run this again, then import; Partner Center only accepts a file named after its draft."
+          }
+          python tools/store-listing/import_csv.py --template store/listing-template.csv --name $name --screenshots artifacts/store-screenshots --out artifacts/store-listing-import
       - uses: actions/upload-artifact@v4
         with:
           name: store-screenshots
