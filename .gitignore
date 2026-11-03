@@ -33,3 +33,7 @@ local.properties
 
 # Build output (releases are published by CI)
 artifacts/
+
+# Generated Store listing import package
+Pairly-store-listing/
+Pairly-store-listing.zip
