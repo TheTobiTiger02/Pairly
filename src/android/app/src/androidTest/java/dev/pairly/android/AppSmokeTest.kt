@@ -164,7 +164,12 @@ class AppSmokeTest {
             runCatching { UiScrollable(UiSelector().scrollable(true)).scrollTextIntoView("Pairly") }
             Thread.sleep(500)
         }
-        check(device.wait(Until.hasObject(By.textContains("Pairly")), 2_000)) { "Accessibility settings did not show Pairly." }
+        if (!device.wait(Until.hasObject(By.textContains("Pairly")), 2_000)) {
+            // Keep evidence of what Android showed instead.
+            device.takeScreenshot(File(context.filesDir, "screenshots/%02d-accessibility-failed.png".format(++shot)))
+            runCatching { device.dumpWindowHierarchy(File(context.filesDir, "screenshots/accessibility-window.xml")) }
+            error("Accessibility settings did not show Pairly (showing ${device.currentPackageName}).")
+        }
         device.takeScreenshot(File(context.filesDir, "screenshots/%02d-accessibility-settings.png".format(++shot)))
         device.pressBack()
         waitFor(R.string.feature_why_title)
