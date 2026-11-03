@@ -157,11 +157,14 @@ class AppSmokeTest {
         while (device.currentPackageName == context.packageName && System.currentTimeMillis() < deadline) Thread.sleep(250)
         check(device.currentPackageName != context.packageName) { "Settings did not open." }
         device.waitForIdle()
-        // Pairly may be listed below the fold (Downloaded apps), so scroll to it if needed.
-        if (!device.hasObject(By.textContains("Pairly"))) {
+        // Pairly may be listed below the fold (Downloaded apps), and the list can still be loading:
+        // keep trying to scroll to it for a while.
+        val listDeadline = System.currentTimeMillis() + 15_000
+        while (!device.hasObject(By.textContains("Pairly")) && System.currentTimeMillis() < listDeadline) {
             runCatching { UiScrollable(UiSelector().scrollable(true)).scrollTextIntoView("Pairly") }
+            Thread.sleep(500)
         }
-        check(device.wait(Until.hasObject(By.textContains("Pairly")), 10_000)) { "Accessibility settings did not show Pairly." }
+        check(device.wait(Until.hasObject(By.textContains("Pairly")), 2_000)) { "Accessibility settings did not show Pairly." }
         device.takeScreenshot(File(context.filesDir, "screenshots/%02d-accessibility-settings.png".format(++shot)))
         device.pressBack()
         waitFor(R.string.feature_why_title)
