@@ -11,7 +11,9 @@ The listing text and screenshots live in the repository and are uploaded by a wo
 2. **Actions → Store listing → Run workflow.**
    - It fails with a clear message while a release is still in certification. Run it again once that release is published.
    - Untick **Upload to Partner Center** to only render the screenshots (artifact **store-screenshots**).
-3. Open Partner Center. The draft submission has the new text and screenshots for each language. Check them, then select **Submit for certification**. Or tick **Submit for certification** when running the workflow.
+3. Open Partner Center. The draft submission has the new text for each language. Check it, then select **Submit for certification**, or tick **Submit for certification** when running the workflow.
+   - Partner Center processes the new screenshots only when the draft is submitted, so until then the draft still shows the old ones.
+   - To see exactly what the draft holds (text, features, search terms, and each screenshot with its status), run the workflow with **Only show what Partner Center holds now**. It changes nothing.
 
 Submit the draft before the next release, so the release doesn't run into an open draft.
 
