@@ -21,6 +21,8 @@ def main():
     parser.add_argument("--listing", default="store/listing.json")
     parser.add_argument("--screenshots", required=True)
     parser.add_argument("--out", required=True)
+    parser.add_argument("--text-only", action="store_true",
+                        help="Leave the screenshot rows as exported (upload screenshots by hand in Partner Center).")
     parser.add_argument("--name", help="CSV file name; Partner Center reads the app and submission from the export's name "
                         "(listingData-<app>-<submission>.csv), so keep the name of the export you are importing into. "
                         "Defaults to the template's file name.")
@@ -49,7 +51,7 @@ def main():
             keywords = listing["keywords"]
             values[f"SearchTerm{index}"] = keywords[index - 1] if index <= len(keywords) else ""
         shots = listing["screenshots"]
-        for index in range(1, 31):
+        for index in range(1, 31) if not args.text_only else []:
             if index <= len(shots):
                 shot = shots[index - 1]
                 relative = f"{language}/{shot['file']}.png"

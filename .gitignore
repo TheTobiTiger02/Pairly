@@ -37,3 +37,5 @@ artifacts/
 # Generated Store listing import package
 Pairly-store-listing/
 Pairly-store-listing.zip
+Pairly-store-text/
+/listingData-*.csv
