@@ -21,6 +21,10 @@ on:
         description: Submit for certification right away (otherwise it stays a draft to review)
         type: boolean
         default: false
+      inspect:
+        description: Only show what Partner Center holds now (changes nothing)
+        type: boolean
+        default: false
 
 concurrency:
   group: microsoft-store
@@ -29,6 +33,7 @@ concurrency:
 jobs:
   screenshots:
     name: Render screenshots
+    if: ${{ !inputs.inspect }}
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -206,3 +211,57 @@ jobs:
             throw "Partner Center rejected the submission: $($result.status)."
           }
           "Submitted for certification ($($result.status))." >> $env:GITHUB_STEP_SUMMARY
+
+  inspect:
+    name: Show the Store listing in Partner Center
+    if: github.event_name == 'workflow_dispatch' && inputs.inspect
+    runs-on: windows-latest
+    env:
+      STORE_PRODUCT_ID: ${{ vars.STORE_PRODUCT_ID }}
+      STORE_TENANT_ID: ${{ secrets.STORE_TENANT_ID }}
+      STORE_CLIENT_ID: ${{ secrets.STORE_CLIENT_ID }}
+      STORE_CLIENT_SECRET: ${{ secrets.STORE_CLIENT_SECRET }}
+    steps:
+      - name: Read the draft and the published submission
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $token = (Invoke-RestMethod -Method Post -Uri "https://login.microsoftonline.com/$env:STORE_TENANT_ID/oauth2/token" -Body @{
+            grant_type = 'client_credentials'; client_id = $env:STORE_CLIENT_ID; client_secret = $env:STORE_CLIENT_SECRET; resource = 'https://manage.devcenter.microsoft.com'
+          }).access_token
+          $headers = @{ Authorization = "Bearer $token" }
+          $api = "https://manage.devcenter.microsoft.com/v1.0/my/applications/$env:STORE_PRODUCT_ID"
+          $app = Invoke-RestMethod -Uri $api -Headers $headers
+          $out = [System.Collections.Generic.List[string]]::new()
+          function Show($name, $id) {
+            if (-not $id) { $out.Add("## $name: none"); return }
+            $sub = Invoke-RestMethod -Uri "$api/submissions/$id" -Headers $headers
+            $status = (Invoke-RestMethod -Uri "$api/submissions/$id/status" -Headers $headers).status
+            $out.Add("## $name ($id): $status, upload URL present: $([bool]$sub.fileUploadUrl)")
+            $out.Add("Top-level fields: $(($sub.PSObject.Properties.Name) -join ', ')")
+            foreach ($lang in $sub.listings.PSObject.Properties) {
+              $b = $lang.Value.baseListing
+              $desc = [string]$b.description
+              $out.Add("### $($lang.Name)")
+              $out.Add("baseListing fields: $(($b.PSObject.Properties.Name) -join ', ')")
+              $out.Add("description ($($desc.Length) chars): $($desc.Substring(0, [Math]::Min(120, $desc.Length)) -replace "`n", ' / ')")
+              $out.Add("shortDescription: $($b.shortDescription)")
+              $out.Add("features ($(@($b.features).Count)): $((@($b.features) | Select-Object -First 3) -join ' | ')")
+              $out.Add("keywords: $(@($b.keywords) -join ', ')")
+              foreach ($img in @($b.images)) { if ($img) { $out.Add("image: $($img.imageType) $($img.fileStatus) $($img.fileName)") } }
+              $po = $lang.Value.platformOverrides
+              if ($po) { $out.Add("platformOverrides: $(($po.PSObject.Properties.Name) -join ', ')") }
+            }
+            return $sub
+          }
+          $draft = Show 'Draft' $app.pendingApplicationSubmission.id
+          $live = Show 'Published' $app.lastPublishedApplicationSubmission.id
+          if ($draft -and $live) {
+            foreach ($field in 'applicationCategory', 'pricing', 'visibility', 'targetPublishMode', 'allowTargetFutureDeviceFamilies', 'hardwarePreferences', 'hasExternalInAppProducts', 'meetAccessibilityGuidelines', 'canInstallOnRemovableMedia', 'automaticBackupEnabled', 'gamingOptions', 'enterpriseLicensing', 'notesForCertification') {
+              $a = $draft.$field | ConvertTo-Json -Depth 10 -Compress
+              $b = $live.$field | ConvertTo-Json -Depth 10 -Compress
+              if ($a -ne $b) { $out.Add("Differs: $field draft=$a published=$b") }
+            }
+          }
+          $out | ForEach-Object { Write-Host $_ }
+          ($out -join "`n`n") >> $env:GITHUB_STEP_SUMMARY
