@@ -137,6 +137,16 @@ class ScreenshotTest(private val case: Case) {
     }
     @Test fun features() = capture("features") { Screen { FeaturesScreen(connected) {} } }
     @Test fun featureDetail() = capture("feature-detail") { Screen { FeatureDetailScreen(Feature.RemoteControl, connected, detailCallbacks) } }
+    @Test fun mirroring() = capture("feature-mirroring") { Screen { FeatureDetailScreen(Feature.Mirroring, connected, detailCallbacks) } }
+    @Test fun mirroringWithShizuku() = capture("feature-mirroring-shizuku") {
+        Screen {
+            FeatureDetailScreen(
+                Feature.Mirroring,
+                connected.copy(shizuku = ShizukuStatus(developerOptions = true, wirelessDebugging = true, installed = true, running = true, allowed = true)),
+                detailCallbacks
+            )
+        }
+    }
     @Test fun clipboard() = capture("feature-clipboard") { Screen { FeatureDetailScreen(Feature.Clipboard, connected, detailCallbacks) } }
     @Test fun shizukuGuide() = capture("shizuku-guide") { Screen { ShizukuGuideScreen(connected) {} } }
     @Test fun help() = capture("help") { Screen { HelpScreen(HelpCallbacks({}, {}, null)) } }

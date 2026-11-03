@@ -27,6 +27,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import dev.pairly.android.R
+import dev.pairly.android.ui.components.SwitchRow
+import dev.pairly.android.ui.components.StatusPill
+import dev.pairly.android.ui.components.SecondaryButton
+import dev.pairly.android.ui.components.PillTone
+import dev.pairly.android.features.mirror.ScreenCaptureAccess
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import dev.pairly.android.network.ConnectionPhase
 import dev.pairly.android.ui.AppState
 import dev.pairly.android.ui.components.DetailTopBar
@@ -114,7 +125,47 @@ fun FeatureDetailScreen(feature: Feature, state: AppState, callbacks: FeatureDet
                 }
             } else {
                 item { FeatureSetupContent(feature, state.permissions) }
+                if (feature == Feature.Mirroring) {
+                    item { StartWithoutAskingCard(state.shizuku.ready, callbacks.openShizukuGuide) }
+                }
             }
+        }
+    }
+}
+
+/**
+ * Android asks before every screen mirror. With Shizuku running, Pairly can tell Android to skip
+ * that prompt (see ScreenCaptureAccess); without it, this explains how to get there.
+ */
+@Composable
+private fun StartWithoutAskingCard(shizukuReady: Boolean, onOpenGuide: () -> Unit) {
+    val context = LocalContext.current
+    var wanted by remember { mutableStateOf(ScreenCaptureAccess.wanted(context)) }
+    val allowed by ScreenCaptureAccess.allowedState.collectAsState()
+    LaunchedEffect(shizukuReady) { ScreenCaptureAccess.isAllowed(context) }
+    PairlyCard(Modifier.fillMaxWidth()) {
+        if (shizukuReady) {
+            SwitchRow(
+                stringResource(R.string.mirror_skip_prompt_title),
+                stringResource(R.string.mirror_skip_prompt_detail),
+                checked = wanted,
+                onCheckedChange = { on -> wanted = on; ScreenCaptureAccess.setWanted(context, on) }
+            )
+            Spacer(Modifier.height(Space.s))
+            StatusPill(
+                stringResource(if (wanted && allowed) R.string.mirror_skip_prompt_on else R.string.mirror_skip_prompt_off),
+                if (wanted && allowed) PillTone.Positive else PillTone.Neutral
+            )
+        } else {
+            Text(stringResource(R.string.mirror_skip_prompt_title), style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(Space.xs))
+            Text(
+                stringResource(R.string.mirror_skip_prompt_setup),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(Space.m))
+            SecondaryButton(stringResource(R.string.mirror_skip_prompt_setup_action), onClick = onOpenGuide)
         }
     }
 }

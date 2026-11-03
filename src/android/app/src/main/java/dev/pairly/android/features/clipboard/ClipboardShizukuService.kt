@@ -11,6 +11,7 @@ import kotlin.system.exitProcess
 
 /** Runs as Shizuku's shell user. Clipboard bytes never travel in a Binder transaction. */
 class ClipboardShizukuService(context: Context) : IClipboardShizuku.Stub() {
+    private val ownPackage = context.packageName
     // UserServices have no registered Android application thread. The native content
     // reader acquires providers externally as shell, with the clip's shell URI grant.
     private var wirelessDebugging = readWirelessDebugging()
@@ -83,6 +84,20 @@ class ClipboardShizukuService(context: Context) : IClipboardShizuku.Stub() {
         wirelessDebugging = readWirelessDebugging()
         check(wirelessDebugging == 0) { "Wireless debugging is still enabled." }
     }
+    /**
+     * Lets Android start screen capture for Pairly without its consent dialog (the PROJECT_MEDIA
+     * app-op), or restores the default. Only for Pairly itself, never another app.
+     */
+    override fun setScreenCaptureAllowed(packageName: String, allowed: Boolean): Boolean {
+        if (packageName != ownPackage) return false
+        return runCatching {
+            val process = ProcessBuilder("appops", "set", packageName, "PROJECT_MEDIA", if (allowed) "allow" else "default")
+                .redirectErrorStream(true).start()
+            process.inputStream.use { input -> val buffer = ByteArray(1024); while (input.read(buffer) >= 0) { } }
+            process.waitFor(5, java.util.concurrent.TimeUnit.SECONDS) && process.exitValue() == 0
+        }.getOrDefault(false)
+    }
+
     private fun readWirelessDebugging(): Int = runCatching {
         val process = ProcessBuilder("settings", "get", "global", "adb_wifi_enabled").redirectErrorStream(true).start()
         val value = process.inputStream.bufferedReader().use { it.readText().trim().toIntOrNull() ?: -1 }

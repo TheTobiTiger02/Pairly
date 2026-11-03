@@ -48,6 +48,9 @@ class MirrorPermissionActivity : Activity() {
     }
 
     private fun requestCapture() {
+        // With Shizuku, Android can be told to skip its consent dialog (see ScreenCaptureAccess);
+        // the intent below then returns the grant at once.
+        ScreenCaptureAccess.syncNow(this)
         val manager = getSystemService(MediaProjectionManager::class.java)
         startActivityForResult(manager.createScreenCaptureIntent(), captureRequestCode)
     }

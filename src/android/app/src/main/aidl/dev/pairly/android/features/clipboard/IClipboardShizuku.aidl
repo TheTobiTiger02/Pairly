@@ -7,4 +7,5 @@ interface IClipboardShizuku {
     Bundle snapshot() = 1;
     ParcelFileDescriptor openContent(long revision) = 2;
     void turnOffWirelessDebugging() = 3;
+    boolean setScreenCaptureAllowed(String packageName, boolean allowed) = 4;
 }

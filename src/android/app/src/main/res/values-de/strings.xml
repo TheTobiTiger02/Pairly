@@ -282,7 +282,7 @@
     <string name="faq_restricted_q">Android meldet „Eingeschränkte Einstellung“</string>
     <string name="faq_restricted_a">Android schützt SMS, Benachrichtigungszugriff und Bedienungshilfen bei Apps, die nicht aus einem App Store installiert wurden. Öffne App-Info → ⋮ → „Eingeschränkte Einstellungen zulassen“ und schalte die Funktion dann erneut ein. Die Einrichtung von Pairly zeigt diese Schritte, wenn es passiert.</string>
     <string name="faq_clipboard_q">Die Zwischenablage synchronisiert nicht im Hintergrund</string>
-    <string name="faq_clipboard_a">Android lässt nur die sichtbare App die Zwischenablage lesen. Richte Shizuku unter Funktionen → Gemeinsame Zwischenablage ein. Öffne nach einem Neustart Shizuku und tippe auf Starten.</string>
+    <string name="faq_clipboard_a">Android lässt nur die sichtbare App die Zwischenablage lesen. Richte Shizuku unter Funktionen → Gemeinsame Zwischenablage ein. Mit Shizuku startet auch das Bildschirmspiegeln ohne Abfrage von Android. Öffne nach einem Neustart des Handys Shizuku und tippe auf Starten.</string>
     <string name="faq_mirror_q">Die Bildschirmspiegelung hat keinen Ton</string>
     <string name="faq_mirror_a">Android teilt Ton nur von Apps, die das erlauben, und fragt einmal nach Mikrofonzugriff. Manche Apps, etwa Streamingdienste, blockieren die Aufnahme komplett.</string>
     <string name="faq_devices_q">Kann ich mehrere Handys oder PCs nutzen?</string>
@@ -348,4 +348,10 @@
     <string name="pair_not_found_wifi">Achte darauf, dass Handy und PC im selben WLAN sind (kein Gastnetz).</string>
     <string name="pair_not_found_vpn">Schalte ein VPN auf Handy oder PC kurz aus.</string>
     <string name="pair_not_found_address">Immer noch nichts? Gib unten die Adresse ein, die dein PC anzeigt.</string>
+    <string name="mirror_skip_prompt_title">Ohne Nachfrage starten</string>
+    <string name="mirror_skip_prompt_detail">Mit Shizuku überspringt Pairly die Bildschirmfreigabe-Abfrage von Android. Schalte das aus, um jedes Mal zu bestätigen.</string>
+    <string name="mirror_skip_prompt_on">Spiegeln startet sofort</string>
+    <string name="mirror_skip_prompt_off">Android fragt jedes Mal</string>
+    <string name="mirror_skip_prompt_setup">Android fragt jedes Mal nach, wenn dein PC das Spiegeln startet. Mit Shizuku (derselbe Helfer wie für die Zwischenablage im Hintergrund) kann Pairly diese Abfrage überspringen.</string>
+    <string name="mirror_skip_prompt_setup_action">Shizuku einrichten</string>
 </resources>

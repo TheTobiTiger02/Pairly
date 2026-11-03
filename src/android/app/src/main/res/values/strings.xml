@@ -282,7 +282,7 @@
     <string name="faq_restricted_q">Android says “Restricted setting”</string>
     <string name="faq_restricted_a">Android protects text messages, notification access and accessibility for apps installed outside an app store. Open App info → ⋮ → Allow restricted settings, then turn the feature on again. Pairly’s setup shows these steps when it happens.</string>
     <string name="faq_clipboard_q">The clipboard doesn’t sync in the background</string>
-    <string name="faq_clipboard_a">Android only lets the visible app read the clipboard. Set up Shizuku under Features → Shared clipboard. After restarting your phone, open Shizuku and tap Start.</string>
+    <string name="faq_clipboard_a">Android only lets the visible app read the clipboard. Set up Shizuku under Features → Shared clipboard. Shizuku also lets screen mirroring start without Android’s prompt. After restarting your phone, open Shizuku and tap Start.</string>
     <string name="faq_mirror_q">Screen mirroring has no sound</string>
     <string name="faq_mirror_a">Android shares audio only from apps that allow it, and asks once for microphone access. Some apps, such as streaming services, block capture entirely.</string>
     <string name="faq_devices_q">Can I use more than one phone or PC?</string>
@@ -348,4 +348,10 @@
     <string name="pair_not_found_wifi">Make sure the phone and PC are on the same Wi-Fi (not a guest network).</string>
     <string name="pair_not_found_vpn">Turn off any VPN on the phone or PC for a moment.</string>
     <string name="pair_not_found_address">Still nothing? Enter the address shown on your PC below.</string>
+    <string name="mirror_skip_prompt_title">Start without asking</string>
+    <string name="mirror_skip_prompt_detail">Shizuku lets Pairly skip Android’s screen-sharing prompt. Turn off to confirm every time.</string>
+    <string name="mirror_skip_prompt_on">Mirroring starts right away</string>
+    <string name="mirror_skip_prompt_off">Android asks each time</string>
+    <string name="mirror_skip_prompt_setup">Android asks for permission every time your PC starts mirroring. With Shizuku (the same helper as for the background clipboard), Pairly can skip that prompt.</string>
+    <string name="mirror_skip_prompt_setup_action">Set up Shizuku</string>
 </resources>
