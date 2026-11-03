@@ -183,6 +183,7 @@ jobs:
         run: |
           @"
           **Next:** open [Partner Center](https://partner.microsoft.com/dashboard/products/$env:STORE_PRODUCT_ID/overview), check the draft's **Store listings** (each language), then select **Submit for certification**.
+          The new screenshots are uploaded but Partner Center only shows them after you submit (until then the draft still shows the old ones). Run this workflow with **Only show what Partner Center holds** to see every field and screenshot the draft contains.
           Submit it before the next release, so the release doesn't run into an open draft.
           "@ >> $env:GITHUB_STEP_SUMMARY
 
