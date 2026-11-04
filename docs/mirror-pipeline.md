@@ -217,17 +217,11 @@ Defects that only the device exposed, all fixed:
   stream has been run through it, and some systems need the free HEVC extension installed.
 - Aspect handling is not implemented in the presenter; it stretches to the swap chain. The real
   mirror window preserves aspect via its existing `FitToVideo`.
-- Mid-stream resolution change calls `RenegotiateOutputType` on `MF_E_TRANSFORM_STREAM_CHANGE`,
-  but rotation has not been exercised end to end yet.
-- **Touch and scroll input are temporarily gone.** They lived in the WebRTC viewer page's
-  JavaScript, which is deleted. Back, Home and Recents still work over the control channel. Full
-  pointer, keyboard and clipboard input arrive with the control stream socket and
-  `MirrorInputRouter`, which is the next piece of work.
-- **Screen audio is temporarily gone.** The old path pushed raw PCM over a WebRTC data channel. The
-  audio stream kind is reserved in the framing but not implemented, and the checkbox was removed
-  rather than left in place doing nothing.
-- Mid-stream rotation restarts the encoder and renegotiates the decoder output type, but has not
-  been exercised end to end.
+- Rotation was verified end to end on a Galaxy S25 in both ADB and app mode. The encoder restarts
+  at the new size; app mode keeps its one MediaProjection virtual display and swaps its surface,
+  because Android 14+ throws on a second `createVirtualDisplay`. The PC rebuilds its decoder on new
+  parameter sets and asks for a keyframe. Over a slow link the ADB server can take several seconds
+  to deliver the first frame at the new size.
 - On a static screen the Exynos encoder repeats frames at roughly 1-3 fps rather than the 10 fps
   `KEY_REPEAT_PREVIOUS_FRAME_AFTER` asks for. Enough to prove liveness; not yet a freeze detector.
 - The Back / Home / Recents buttons need the accessibility service enabled on the phone, which has

@@ -106,12 +106,16 @@ object MirrorQualityPolicy {
      * Scales [sourceWidth] x [sourceHeight] down to fit the requested bounds, preserving aspect and
      * rounding to even pixels. Zero or negative bounds mean "no limit", which is how the PC asks
      * for the phone's native resolution. Never scales up: encoding invented pixels helps nothing.
+     *
+     * The bounds follow the source's orientation: a 1080x1920 box limits a landscape screen to
+     * 1920x1080, not to 1080 wide, or rotating the phone would shrink the mirror to a sliver.
      */
     fun fitCaptureSize(sourceWidth: Int, sourceHeight: Int, maxWidth: Int, maxHeight: Int): Pair<Int, Int> {
         require(sourceWidth > 0 && sourceHeight > 0) { "Source size must be positive." }
 
-        val boundWidth = if (maxWidth > 0) maxWidth else sourceWidth
-        val boundHeight = if (maxHeight > 0) maxHeight else sourceHeight
+        val rotated = maxWidth > 0 && maxHeight > 0 && (sourceWidth > sourceHeight) != (maxWidth > maxHeight)
+        val boundWidth = if (rotated) maxHeight else if (maxWidth > 0) maxWidth else sourceWidth
+        val boundHeight = if (rotated) maxWidth else if (maxHeight > 0) maxHeight else sourceHeight
 
         val scale = min(
             boundWidth.toDouble() / sourceWidth,

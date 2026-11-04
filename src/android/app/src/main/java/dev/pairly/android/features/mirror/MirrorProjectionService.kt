@@ -26,7 +26,9 @@ class MirrorProjectionService : Service() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        mirrorSession?.handleOrientationChange()
+        // A failed re-fit must end the mirror with a reason, never crash the app.
+        runCatching { mirrorSession?.handleOrientationChange() }
+            .onFailure { stopSession("The phone rotated and the mirror could not follow: ${it.message}") }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

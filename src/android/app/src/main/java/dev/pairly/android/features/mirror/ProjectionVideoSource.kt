@@ -26,7 +26,17 @@ class ProjectionVideoSource(
     private var registeredCallback: MediaProjection.Callback? = null
 
     override fun start(surface: Surface, width: Int, height: Int) {
-        release()
+        val existing = virtualDisplay
+        if (existing != null) {
+            // An encoder restart (rotation, resolution change) keeps the one virtual display and
+            // hands it the new surface. Android 14+ allows a single createVirtualDisplay per
+            // projection and throws SecurityException on the second, which used to crash the app
+            // as soon as the phone rotated.
+            Log.i(TAG, "Moving virtual display to a new ${width}x$height surface.")
+            existing.resize(width, height, densityDpi)
+            existing.surface = surface
+            return
+        }
 
         // Android 14+ refuses createVirtualDisplay unless a callback is registered first.
         val callback = object : MediaProjection.Callback() {
@@ -67,7 +77,7 @@ class ProjectionVideoSource(
 
     override fun release() {
         if (virtualDisplay != null || registeredCallback != null) {
-            Log.i(TAG, "Releasing virtual display.", Throwable("release call site"))
+            Log.i(TAG, "Releasing virtual display.")
         }
         virtualDisplay?.let { runCatching { it.release() } }
         virtualDisplay = null

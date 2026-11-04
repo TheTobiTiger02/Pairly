@@ -2088,6 +2088,10 @@ static void MirrorQualityPolicyMatchesAndroidPolicy()
     AssertEqual(1920, fittedHeight);
     AssertTrue(Math.Abs((1440.0 / 3200.0) - ((double)fittedWidth / fittedHeight)) < 0.01, "Aspect ratio must survive the fit.");
 
+    // Bounds follow the source orientation, as in MirrorQualityPolicyTest.boundsFollowTheSourceOrientation.
+    AssertEqual((1920, 864), MirrorQualityPolicy.FitCaptureSize(3200, 1440, 1080, 1920));
+    AssertEqual((864, 1920), MirrorQualityPolicy.FitCaptureSize(1440, 3200, 1920, 1080));
+
     var (oddWidth, oddHeight) = MirrorQualityPolicy.FitCaptureSize(1001, 2001, 999, 1999);
     AssertEqual(0, oddWidth % 2);
     AssertEqual(0, oddHeight % 2);
