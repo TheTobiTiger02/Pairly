@@ -47,12 +47,23 @@ object ClipboardShizukuAccess {
         Shizuku.addRequestPermissionResultListener { code, _ -> if (code == 7816) main.post { refresh() } }
         refresh()
     }
-    fun start(app: Context) { main.post {
-        init(app); lifecycle.start()
+    /**
+     * Features that need the helper right now. Clipboard sync holds it while it runs; mirroring
+     * borrows it only until "Start without asking" is applied, so that setting no longer depends
+     * on clipboard sync being on.
+     */
+    private val holders = mutableSetOf<String>()
+    const val HOLDER_CLIPBOARD = "clipboard"
+    const val HOLDER_SCREEN_CAPTURE = "screen-capture"
+
+    fun start(app: Context, holder: String = HOLDER_CLIPBOARD) { main.post {
+        init(app); holders += holder; lifecycle.start()
         main.removeCallbacks(refreshLoop); main.post(refreshLoop)
     } }
-    fun stop() {
+    fun stop(holder: String = HOLDER_CLIPBOARD) {
         main.post {
+            holders -= holder
+            if (holders.isNotEmpty()) return@post
             main.removeCallbacks(refreshLoop)
             unbind(); lifecycle.stop(); publishState()
         }

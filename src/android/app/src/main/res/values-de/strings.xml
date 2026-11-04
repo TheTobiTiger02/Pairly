@@ -352,6 +352,12 @@
     <string name="mirror_skip_prompt_detail">Mit Shizuku überspringt Pairly die Bildschirmfreigabe-Abfrage von Android. Schalte das aus, um jedes Mal zu bestätigen.</string>
     <string name="mirror_skip_prompt_on">Spiegeln startet sofort</string>
     <string name="mirror_skip_prompt_off">Android fragt jedes Mal</string>
-    <string name="mirror_skip_prompt_setup">Android fragt jedes Mal nach, wenn dein PC das Spiegeln startet. Mit Shizuku (derselbe Helfer wie für die Zwischenablage im Hintergrund) kann Pairly diese Abfrage überspringen.</string>
+    <string name="mirror_skip_prompt_setup">Shizuku wird nur einmal gebraucht, um die Abfrage abzuschalten. Danach kannst du Kabelloses Debugging wieder ausschalten.</string>
+    <string name="mirror_skip_prompt_applying">Abfrage wird abgeschaltet…</string>
+    <string name="mirror_skip_prompt_done_note">Android merkt sich das. Es funktioniert auch mit ausgeschaltetem Kabellosen Debugging, beendetem Shizuku und nach einem Neustart. Nur eine Neuinstallation von Pairly setzt es zurück.</string>
+    <string name="mirror_check_shizuku_installed">Shizuku installiert</string>
+    <string name="mirror_check_shizuku_running">Shizuku läuft</string>
+    <string name="mirror_check_shizuku_allowed">Pairly in Shizuku erlaubt</string>
+    <string name="mirror_check_prompt_skipped">Abfrage von Android abgeschaltet</string>
     <string name="mirror_skip_prompt_setup_action">Shizuku einrichten</string>
 </resources>

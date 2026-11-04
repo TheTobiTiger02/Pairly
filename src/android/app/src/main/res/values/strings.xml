@@ -352,6 +352,12 @@
     <string name="mirror_skip_prompt_detail">Shizuku lets Pairly skip Android’s screen-sharing prompt. Turn off to confirm every time.</string>
     <string name="mirror_skip_prompt_on">Mirroring starts right away</string>
     <string name="mirror_skip_prompt_off">Android asks each time</string>
-    <string name="mirror_skip_prompt_setup">Android asks for permission every time your PC starts mirroring. With Shizuku (the same helper as for the background clipboard), Pairly can skip that prompt.</string>
+    <string name="mirror_skip_prompt_setup">Shizuku is only needed once, to switch the prompt off. After that you can turn Wireless debugging off again.</string>
+    <string name="mirror_skip_prompt_applying">Switching the prompt off…</string>
+    <string name="mirror_skip_prompt_done_note">Android remembers this. It keeps working with Wireless debugging off, Shizuku stopped, and after a restart. Only reinstalling Pairly resets it.</string>
+    <string name="mirror_check_shizuku_installed">Shizuku installed</string>
+    <string name="mirror_check_shizuku_running">Shizuku running</string>
+    <string name="mirror_check_shizuku_allowed">Pairly allowed in Shizuku</string>
+    <string name="mirror_check_prompt_skipped">Android’s prompt switched off</string>
     <string name="mirror_skip_prompt_setup_action">Set up Shizuku</string>
 </resources>

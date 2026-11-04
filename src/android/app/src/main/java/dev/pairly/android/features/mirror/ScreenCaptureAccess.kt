@@ -33,7 +33,20 @@ object ScreenCaptureAccess {
 
     fun setWanted(context: Context, wanted: Boolean) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_SKIP_PROMPT, wanted).apply()
-        syncInBackground(context)
+        ensure(context)
+    }
+
+    /**
+     * Brings the app-op in line with the setting, connecting to Shizuku for as long as that takes.
+     * Once applied, Android keeps the app-op across restarts and with Wireless debugging off, so
+     * Shizuku is only needed again after Pairly is reinstalled or the setting changes.
+     */
+    fun ensure(context: Context) {
+        val app = context.applicationContext
+        if (wanted(app) == isAllowed(app)) return
+        // The helper calls syncInBackground once it is connected.
+        ClipboardShizukuAccess.start(app, ClipboardShizukuAccess.HOLDER_SCREEN_CAPTURE)
+        syncInBackground(app)
     }
 
     fun isAllowed(context: Context): Boolean {
@@ -66,10 +79,14 @@ object ScreenCaptureAccess {
     private fun sync(context: Context) {
         val wanted = wanted(context)
         val allowed = isAllowed(context)
-        if (wanted == allowed) return
+        if (wanted == allowed) {
+            ClipboardShizukuAccess.stop(ClipboardShizukuAccess.HOLDER_SCREEN_CAPTURE)
+            return
+        }
         val shell = ClipboardShizukuAccess.shell ?: return
         val ok = runCatching { shell.setScreenCaptureAllowed(context.packageName, wanted) }.getOrDefault(false)
         val now = isAllowed(context)
+        if (now == wanted) ClipboardShizukuAccess.stop(ClipboardShizukuAccess.HOLDER_SCREEN_CAPTURE)
         LinkDiagnostics.record(
             LinkDiagnostics.Category.MIRROR,
             "mirror.prompt.${if (wanted) "skip" else "restore"}",

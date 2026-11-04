@@ -1,5 +1,6 @@
 package dev.pairly.android.ui.features
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -126,7 +127,7 @@ fun FeatureDetailScreen(feature: Feature, state: AppState, callbacks: FeatureDet
             } else {
                 item { FeatureSetupContent(feature, state.permissions) }
                 if (feature == Feature.Mirroring) {
-                    item { StartWithoutAskingCard(state.shizuku.ready, callbacks.openShizukuGuide) }
+                    item { StartWithoutAskingCard(state.shizuku, callbacks.openShizukuGuide) }
                 }
             }
         }
@@ -135,30 +136,58 @@ fun FeatureDetailScreen(feature: Feature, state: AppState, callbacks: FeatureDet
 
 /**
  * Android asks before every screen mirror. With Shizuku running, Pairly can tell Android to skip
- * that prompt (see ScreenCaptureAccess); without it, this explains how to get there.
+ * that prompt (see ScreenCaptureAccess). The checklist shows each piece, so it is clear what is
+ * still missing and that Shizuku is no longer needed once the last item is done.
  */
 @Composable
-private fun StartWithoutAskingCard(shizukuReady: Boolean, onOpenGuide: () -> Unit) {
+private fun StartWithoutAskingCard(shizuku: dev.pairly.android.ui.ShizukuStatus, onOpenGuide: () -> Unit) {
     val context = LocalContext.current
     var wanted by remember { mutableStateOf(ScreenCaptureAccess.wanted(context)) }
     val allowed by ScreenCaptureAccess.allowedState.collectAsState()
-    LaunchedEffect(shizukuReady) { ScreenCaptureAccess.isAllowed(context) }
+    // Re-check whenever Shizuku's state changes, and apply the setting as soon as it can be.
+    LaunchedEffect(shizuku) { ScreenCaptureAccess.ensure(context) }
+    val active = wanted && allowed
     PairlyCard(Modifier.fillMaxWidth()) {
-        if (shizukuReady) {
-            SwitchRow(
-                stringResource(R.string.mirror_skip_prompt_title),
-                stringResource(R.string.mirror_skip_prompt_detail),
-                checked = wanted,
-                onCheckedChange = { on -> wanted = on; ScreenCaptureAccess.setWanted(context, on) }
+        SwitchRow(
+            stringResource(R.string.mirror_skip_prompt_title),
+            stringResource(R.string.mirror_skip_prompt_detail),
+            checked = wanted,
+            onCheckedChange = { on -> wanted = on; ScreenCaptureAccess.setWanted(context, on) }
+        )
+        Spacer(Modifier.height(Space.s))
+        StatusPill(
+            stringResource(
+                when {
+                    !wanted -> R.string.mirror_skip_prompt_off
+                    active -> R.string.mirror_skip_prompt_on
+                    shizuku.ready -> R.string.mirror_skip_prompt_applying
+                    else -> R.string.mirror_skip_prompt_off
+                }
+            ),
+            when {
+                active -> PillTone.Positive
+                wanted && shizuku.ready -> PillTone.Busy
+                else -> PillTone.Neutral
+            }
+        )
+        if (!wanted) return@PairlyCard
+
+        Spacer(Modifier.height(Space.m))
+        if (active) {
+            // Android keeps the grant on its own; Shizuku and Wireless debugging can go.
+            Text(
+                stringResource(R.string.mirror_skip_prompt_done_note),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            return@PairlyCard
+        }
+        ChecklistRow(stringResource(R.string.mirror_check_shizuku_installed), shizuku.installed)
+        ChecklistRow(stringResource(R.string.mirror_check_shizuku_running), shizuku.running)
+        ChecklistRow(stringResource(R.string.mirror_check_shizuku_allowed), shizuku.allowed)
+        ChecklistRow(stringResource(R.string.mirror_check_prompt_skipped), allowed)
+        if (!shizuku.ready) {
             Spacer(Modifier.height(Space.s))
-            StatusPill(
-                stringResource(if (wanted && allowed) R.string.mirror_skip_prompt_on else R.string.mirror_skip_prompt_off),
-                if (wanted && allowed) PillTone.Positive else PillTone.Neutral
-            )
-        } else {
-            Text(stringResource(R.string.mirror_skip_prompt_title), style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(Space.xs))
             Text(
                 stringResource(R.string.mirror_skip_prompt_setup),
                 style = MaterialTheme.typography.bodyMedium,
@@ -167,6 +196,26 @@ private fun StartWithoutAskingCard(shizukuReady: Boolean, onOpenGuide: () -> Uni
             Spacer(Modifier.height(Space.m))
             SecondaryButton(stringResource(R.string.mirror_skip_prompt_setup_action), onClick = onOpenGuide)
         }
+    }
+}
+
+@Composable
+private fun ChecklistRow(label: String, done: Boolean) {
+    Row(Modifier.fillMaxWidth().padding(vertical = Space.xs), verticalAlignment = Alignment.CenterVertically) {
+        if (done) {
+            CheckBadge(size = 20.dp)
+        } else {
+            androidx.compose.foundation.layout.Box(
+                Modifier.width(20.dp).height(20.dp).clip(androidx.compose.foundation.shape.CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+            )
+        }
+        Spacer(Modifier.width(Space.m))
+        Text(
+            label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (done) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
