@@ -52,8 +52,10 @@ jobs:
           script: |
             # Keep the app installed after the run so its screenshots can still be pulled.
             ./gradlew :app:connectedDebugAndroidTest -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true || touch test-failed
-            adb exec-out run-as dev.pairly.android tar c files/screenshots > screenshots.tar || true
-            adb logcat -d -t 600 > emulator-logcat.txt || true
+            # Time-limited: if the emulator dropped after the tests, adb waits for it forever
+            # ("waiting for device") and the job would hang until its 45-minute timeout.
+            timeout 60 adb exec-out run-as dev.pairly.android tar c files/screenshots > screenshots.tar || true
+            timeout 60 adb logcat -d -t 600 > emulator-logcat.txt || true
             test ! -f test-failed
 
       - name: Collect screenshots
