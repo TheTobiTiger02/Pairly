@@ -142,6 +142,7 @@ public partial class MainWindow : Window
                     mirrorStreams.VideoStreamReady += OnMirrorStreamReady;
                     mirrorStreams.ControlStreamReady += OnMirrorControlReady;
                     mirrorStreams.AudioStreamReady += OnMirrorAudioReady;
+                    mirrorStreams.VideoFormatChanged += OnMirrorFormatChanged;
                 }
                 await RefreshFromHostAsync(showErrors: true);
             }
@@ -162,6 +163,13 @@ public partial class MainWindow : Window
 
         Closed += async (_, _) =>
         {
+            // Mirror windows are not owned by this one, so they would otherwise keep the process
+            // alive after a real exit.
+            foreach (var mirror in System.Windows.Application.Current.Windows.OfType<MirrorWindow>().ToList())
+            {
+                mirror.Close();
+            }
+
             _refreshTimer.Stop();
             App.ClipboardSync.StatusChanged -= UpdateClipboardStatus;
             _photoPrefetchCts?.Cancel();
@@ -1319,10 +1327,10 @@ public partial class MainWindow : Window
 
     private MirrorWindow CreateMirrorWindow(string deviceName, string deviceId, string advancedSummary)
     {
-        var mirrorWindow = new MirrorWindow(deviceName, deviceId, advancedSummary, _embeddedServer.Diagnostics)
-        {
-            Owner = this
-        };
+        // Deliberately not owned by this window: the mirror has its own taskbar entry, does not
+        // minimize with the main window, and keeps running while the main window sits in the tray.
+        // It ends with its own Stop or Close, or when the app exits (see Closed above).
+        var mirrorWindow = new MirrorWindow(deviceName, deviceId, advancedSummary, _embeddedServer.Diagnostics);
 
         mirrorWindow.NavigationRequested += key => _ = SendMirrorNavigationAsync(deviceId, key);
         mirrorWindow.LeaseRenewalDue += sessionId => _ = RenewMirrorLeaseAsync(deviceId, sessionId);
@@ -1392,6 +1400,25 @@ public partial class MainWindow : Window
             _activeMirrorWindow = mirrorWindow;
             mirrorWindow.Show();
             mirrorWindow.Attach(connection, format);
+        });
+    }
+
+    /// <summary>A playing stream changed size (the phone rotated); its window re-shapes itself.</summary>
+    private void OnMirrorFormatChanged(MirrorVideoFormat format)
+    {
+        Dispatcher.BeginInvoke(() =>
+        {
+            if (_streamWindows.TryGetValue((format.DeviceId, format.StreamId), out var owner))
+            {
+                owner.UpdateFormat(format);
+                return;
+            }
+
+            if (_activeMirrorWindow is MirrorWindow window
+                && string.Equals(window.DeviceId, format.DeviceId, StringComparison.Ordinal))
+            {
+                window.UpdateFormat(format);
+            }
         });
     }
 

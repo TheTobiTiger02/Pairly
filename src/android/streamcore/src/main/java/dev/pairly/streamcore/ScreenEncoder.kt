@@ -53,6 +53,9 @@ class ScreenEncoder(
     private val released = AtomicBoolean(false)
     private val keyframeRequested = AtomicBoolean(false)
 
+    private val codecLock = Any()
+
+    @Volatile
     private var codec: MediaCodec? = null
     private var outputThread: Thread? = null
     private var activeConfig: EncoderConfig? = null
@@ -166,25 +169,45 @@ class ScreenEncoder(
     }
 
     private fun restartCodec(config: EncoderConfig) {
-        releaseCodec()
-
-        val format = buildFormat(config, activeCodec)
-        val created = MediaCodec.createEncoderByType(activeCodec.mimeType)
-        created.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+        val created = try {
+            MediaCodec.createEncoderByType(activeCodec.mimeType).also {
+                it.configure(buildFormat(config, activeCodec), null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+            }
+        } catch (e: Exception) {
+            // Keep streaming at the old size rather than taking the whole session down.
+            Log.w(TAG, "Encoder refused ${config.width}x${config.height}; keeping the current size.", e)
+            return
+        }
 
         val surface = created.createInputSurface()
         created.start()
 
-        codec = created
-        activeConfig = config
-        source.resize(config.width, config.height)
+        // Point the source at the new surface before the old codec goes away, so the display
+        // never draws into a released surface.
         source.start(surface, config.width, config.height)
+
+        val previous = synchronized(codecLock) {
+            val old = codec
+            codec = created
+            activeConfig = config
+            old
+        }
+        previous?.let(::releaseQuietly)
         onFormatChanged(config.width, config.height, activeCodec)
     }
 
     private fun releaseCodec() {
-        val target = codec ?: return
-        codec = null
+        val target = synchronized(codecLock) {
+            val old = codec
+            codec = null
+            old
+        } ?: return
+        releaseQuietly(target)
+    }
+
+    private fun releaseQuietly(target: MediaCodec) {
+        // Called only after the codec left [codec] under [codecLock], so the output thread can no
+        // longer be inside one of its calls.
         runCatching { target.stop() }
         runCatching { target.release() }
     }
@@ -232,58 +255,79 @@ class ScreenEncoder(
         val bufferInfo = MediaCodec.BufferInfo()
 
         while (running.get() && !Thread.currentThread().isInterrupted) {
-            val target = codec ?: break
-
-            val index = try {
-                target.dequeueOutputBuffer(bufferInfo, DEQUEUE_TIMEOUT_US)
-            } catch (e: IllegalStateException) {
-                // The codec was restarted underneath us by reconfigure(); pick up the new one.
-                continue
-            }
-
-            when {
-                index == MediaCodec.INFO_TRY_AGAIN_LATER -> continue
-
-                index == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
-                    val format = target.outputFormat
-                    onFormatChanged(
-                        format.getInteger(MediaFormat.KEY_WIDTH),
-                        format.getInteger(MediaFormat.KEY_HEIGHT),
-                        activeCodec
-                    )
-                }
-
-                index >= 0 -> {
-                    val buffer = target.getOutputBuffer(index)
-                    if (buffer != null && bufferInfo.size > 0) {
-                        buffer.position(bufferInfo.offset)
-                        buffer.limit(bufferInfo.offset + bufferInfo.size)
-                        writeRecord(buffer, bufferInfo)
-                    }
-                    runCatching { target.releaseOutputBuffer(index, false) }
+            // Codec calls run under the lock, so a restart or stop swaps the codec out between
+            // steps, never while one of its buffers is being read; that delays a restart by at
+            // most DEQUEUE_TIMEOUT_US. The socket write happens outside it: a slow link used to
+            // hold the lock for seconds and stall the rotation on the main thread.
+            val record = synchronized(codecLock) {
+                val target = codec ?: return
+                try {
+                    drainStep(target, bufferInfo)
+                } catch (e: IllegalStateException) {
+                    // Includes CodecException. A codec in a bad state is replaced or stopped by
+                    // its owner; an uncaught throw here would kill the process.
+                    Log.w(TAG, "Encoder output failed; waiting for the codec to be replaced.", e)
+                    null
                 }
             }
-
+            record?.let(::writeRecord)
             if (bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
                 break
             }
         }
     }
 
-    private fun writeRecord(buffer: java.nio.ByteBuffer, info: MediaCodec.BufferInfo) {
+    private class OutputRecord(val payload: java.nio.ByteBuffer, val codecFlags: Int, val presentationTimeUs: Long)
+
+    /** Handles one output buffer or event; returns a copy of the encoded data, if any. */
+    private fun drainStep(target: MediaCodec, bufferInfo: MediaCodec.BufferInfo): OutputRecord? {
+        val index = target.dequeueOutputBuffer(bufferInfo, DEQUEUE_TIMEOUT_US)
+        when {
+            index == MediaCodec.INFO_TRY_AGAIN_LATER -> return null
+
+            index == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
+                val format = target.outputFormat
+                onFormatChanged(
+                    format.getInteger(MediaFormat.KEY_WIDTH),
+                    format.getInteger(MediaFormat.KEY_HEIGHT),
+                    activeCodec
+                )
+            }
+
+            index >= 0 -> {
+                val buffer = target.getOutputBuffer(index)
+                val record = if (buffer != null && bufferInfo.size > 0) {
+                    buffer.position(bufferInfo.offset)
+                    buffer.limit(bufferInfo.offset + bufferInfo.size)
+                    // Codec buffers are direct, so the writer copied them anyway; copying here
+                    // lets the buffer go back to the codec before the socket write.
+                    val copy = ByteArray(bufferInfo.size)
+                    buffer.get(copy)
+                    OutputRecord(java.nio.ByteBuffer.wrap(copy), bufferInfo.flags, bufferInfo.presentationTimeUs)
+                } else {
+                    null
+                }
+                runCatching { target.releaseOutputBuffer(index, false) }
+                return record
+            }
+        }
+        return null
+    }
+
+    private fun writeRecord(record: OutputRecord) {
         var flags = 0
-        if (info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG != 0) {
+        if (record.codecFlags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG != 0) {
             flags = flags or StreamProtocol.FLAG_CODEC_CONFIG
         }
-        if (info.flags and MediaCodec.BUFFER_FLAG_KEY_FRAME != 0) {
+        if (record.codecFlags and MediaCodec.BUFFER_FLAG_KEY_FRAME != 0) {
             flags = flags or StreamProtocol.FLAG_KEYFRAME
             keyframesEmitted++
             keyframeRequested.set(false)
         }
 
         try {
-            val size = info.size
-            writer.write(buffer, flags, info.presentationTimeUs)
+            val size = record.payload.remaining()
+            writer.write(record.payload, flags, record.presentationTimeUs)
             bytesWritten += size
             if (flags and StreamProtocol.FLAG_CODEC_CONFIG == 0) {
                 framesEncoded++

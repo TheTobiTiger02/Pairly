@@ -68,6 +68,7 @@
   <data name="clipboard_sent_to_all_connected_devices" xml:space="preserve"><value>Clipboard sent to all connected devices.</value></data>
   <data name="clipboard_settings" xml:space="preserve"><value>Clipboard settings</value></data>
   <data name="clipboard_text" xml:space="preserve"><value>Clipboard text</value></data>
+  <data name="close" xml:space="preserve"><value>Close</value></data>
   <data name="closing_the_window_keeps_your_phone_connecte" xml:space="preserve"><value>Closing the window keeps your phone connected.</value></data>
   <data name="collecting" xml:space="preserve"><value>Collecting...</value></data>
   <data name="confirm_delete" xml:space="preserve"><value>Confirm Delete</value></data>
@@ -180,6 +181,7 @@
   <data name="is_paired_but_offline" xml:space="preserve"><value>{0} is paired but offline.</value></data>
   <data name="just_now" xml:space="preserve"><value>Just now</value></data>
   <data name="keep_both_on_the_same_wi_fi_network_not_a_gu" xml:space="preserve"><value>Keep both on the same Wi-Fi network, not a guest network. When Windows asks, allow Pairly through the firewall on private networks. If Windows treats your network as Public, switch it to Private under Settings &gt; Network &amp; internet.</value></data>
+  <data name="keep_on_top" xml:space="preserve"><value>Keep on top</value></data>
   <data name="keep_running_in_the_notification_area" xml:space="preserve"><value>Keep running in the notification area</value></data>
   <data name="keep_your_phone_and_this_pc_on_the_same_wi_f" xml:space="preserve"><value>• Keep your phone and this PC on the same Wi-Fi network.
 • If Windows asks, allow Pairly through Windows Firewall on private networks.
@@ -208,6 +210,7 @@
   <data name="messages_could_not_be_loaded_check_the_phone" xml:space="preserve"><value>Messages could not be loaded. Check the phone connection and retry.</value></data>
   <data name="messages_in_conversation" xml:space="preserve"><value>Messages in conversation</value></data>
   <data name="min_ago" xml:space="preserve"><value>{0} min ago</value></data>
+  <data name="minimize" xml:space="preserve"><value>Minimize</value></data>
   <data name="mirror_and_control_your_phone_in_a_window" xml:space="preserve"><value>Mirror and control your phone in a window.</value></data>
   <data name="mirror_stopped" xml:space="preserve"><value>Mirror stopped.</value></data>
   <data name="mirroring_active_in_a_separate_window" xml:space="preserve"><value>Mirroring active in a separate window.</value></data>
@@ -307,6 +310,7 @@
   <data name="phone_screen_needs_attention" xml:space="preserve"><value>Phone screen needs attention</value></data>
   <data name="phone_screen_settings" xml:space="preserve"><value>Phone screen settings</value></data>
   <data name="phone_sound_on_this_pc" xml:space="preserve"><value>Phone sound on this PC</value></data>
+  <data name="phone_sound_volume_on_this_pc" xml:space="preserve"><value>Phone sound volume on this PC</value></data>
   <data name="photo_download_failed" xml:space="preserve"><value>Photo download failed: {0}. {1}</value></data>
   <data name="photo_sort_order" xml:space="preserve"><value>Photo sort order</value></data>
   <data name="photo_tile_size" xml:space="preserve"><value>Photo tile size</value></data>
@@ -438,6 +442,7 @@
   <data name="startup_will_be_enabled_automatically_after" xml:space="preserve"><value>Startup will be enabled automatically after the first successful pairing.</value></data>
   <data name="step_1_of_3" xml:space="preserve"><value>Step 1 of 3</value></data>
   <data name="stop" xml:space="preserve"><value>Stop</value></data>
+  <data name="stop_keeping_on_top" xml:space="preserve"><value>Stop keeping on top</value></data>
   <data name="stop_phone_screen" xml:space="preserve"><value>Stop phone screen</value></data>
   <data name="stream_details" xml:space="preserve"><value>Stream details</value></data>
   <data name="sync" xml:space="preserve"><value>Sync</value></data>
@@ -492,6 +497,7 @@
   <data name="type_or_paste_text_to_send_to_your_phones" xml:space="preserve"><value>Type or paste text to send to your phones</value></data>
   <data name="unavailable" xml:space="preserve"><value>Unavailable</value></data>
   <data name="unknown_caller" xml:space="preserve"><value>Unknown caller</value></data>
+  <data name="unmute_phone_sound_on_this_pc" xml:space="preserve"><value>Unmute phone sound on this PC</value></data>
   <data name="updates" xml:space="preserve"><value>Updates</value></data>
   <data name="updates_are_installed_by_the_microsoft_store" xml:space="preserve"><value>Updates are installed by the Microsoft Store.</value></data>
   <data name="use_windows_language" xml:space="preserve"><value>Use Windows language</value></data>
@@ -501,6 +507,7 @@
   <data name="version" xml:space="preserve"><value>Version</value></data>
   <data name="version_is_ready_it_installs_the_next_time_p" xml:space="preserve"><value>Version {0} is ready. It installs the next time Pairly starts.</value></data>
   <data name="video" xml:space="preserve"><value>Video</value></data>
+  <data name="volume_percent" xml:space="preserve"><value>Volume {0}%</value></data>
   <data name="waiting_for_a_clipboard_change" xml:space="preserve"><value>Waiting for a clipboard change.</value></data>
   <data name="waiting_for_your_phone" xml:space="preserve"><value>Waiting for your phone…</value></data>
   <data name="welcome_back" xml:space="preserve"><value>Welcome back</value></data>

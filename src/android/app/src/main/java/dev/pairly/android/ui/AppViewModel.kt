@@ -90,6 +90,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         PairlyConnection.deviceId = settings.deviceId
         PairlyConnection.host = settings.endpoint
         ClipboardShizukuAccess.init(application)
+        dev.pairly.android.features.mirror.ScreenCaptureAccess.ensure(application)
         if (settings.autoConnectEnabled && settings.trustKey.isNotBlank()) {
             PairlyConnectionService.startConnect(application)
         }

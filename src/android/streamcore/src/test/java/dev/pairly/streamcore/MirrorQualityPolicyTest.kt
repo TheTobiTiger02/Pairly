@@ -46,6 +46,13 @@ class MirrorQualityPolicyTest {
     }
 
     @Test
+    fun boundsFollowTheSourceOrientation() {
+        // A rotated phone keeps the same long-edge budget instead of being squeezed to 1080 wide.
+        assertEquals(1920 to 864, MirrorQualityPolicy.fitCaptureSize(3200, 1440, 1080, 1920))
+        assertEquals(864 to 1920, MirrorQualityPolicy.fitCaptureSize(1440, 3200, 1920, 1080))
+    }
+
+    @Test
     fun dimensionsAreAlwaysEven() {
         // Most hardware encoders reject odd dimensions outright.
         val (width, height) = MirrorQualityPolicy.fitCaptureSize(1001, 2001, 999, 1999)

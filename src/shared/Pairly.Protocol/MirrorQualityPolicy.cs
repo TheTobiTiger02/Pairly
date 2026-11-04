@@ -116,7 +116,8 @@ public static class MirrorQualityPolicy
     /// <summary>
     /// Scales a source size down to fit the requested bounds, preserving aspect and rounding to
     /// even pixels. Non-positive bounds mean "no limit", which is how the desktop asks for the
-    /// phone's native resolution. Never scales up.
+    /// phone's native resolution. Never scales up. The bounds follow the source's orientation, so
+    /// a 1080x1920 box limits a landscape screen to 1920x1080.
     /// </summary>
     public static (int Width, int Height) FitCaptureSize(int sourceWidth, int sourceHeight, int maxWidth, int maxHeight)
     {
@@ -125,8 +126,9 @@ public static class MirrorQualityPolicy
             throw new ArgumentOutOfRangeException(nameof(sourceWidth), "Source size must be positive.");
         }
 
-        var boundWidth = maxWidth > 0 ? maxWidth : sourceWidth;
-        var boundHeight = maxHeight > 0 ? maxHeight : sourceHeight;
+        var rotated = maxWidth > 0 && maxHeight > 0 && (sourceWidth > sourceHeight) != (maxWidth > maxHeight);
+        var boundWidth = rotated ? maxHeight : maxWidth > 0 ? maxWidth : sourceWidth;
+        var boundHeight = rotated ? maxWidth : maxHeight > 0 ? maxHeight : sourceHeight;
 
         var scale = Math.Min(
             Math.Min((double)boundWidth / sourceWidth, (double)boundHeight / sourceHeight),

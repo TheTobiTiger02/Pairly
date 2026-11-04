@@ -37,6 +37,7 @@ public sealed unsafe class AudioStreamPlayer : IDisposable
     private int _chunksAboveTarget;
     private bool _started;
     private bool _disposed;
+    private float _volume = 1f;
 
     public AudioStreamPlayer()
     {
@@ -46,6 +47,26 @@ public sealed unsafe class AudioStreamPlayer : IDisposable
         for (var index = 0; index < SlotCount; index++)
         {
             _slots[index] = (byte*)NativeMemory.Alloc(SlotBytes);
+        }
+    }
+
+    /// <summary>
+    /// Playback level on this PC, 0 (silent) to 1 (as sent). Only the local output changes; the
+    /// phone keeps its own volume.
+    /// </summary>
+    public float Volume
+    {
+        get => _volume;
+        set
+        {
+            var clamped = Math.Clamp(value, 0f, 1f);
+            if (_disposed || clamped == _volume)
+            {
+                return;
+            }
+
+            _volume = clamped;
+            _voice.SetVolume(clamped);
         }
     }
 

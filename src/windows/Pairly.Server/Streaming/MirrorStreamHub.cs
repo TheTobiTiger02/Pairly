@@ -43,6 +43,13 @@ public sealed class MirrorStreamHub
     /// </summary>
     public event Action<StreamConnection>? ControlStreamReady;
 
+    /// <summary>
+    /// Raised when a stream that already had a format is announced again with a different size or
+    /// rotation - the phone rotated mid-stream. The stream keeps its socket; only the renderer's
+    /// idea of the picture changes.
+    /// </summary>
+    public event Action<MirrorVideoFormat>? VideoFormatChanged;
+
     /// <summary>Raised when the phone opens its audio channel. The handler owns the connection.</summary>
     public event Action<StreamConnection>? AudioStreamReady;
 
@@ -59,9 +66,11 @@ public sealed class MirrorStreamHub
             payload.DisplayId);
 
         StreamConnection? waiting;
+        MirrorVideoFormat? previous;
         lock (_gate)
         {
             var key = (format.DeviceId, format.StreamId);
+            _formats.TryGetValue(key, out previous);
             _formats[key] = format;
             _pending.Remove(key, out waiting);
         }
@@ -75,6 +84,13 @@ public sealed class MirrorStreamHub
         if (waiting is not null)
         {
             Publish(waiting, format);
+            return;
+        }
+
+        if (previous is not null
+            && (previous.Width != format.Width || previous.Height != format.Height || previous.Rotation != format.Rotation))
+        {
+            VideoFormatChanged?.Invoke(format);
         }
     }
 

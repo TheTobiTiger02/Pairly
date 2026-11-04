@@ -161,6 +161,9 @@ class AppSmokeTest {
         // keep trying to scroll to it for a while.
         val listDeadline = System.currentTimeMillis() + 15_000
         while (!device.hasObject(By.textContains("Pairly")) && System.currentTimeMillis() < listDeadline) {
+            // A busy CI emulator sometimes puts an "isn't responding" dialog for another app (the
+            // launcher) over Settings; waiting it out keeps Settings in front.
+            device.findObject(By.res("android", "aerr_wait"))?.click()
             runCatching { UiScrollable(UiSelector().scrollable(true)).scrollTextIntoView("Pairly") }
             Thread.sleep(500)
         }
