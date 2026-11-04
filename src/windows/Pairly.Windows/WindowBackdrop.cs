@@ -19,6 +19,7 @@ internal static class WindowBackdrop
     private const int DwmwaSystemBackdropType = 38;
     private const int DwmsbtNone = 1;
     private const int DwmsbtMainWindow = 2;
+    private const int DwmwcpDoNotRound = 1;
     private const int DwmwcpRound = 2;
 
     // DWMWA_SYSTEMBACKDROP_TYPE first shipped in Windows 11 22H2.
@@ -40,24 +41,41 @@ internal static class WindowBackdrop
         Environment.OSVersion.Version.Build >= MicaMinimumBuild && !ThemeManager.IsHighContrast;
 
     /// <summary>Call once the window has a handle; the backdrop then tracks theme changes on its own.</summary>
-    public static void Attach(Window window)
+    /// <param name="frameOnly">
+    /// Rounded corners and a theme-coloured frame, but no Mica: for windows whose content covers
+    /// the whole client area anyway, such as video.
+    /// </param>
+    public static void Attach(Window window, bool frameOnly = false)
     {
-        void Apply(object? sender, EventArgs e) => window.Dispatcher.BeginInvoke(() => ApplyCore(window));
+        void Apply(object? sender, EventArgs e) => window.Dispatcher.BeginInvoke(() => ApplyCore(window, frameOnly));
 
         if (new WindowInteropHelper(window).Handle == IntPtr.Zero)
         {
-            window.SourceInitialized += (_, _) => ApplyCore(window);
+            window.SourceInitialized += (_, _) => ApplyCore(window, frameOnly);
         }
         else
         {
-            ApplyCore(window);
+            ApplyCore(window, frameOnly);
         }
 
         ThemeManager.ThemeChanged += Apply;
         window.Closed += (_, _) => ThemeManager.ThemeChanged -= Apply;
     }
 
-    private static void ApplyCore(Window window)
+    /// <summary>Square corners for a window covering a whole monitor, round ones otherwise.</summary>
+    public static void SetRoundedCorners(Window window, bool rounded)
+    {
+        var handle = new WindowInteropHelper(window).Handle;
+        if (handle == IntPtr.Zero)
+        {
+            return;
+        }
+
+        var corners = rounded ? DwmwcpRound : DwmwcpDoNotRound;
+        DwmSetWindowAttribute(handle, DwmwaWindowCornerPreference, ref corners, sizeof(int));
+    }
+
+    private static void ApplyCore(Window window, bool frameOnly)
     {
         var handle = new WindowInteropHelper(window).Handle;
         if (handle == IntPtr.Zero || HwndSource.FromHwnd(handle) is not { } source)
@@ -68,7 +86,7 @@ internal static class WindowBackdrop
         // With Mica the frame reaches into the client area and DWM draws the real caption buttons
         // there (with Snap Layouts); WindowChrome only has to route hit-testing to them. Without Mica
         // the opaque background would cover them, so CaptionButtons draws its own instead.
-        if (WindowChrome.GetWindowChrome(window) is { } chrome && chrome.UseAeroCaptionButtons != SupportsMica)
+        if (!frameOnly && WindowChrome.GetWindowChrome(window) is { } chrome && chrome.UseAeroCaptionButtons != SupportsMica)
         {
             var updated = (WindowChrome)chrome.Clone();
             updated.UseAeroCaptionButtons = SupportsMica;
@@ -79,6 +97,10 @@ internal static class WindowBackdrop
         DwmSetWindowAttribute(handle, DwmwaUseImmersiveDarkMode, ref dark, sizeof(int));
         var corners = DwmwcpRound;
         DwmSetWindowAttribute(handle, DwmwaWindowCornerPreference, ref corners, sizeof(int));
+        if (frameOnly)
+        {
+            return;
+        }
 
         if (SupportsMica)
         {

@@ -25,7 +25,7 @@ public sealed class MirrorStreamPlayer : IDisposable
 {
     private readonly D3D11Context _context;
     private readonly StreamConnection _connection;
-    private readonly MirrorVideoFormat _format;
+    private volatile MirrorVideoFormat _format;
     private readonly NV12Presenter _presenter;
     private readonly CancellationTokenSource _cts = new();
     private readonly object _presentGate = new();
@@ -34,6 +34,12 @@ public sealed class MirrorStreamPlayer : IDisposable
     private Thread? _pumpThread;
     private Thread? _asyncEventThread;
     private long _startedTimestamp;
+    private int _videoWidth;
+    private int _videoHeight;
+
+    // Decoders report their surface size, which can be padded to a multiple of 16 (1088 for
+    // 1080). Changes smaller than this are alignment, not a new picture.
+    private const int AlignmentTolerance = 16;
 
     private MirrorStreamPlayer(
         D3D11Context context,
@@ -45,11 +51,58 @@ public sealed class MirrorStreamPlayer : IDisposable
         _connection = connection;
         _format = format;
         _presenter = presenter;
+        _videoWidth = format.Width;
+        _videoHeight = format.Height;
     }
 
     public event Action<string>? Failed;
 
+    /// <summary>
+    /// Raised, from a playback thread, when the picture changes size mid-stream - the phone
+    /// rotated. Letterboxing has already been updated; listeners resize whatever else depends on it.
+    /// </summary>
+    public event Action<int, int>? VideoSizeChanged;
+
     public MirrorVideoFormat Format => _format;
+
+    /// <summary>
+    /// Takes a new announcement for the stream being played. The socket and decoder stay; the
+    /// decoder learns the new size from the stream's own parameter sets.
+    /// </summary>
+    public void UpdateFormat(MirrorVideoFormat format)
+    {
+        if (format.StreamId != _format.StreamId)
+        {
+            return;
+        }
+
+        _format = format;
+        ApplyVideoSize(format.Width, format.Height, exact: true);
+    }
+
+    private void ApplyVideoSize(int width, int height, bool exact)
+    {
+        if (width <= 0 || height <= 0)
+        {
+            return;
+        }
+
+        lock (_presentGate)
+        {
+            var sameOrientation = (width >= height) == (_videoWidth >= _videoHeight);
+            var delta = Math.Max(Math.Abs(width - _videoWidth), Math.Abs(height - _videoHeight));
+            if ((width == _videoWidth && height == _videoHeight) || (!exact && sameOrientation && delta <= AlignmentTolerance))
+            {
+                return;
+            }
+
+            _videoWidth = width;
+            _videoHeight = height;
+            _presenter.SetVideoSize(width, height);
+        }
+
+        VideoSizeChanged?.Invoke(width, height);
+    }
 
     public MirrorPlaybackStatistics Statistics
     {
@@ -188,6 +241,7 @@ public sealed class MirrorStreamPlayer : IDisposable
             parameterSets);
 
         decoder.FrameDecoded += OnFrameDecoded;
+        decoder.OutputSizeChanged += OnDecoderSizeChanged;
         _decoder = decoder;
 
         if (decoder.IsAsync)
@@ -200,6 +254,8 @@ public sealed class MirrorStreamPlayer : IDisposable
             _asyncEventThread.Start();
         }
     }
+
+    private void OnDecoderSizeChanged(int width, int height) => ApplyVideoSize(width, height, exact: false);
 
     private void OnFrameDecoded(DecodedFrame frame)
     {
@@ -233,6 +289,7 @@ public sealed class MirrorStreamPlayer : IDisposable
         if (_decoder is not null)
         {
             _decoder.FrameDecoded -= OnFrameDecoded;
+            _decoder.OutputSizeChanged -= OnDecoderSizeChanged;
             _decoder.Dispose();
             _decoder = null;
         }

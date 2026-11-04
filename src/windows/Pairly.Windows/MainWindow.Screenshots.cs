@@ -109,6 +109,18 @@ public partial class MainWindow
                         Save($"{prefix}-whats-new");
                         WhatsNewOverlay.Visibility = Visibility.Collapsed;
                     }
+
+                    // The phone screen window. It is captured from the screen, which a headless
+                    // session cannot do, so a capture problem is noted rather than failing the run.
+                    if (language == "en")
+                    {
+                        var captureNotes = new List<string>();
+                        await RenderMirrorScreenshotsAsync(folder, prefix, Settle, captureNotes);
+                        if (captureNotes.Count > 0)
+                        {
+                            File.AppendAllLines(Path.Combine(folder, "mirror-capture.txt"), captureNotes);
+                        }
+                    }
                 }
             }
         }

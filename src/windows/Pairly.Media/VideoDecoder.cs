@@ -122,6 +122,12 @@ public sealed class VideoDecoder : IDisposable
 
     public event Action<DecodedFrame>? FrameDecoded;
 
+    /// <summary>
+    /// Raised (on the decoding thread) when the stream itself changes the frame size, for example
+    /// new parameter sets after the phone rotates. Arguments are the new width and height.
+    /// </summary>
+    public event Action<int, int>? OutputSizeChanged;
+
     public DecoderStatistics Statistics => new(
         _framesDecoded,
         _framesDropped,
@@ -409,9 +415,17 @@ public sealed class VideoDecoder : IDisposable
 
                 _transform.SetOutputType(_outputStreamId, candidate, 0);
                 var size = candidate.GetUInt64(MediaTypeAttributeKeys.FrameSize);
-                Width = (int)(size >> 32);
-                Height = (int)(size & 0xFFFFFFFF);
+                var width = (int)(size >> 32);
+                var height = (int)(size & 0xFFFFFFFF);
+                var changed = width != Width || height != Height;
+                Width = width;
+                Height = height;
                 ReadOutputStreamInfo();
+                if (changed)
+                {
+                    OutputSizeChanged?.Invoke(width, height);
+                }
+
                 return;
             }
         }

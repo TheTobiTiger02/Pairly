@@ -31,7 +31,8 @@ public readonly record struct SurfaceKeyEvent(bool IsDown, int VirtualKey, bool 
 /// A bare child HWND for the mirror's swap chain to present into.
 ///
 /// WPF cannot draw over an <see cref="HwndHost"/> - the "airspace" limitation - which is why the
-/// mirror window keeps its chrome around the video rather than on top of it. In exchange the swap
+/// mirror window's controls live in small owned windows floating above the video rather than in
+/// its own visual tree. In exchange the swap
 /// chain presents straight to the window with no shared surface and no compositor hop, which is
 /// the difference between a frame of latency and none.
 /// </summary>
@@ -52,6 +53,8 @@ public sealed class MirrorSurfaceHost : HwndHost
     private const int WmMouseWheel = 0x020A;
     private const int WmMouseHWheel = 0x020E;
     private const int WmGetDlgCode = 0x0087;
+    private const int WmNcHitTest = 0x0084;
+    private const int HtTransparent = -1;
     private const int WmDropFiles = 0x0233;
     private const int DlgcWantAllKeys = 0x0004;
     private const int DlgcWantChars = 0x0080;
@@ -69,6 +72,28 @@ public sealed class MirrorSurfaceHost : HwndHost
     public event Action<SurfaceWheelEvent>? WheelInput;
 
     public event Action<SurfaceKeyEvent>? KeyInput;
+
+    /// <summary>
+    /// Any mouse movement over the video, buttons held or not. The window uses it to bring its
+    /// controls back; it is not phone input.
+    /// </summary>
+    public event Action? MouseActivity;
+
+    /// <summary>
+    /// Width, in device pixels, of the band along the surface's edges that is handed to the parent
+    /// window's hit testing. The video fills the borderless window, so without it the window could
+    /// not be resized from its edges. Zero in full screen.
+    /// </summary>
+    public int EdgePassThroughPixels { get; set; }
+
+    /// <summary>Gives the video keyboard focus, so typing goes to the phone.</summary>
+    public void FocusSurface()
+    {
+        if (SurfaceHandle != nint.Zero)
+        {
+            SetFocus(SurfaceHandle);
+        }
+    }
 
     /// <summary>A printable character after keyboard layout translation.</summary>
     public event Action<char>? CharacterInput;
@@ -144,7 +169,17 @@ public sealed class MirrorSurfaceHost : HwndHost
                 handled = true;
                 return 0;
 
+            case WmNcHitTest:
+                if (IsInEdgeBand(hwnd, lParam))
+                {
+                    handled = true;
+                    return HtTransparent;
+                }
+
+                break;
+
             case WmMouseMove:
+                MouseActivity?.Invoke();
                 var held = ButtonsFromWParam(wParam);
                 if (held != SurfaceButtons.None)
                 {
@@ -208,6 +243,36 @@ public sealed class MirrorSurfaceHost : HwndHost
 
         return base.WndProc(hwnd, msg, wParam, lParam, ref handled);
     }
+
+    private bool IsInEdgeBand(nint hwnd, nint lParam)
+    {
+        var band = EdgePassThroughPixels;
+        if (band <= 0 || !GetClientRect(hwnd, out var client))
+        {
+            return false;
+        }
+
+        var point = new Point32
+        {
+            X = unchecked((short)((long)lParam & 0xFFFF)),
+            Y = unchecked((short)(((long)lParam >> 16) & 0xFFFF))
+        };
+        ScreenToClient(hwnd, ref point);
+        return point.X < band || point.Y < band || point.X >= client.Right - band || point.Y >= client.Bottom - band;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct Rect32
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+    }
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetClientRect(nint hwnd, out Rect32 rect);
 
     private static string[] ReadDroppedFiles(nint drop)
     {

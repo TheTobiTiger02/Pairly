@@ -68,6 +68,7 @@
   <data name="clipboard_sent_to_all_connected_devices" xml:space="preserve"><value>Zwischenablage an alle verbundenen Geräte gesendet.</value></data>
   <data name="clipboard_settings" xml:space="preserve"><value>Einstellungen der Zwischenablage</value></data>
   <data name="clipboard_text" xml:space="preserve"><value>Text der Zwischenablage</value></data>
+  <data name="close" xml:space="preserve"><value>Schließen</value></data>
   <data name="closing_the_window_keeps_your_phone_connecte" xml:space="preserve"><value>Nach dem Schließen des Fensters bleibt dein Handy verbunden.</value></data>
   <data name="collecting" xml:space="preserve"><value>Wird gesammelt …</value></data>
   <data name="confirm_delete" xml:space="preserve"><value>Löschen bestätigen</value></data>
@@ -180,6 +181,7 @@
   <data name="is_paired_but_offline" xml:space="preserve"><value>{0} ist gekoppelt, aber offline.</value></data>
   <data name="just_now" xml:space="preserve"><value>Gerade eben</value></data>
   <data name="keep_both_on_the_same_wi_fi_network_not_a_gu" xml:space="preserve"><value>Beide müssen im selben WLAN sein, nicht in einem Gastnetz. Wenn Windows fragt, erlaube Pairly in der Firewall für private Netzwerke. Wenn Windows dein Netzwerk als öffentlich einstuft, stelle es unter Einstellungen &gt; Netzwerk und Internet auf privat.</value></data>
+  <data name="keep_on_top" xml:space="preserve"><value>Im Vordergrund halten</value></data>
   <data name="keep_running_in_the_notification_area" xml:space="preserve"><value>Im Infobereich weiterlaufen</value></data>
   <data name="keep_your_phone_and_this_pc_on_the_same_wi_f" xml:space="preserve"><value>• Handy und PC müssen im selben WLAN sein.
 • Wenn Windows fragt, erlaube Pairly in der Windows-Firewall für private Netzwerke.
@@ -208,6 +210,7 @@
   <data name="messages_could_not_be_loaded_check_the_phone" xml:space="preserve"><value>Nachrichten konnten nicht geladen werden. Prüfe die Verbindung zum Handy und versuche es erneut.</value></data>
   <data name="messages_in_conversation" xml:space="preserve"><value>Nachrichten in der Unterhaltung</value></data>
   <data name="min_ago" xml:space="preserve"><value>vor {0} Min.</value></data>
+  <data name="minimize" xml:space="preserve"><value>Minimieren</value></data>
   <data name="mirror_and_control_your_phone_in_a_window" xml:space="preserve"><value>Spiegle und steuere dein Handy in einem Fenster.</value></data>
   <data name="mirror_stopped" xml:space="preserve"><value>Spiegelung beendet.</value></data>
   <data name="mirroring_active_in_a_separate_window" xml:space="preserve"><value>Spiegelung läuft in einem eigenen Fenster.</value></data>
@@ -307,6 +310,7 @@
   <data name="phone_screen_needs_attention" xml:space="preserve"><value>Handybildschirm braucht Aufmerksamkeit</value></data>
   <data name="phone_screen_settings" xml:space="preserve"><value>Einstellungen für den Handybildschirm</value></data>
   <data name="phone_sound_on_this_pc" xml:space="preserve"><value>Handyton auf diesem PC</value></data>
+  <data name="phone_sound_volume_on_this_pc" xml:space="preserve"><value>Lautstärke des Handytons auf diesem PC</value></data>
   <data name="photo_download_failed" xml:space="preserve"><value>Foto konnte nicht heruntergeladen werden: {0}. {1}</value></data>
   <data name="photo_sort_order" xml:space="preserve"><value>Sortierung der Fotos</value></data>
   <data name="photo_tile_size" xml:space="preserve"><value>Größe der Fotokacheln</value></data>
@@ -438,6 +442,7 @@
   <data name="startup_will_be_enabled_automatically_after" xml:space="preserve"><value>Der Autostart wird nach der ersten erfolgreichen Kopplung automatisch aktiviert.</value></data>
   <data name="step_1_of_3" xml:space="preserve"><value>Schritt 1 von 3</value></data>
   <data name="stop" xml:space="preserve"><value>Stoppen</value></data>
+  <data name="stop_keeping_on_top" xml:space="preserve"><value>Nicht mehr im Vordergrund halten</value></data>
   <data name="stop_phone_screen" xml:space="preserve"><value>Handybildschirm beenden</value></data>
   <data name="stream_details" xml:space="preserve"><value>Übertragungsdetails</value></data>
   <data name="sync" xml:space="preserve"><value>Synchronisieren</value></data>
@@ -492,6 +497,7 @@
   <data name="type_or_paste_text_to_send_to_your_phones" xml:space="preserve"><value>Text eingeben oder einfügen, um ihn an deine Handys zu senden</value></data>
   <data name="unavailable" xml:space="preserve"><value>Nicht verfügbar</value></data>
   <data name="unknown_caller" xml:space="preserve"><value>Unbekannter Anrufer</value></data>
+  <data name="unmute_phone_sound_on_this_pc" xml:space="preserve"><value>Handyton auf diesem PC wieder einschalten</value></data>
   <data name="updates" xml:space="preserve"><value>Updates</value></data>
   <data name="updates_are_installed_by_the_microsoft_store" xml:space="preserve"><value>Updates werden über den Microsoft Store installiert.</value></data>
   <data name="use_windows_language" xml:space="preserve"><value>Sprache von Windows</value></data>
@@ -501,6 +507,7 @@
   <data name="version" xml:space="preserve"><value>Version</value></data>
   <data name="version_is_ready_it_installs_the_next_time_p" xml:space="preserve"><value>Version {0} ist bereit. Sie wird beim nächsten Start von Pairly installiert.</value></data>
   <data name="video" xml:space="preserve"><value>Video</value></data>
+  <data name="volume_percent" xml:space="preserve"><value>Lautstärke {0} %</value></data>
   <data name="waiting_for_a_clipboard_change" xml:space="preserve"><value>Warte auf eine Änderung der Zwischenablage.</value></data>
   <data name="waiting_for_your_phone" xml:space="preserve"><value>Warte auf dein Handy …</value></data>
   <data name="welcome_back" xml:space="preserve"><value>Willkommen zurück</value></data>

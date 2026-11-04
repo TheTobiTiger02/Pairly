@@ -1845,6 +1845,17 @@ static async Task MirrorStreamHubPairsConcurrentStreams()
         await both.Task.WaitAsync(TimeSpan.FromSeconds(5));
         AssertEqual(720, published[20UL]);
         AssertEqual(1080, published[30UL]);
+
+        // A live stream announced again is a rotation: the renderer hears the new size once, and
+        // an unchanged re-announcement is not news.
+        var changes = new List<MirrorVideoFormat>();
+        hub.VideoFormatChanged += changes.Add;
+        hub.AnnounceFormat("phone-a", new MirrorVideoFormatPayload("s", 20UL, "h264", 1600, 720, 90, 0));
+        hub.AnnounceFormat("phone-a", new MirrorVideoFormatPayload("s", 20UL, "h264", 1600, 720, 90, 0));
+        AssertEqual(1, changes.Count);
+        AssertEqual(1600, changes[0].Width);
+        AssertEqual(20UL, changes[0].StreamId);
+        AssertEqual(2, published.Count);
     }
     finally
     {
