@@ -64,20 +64,24 @@ sealed class AccessibilityRoute(val intent: Intent) {
             val component = ComponentName(context, PairlyAccessibilityService::class.java)
             val flat = component.flattenToString()
             val routes = mutableListOf<AccessibilityRoute>()
+            // Settings scrolls to and highlights the entry named by these extras.
+            val args = Bundle().apply { putString(":settings:fragment_args_key", flat) }
+            fun Intent.highlightPairly() = putExtra(":settings:fragment_args_key", flat)
+                .putExtra(":settings:show_fragment_args", args)
+            if (isOneUi()) {
+                // One UI's "Installed apps" list, scrolled to Pairly, where older One UI versions
+                // export it. One UI 9 does not (it is a private Settings fragment), and the details
+                // page below needs the system-only OPEN_ACCESSIBILITY_DETAILS_SETTINGS permission.
+                routes += InstalledList(Intent("com.samsung.accessibility.installed_service").highlightPairly())
+                routes += InstalledList(
+                    Intent().setClassName("com.android.settings", "com.android.settings.Settings\$AccessibilityInstalledServiceActivity")
+                        .highlightPairly()
+                )
+            }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 routes += Direct(Intent("android.settings.ACCESSIBILITY_DETAILS_SETTINGS").putExtra(Intent.EXTRA_COMPONENT_NAME, component))
             }
-            if (isOneUi()) {
-                routes += InstalledList(Intent("com.samsung.accessibility.installed_service"))
-                routes += InstalledList(Intent().setClassName("com.android.settings", "com.android.settings.Settings\$AccessibilityInstalledServiceActivity"))
-            }
-            // AOSP Settings scrolls to and highlights the entry named by these extras.
-            val args = Bundle().apply { putString(":settings:fragment_args_key", flat) }
-            routes += Highlighted(
-                Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-                    .putExtra(":settings:fragment_args_key", flat)
-                    .putExtra(":settings:show_fragment_args", args)
-            )
+            routes += Highlighted(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).highlightPairly())
             routes += General(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
             return routes.filter { it.isUsable(context) }
         }
