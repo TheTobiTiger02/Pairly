@@ -55,6 +55,7 @@ public sealed class MirrorSurfaceHost : HwndHost
     private const int WmGetDlgCode = 0x0087;
     private const int WmNcHitTest = 0x0084;
     private const int HtTransparent = -1;
+    private const int HtClient = 1;
     private const int WmDropFiles = 0x0233;
     private const int DlgcWantAllKeys = 0x0004;
     private const int DlgcWantChars = 0x0080;
@@ -170,13 +171,11 @@ public sealed class MirrorSurfaceHost : HwndHost
                 return 0;
 
             case WmNcHitTest:
-                if (IsInEdgeBand(hwnd, lParam))
-                {
-                    handled = true;
-                    return HtTransparent;
-                }
-
-                break;
+                // A "static" window answers HTTRANSPARENT by default, which sends every click to
+                // the parent: the video then never gets mouse input or focus. Only the thin band
+                // along the edges goes to the parent, so the window can still be resized.
+                handled = true;
+                return IsInEdgeBand(hwnd, lParam) ? HtTransparent : HtClient;
 
             case WmMouseMove:
                 MouseActivity?.Invoke();

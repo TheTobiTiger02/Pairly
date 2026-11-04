@@ -34,6 +34,8 @@ public sealed class MirrorStreamPlayer : IDisposable
     private Thread? _pumpThread;
     private Thread? _asyncEventThread;
     private long _startedTimestamp;
+    private byte[] _parameterSets = Array.Empty<byte>();
+    private volatile bool _rebuildDecoder;
     private int _videoWidth;
     private int _videoHeight;
 
@@ -63,6 +65,12 @@ public sealed class MirrorStreamPlayer : IDisposable
     /// </summary>
     public event Action<int, int>? VideoSizeChanged;
 
+    /// <summary>
+    /// Raised, from the playback thread, when the decoder was rebuilt and can show nothing until a
+    /// keyframe arrives. The window asks the phone for one over the input channel.
+    /// </summary>
+    public event Action? KeyframeNeeded;
+
     public MirrorVideoFormat Format => _format;
 
     /// <summary>
@@ -76,8 +84,15 @@ public sealed class MirrorStreamPlayer : IDisposable
             return;
         }
 
+        var resized = format.Width != _format.Width || format.Height != _format.Height;
         _format = format;
         ApplyVideoSize(format.Width, format.Height, exact: true);
+        if (resized)
+        {
+            // The new size's parameter sets rebuild the decoder even if they happen to repeat.
+            _rebuildDecoder = true;
+            KeyframeNeeded?.Invoke();
+        }
     }
 
     private void ApplyVideoSize(int width, int height, bool exact)
@@ -205,7 +220,15 @@ public sealed class MirrorStreamPlayer : IDisposable
                 // phone, the Microsoft H.264 decoder produced no output at all from the sequence
                 // header alone, because MediaCodec sends parameter sets out of band while the
                 // spike's test file happened to carry them inline.
-                EnsureDecoder(record.Payload);
+                //
+                // New parameter sets mid-stream mean the phone reconfigured its encoder, usually for
+                // a rotation. Measured on a Galaxy S25, the running decoder took the new SPS and then
+                // produced nothing more, so the decoder is rebuilt for the new stream instead.
+                if (_decoder is null || _rebuildDecoder || !record.Payload.AsSpan().SequenceEqual(_parameterSets))
+                {
+                    BuildDecoder(record.Payload);
+                }
+
                 _decoder!.Decode(record.Payload, record.Header.PresentationTimeUs, isKeyframe: false);
                 continue;
             }
@@ -222,22 +245,23 @@ public sealed class MirrorStreamPlayer : IDisposable
         }
     }
 
-    private void EnsureDecoder(byte[] parameterSets)
+    private void BuildDecoder(byte[] parameterSets)
     {
-        if (_decoder is not null)
-        {
-            return;
-        }
+        var rebuilding = _decoder is not null;
+        ReleaseDecoder();
+        _rebuildDecoder = false;
+        _parameterSets = parameterSets;
 
-        var codec = string.Equals(_format.Codec, "h265", StringComparison.OrdinalIgnoreCase)
+        var format = _format;
+        var codec = string.Equals(format.Codec, "h265", StringComparison.OrdinalIgnoreCase)
             ? VideoFormatGuids.H265
             : VideoFormatGuids.H264;
 
         var decoder = VideoDecoder.Create(
             _context,
             codec,
-            _format.Width,
-            _format.Height,
+            format.Width,
+            format.Height,
             parameterSets);
 
         decoder.FrameDecoded += OnFrameDecoded;
@@ -253,6 +277,30 @@ public sealed class MirrorStreamPlayer : IDisposable
             };
             _asyncEventThread.Start();
         }
+
+        if (rebuilding)
+        {
+            // A fresh decoder needs a keyframe before it can show anything.
+            KeyframeNeeded?.Invoke();
+        }
+    }
+
+    /// <summary>Stops and releases the current decoder; its event thread is joined first.</summary>
+    private void ReleaseDecoder()
+    {
+        var decoder = _decoder;
+        if (decoder is null)
+        {
+            return;
+        }
+
+        _decoder = null;
+        decoder.FrameDecoded -= OnFrameDecoded;
+        decoder.OutputSizeChanged -= OnDecoderSizeChanged;
+        decoder.StopEvents();
+        _asyncEventThread?.Join(TimeSpan.FromSeconds(2));
+        _asyncEventThread = null;
+        decoder.Dispose();
     }
 
     private void OnDecoderSizeChanged(int width, int height) => ApplyVideoSize(width, height, exact: false);
@@ -284,15 +332,7 @@ public sealed class MirrorStreamPlayer : IDisposable
         _connection.DisposeAsync().AsTask().GetAwaiter().GetResult();
 
         _pumpThread?.Join(TimeSpan.FromSeconds(2));
-        _asyncEventThread?.Join(TimeSpan.FromSeconds(2));
-
-        if (_decoder is not null)
-        {
-            _decoder.FrameDecoded -= OnFrameDecoded;
-            _decoder.OutputSizeChanged -= OnDecoderSizeChanged;
-            _decoder.Dispose();
-            _decoder = null;
-        }
+        ReleaseDecoder();
 
         lock (_presentGate)
         {

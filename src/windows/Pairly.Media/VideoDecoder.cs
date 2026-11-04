@@ -691,6 +691,28 @@ public sealed class VideoDecoder : IDisposable
 
     private static ulong PackSize(int width, int height) => ((ulong)(uint)width << 32) | (uint)height;
 
+    /// <summary>
+    /// Shuts an asynchronous MFT down, which makes a blocked <see cref="PumpAsync"/> return. Call
+    /// before joining the event thread; <see cref="Dispose"/> then releases the transform.
+    /// </summary>
+    public void StopEvents()
+    {
+        if (!_isAsync)
+        {
+            return;
+        }
+
+        try
+        {
+            using var shutdown = _transform.QueryInterfaceOrNull<IMFShutdown>();
+            shutdown?.Shutdown();
+        }
+        catch (SharpGenException)
+        {
+            // Already shut down, or the device is gone; either way the event loop ends.
+        }
+    }
+
     public void Dispose()
     {
         try

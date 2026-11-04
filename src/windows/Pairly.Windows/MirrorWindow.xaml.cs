@@ -391,6 +391,11 @@ public partial class MirrorWindow : Window
             player.Failed += OnPlaybackFailed;
             player.VideoSizeChanged += (videoWidth, videoHeight) =>
                 Dispatcher.BeginInvoke(() => ApplyVideoSize(player, videoWidth, videoHeight));
+            player.KeyframeNeeded += () => Dispatcher.BeginInvoke(() =>
+            {
+                _diagnostics?.Record(DiagnosticsCategory.Mirror, "mirror.keyframe.requested", "decoder rebuilt or format changed", _deviceId);
+                _input?.RequestKeyframe();
+            });
             player.Start();
             _player = player;
 
