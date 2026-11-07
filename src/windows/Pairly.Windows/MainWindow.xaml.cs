@@ -1831,7 +1831,10 @@ public partial class MainWindow : Window
     {
         if (PhotoSelectionText is not null)
         {
-            PhotoSelectionText.Text = $"{PhotosList.SelectedItems.Count} selected";
+            var count = PhotosList.SelectedItems.Count;
+            PhotoSelectionText.Text = L.F("n_selected", count);
+            SavePhotosButton.IsEnabled = count > 0;
+            OpenPhotoButton.IsEnabled = count == 1;
         }
     }
 
@@ -2269,6 +2272,12 @@ public partial class MainWindow : Window
         {
             PhotosStatusText.Text = L.F("showing_of_photo_s", visibleCount, _allPhotos.Length);
         }
+        if (PhotosEmptyState is not null)
+        {
+            var empty = _photosView.IsEmpty;
+            PhotosEmptyState.Visibility = empty ? Visibility.Visible : Visibility.Collapsed;
+            PhotosEmptyBody.Text = L.T(_photos.Count == 0 ? "photos_empty_body" : "photos_empty_filtered");
+        }
     }
 
     private void ReconcilePhotos(IReadOnlyList<MediaItemViewModel> latest)
@@ -2310,7 +2319,9 @@ public partial class MainWindow : Window
         }
 
         var existingById = _notifications.ToDictionary(notification => notification.NotificationId, StringComparer.Ordinal);
-        foreach (var incoming in latest)
+        // A notification with neither title nor text (a group summary or a placeholder some apps
+        // post) would only show as an empty card.
+        foreach (var incoming in latest.Where(item => !string.IsNullOrWhiteSpace(item.Title) || !string.IsNullOrWhiteSpace(item.Text)))
         {
             if (existingById.TryGetValue(incoming.NotificationId, out var existing))
             {

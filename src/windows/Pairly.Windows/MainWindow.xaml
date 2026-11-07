@@ -580,13 +580,13 @@
                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                 <TextBlock x:Name="PhotoSelectionText" Text="{l:Loc 0_selected}" Style="{StaticResource CaptionText}"
                                            VerticalAlignment="Center" Margin="0,0,12,0" />
-                                <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Click="SaveSelectedPhotos_Click">
+                                <Button x:Name="SavePhotosButton" IsEnabled="False" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Click="SaveSelectedPhotos_Click">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="&#xE74E;" Style="{StaticResource IconGlyph}" FontSize="14" Margin="0,0,8,0" />
                                         <TextBlock Text="{l:Loc save}" />
                                     </StackPanel>
                                 </Button>
-                                <Button Style="{StaticResource AccentButton}" Click="OpenSelectedPhoto_Click">
+                                <Button x:Name="OpenPhotoButton" IsEnabled="False" Style="{StaticResource AccentButton}" Click="OpenSelectedPhoto_Click">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="&#xE8A7;" Style="{StaticResource IconGlyph}" FontSize="14" Margin="0,0,8,0"
                                                    Foreground="{DynamicResource AccentTextBrush}" />
@@ -620,6 +620,16 @@
                                 <ComboBoxItem Content="{l:Loc large}" Tag="220" />
                             </ComboBox>
                         </Grid>
+                        <!-- Empty state: shown while there is nothing to list for the selected phone or filter. -->
+                        <StackPanel x:Name="PhotosEmptyState" Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="360"
+                                    Visibility="Collapsed" Panel.ZIndex="1" IsHitTestVisible="False">
+                            <TextBlock Text="&#xE91B;" Style="{StaticResource IconGlyph}" FontSize="40" HorizontalAlignment="Center"
+                                       Foreground="{DynamicResource AccentBrush}" />
+                            <TextBlock x:Name="PhotosEmptyTitle" Text="{l:Loc photos_empty_title}" FontSize="16" FontWeight="SemiBold"
+                                       HorizontalAlignment="Center" Margin="0,12,0,0" />
+                            <TextBlock x:Name="PhotosEmptyBody" Text="{l:Loc photos_empty_body}" Style="{StaticResource CaptionText}"
+                                       TextWrapping="Wrap" TextAlignment="Center" Margin="0,4,0,0" />
+                        </StackPanel>
                         <ListView x:Name="PhotosList" Grid.Row="2" Margin="-3,0,-12,0" SelectionMode="Extended"
                                   ItemContainerStyle="{StaticResource TileListItem}"
                                   MouseDoubleClick="PhotosList_MouseDoubleClick" SelectionChanged="PhotosList_SelectionChanged"

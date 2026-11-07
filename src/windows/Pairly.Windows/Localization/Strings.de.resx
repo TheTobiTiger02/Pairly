@@ -552,4 +552,8 @@
   <data name="pairing_done_all_set" xml:space="preserve"><value>Ab jetzt verbindet es sich von selbst, und alles ist eingeschaltet.</value></data>
   <data name="checklist_control" xml:space="preserve"><value>Steuern vom PC</value></data>
   <data name="checklist_clipboard" xml:space="preserve"><value>Zwischenablage im Hintergrund</value></data>
+  <data name="n_selected" xml:space="preserve"><value>{0} ausgewählt</value></data>
+  <data name="photos_empty_title" xml:space="preserve"><value>Keine Fotos</value></data>
+  <data name="photos_empty_body" xml:space="preserve"><value>Hier erscheinen die Fotos deines Handys. Wenn keine kommen, erlaube Fotos in Pairly auf dem Handy.</value></data>
+  <data name="photos_empty_filtered" xml:space="preserve"><value>Nichts passt zu dieser Suche oder diesem Album.</value></data>
 </root>
