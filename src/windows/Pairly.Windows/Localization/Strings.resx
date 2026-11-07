@@ -273,7 +273,7 @@
   <data name="pairing" xml:space="preserve"><value>Pairing</value></data>
   <data name="pairing_addresses" xml:space="preserve"><value>This PC's addresses: {0}</value></data>
   <data name="pairing_code" xml:space="preserve"><value>Pairing code</value></data>
-  <data name="pairing_done_body" xml:space="preserve"><value>It reconnects on its own from now on. In Pairly on your phone, turn on the features you want: notifications, messages, photos and files.</value></data>
+  <data name="pairing_done_body" xml:space="preserve"><value>From now on it connects by itself. Turn on what you want in Pairly on your phone; this list ticks off as you do.</value></data>
   <data name="pairing_done_title" xml:space="preserve"><value>Your phone is paired</value></data>
   <data name="pairing_is_disabled_until_the_port_conflict" xml:space="preserve"><value>Pairing is disabled until the port conflict is resolved.</value></data>
   <data name="pairing_no_address" xml:space="preserve"><value>This PC has no network address right now.</value></data>
@@ -549,4 +549,7 @@
   <data name="power_mode_on" xml:space="preserve"><value>Power mode</value></data>
   <data name="power_mode_paused" xml:space="preserve"><value>Power mode paused</value></data>
   <data name="power_mode_tooltip" xml:space="preserve"><value>Shizuku runs on the phone: mirroring starts without asking and the phone gets real touch and keys. Paused: open Shizuku on the phone and tap Start.</value></data>
+  <data name="pairing_done_all_set" xml:space="preserve"><value>From now on it connects by itself, and everything is switched on.</value></data>
+  <data name="checklist_control" xml:space="preserve"><value>Control from PC</value></data>
+  <data name="checklist_clipboard" xml:space="preserve"><value>Clipboard in background</value></data>
 </root>

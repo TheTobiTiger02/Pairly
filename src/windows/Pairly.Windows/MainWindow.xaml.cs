@@ -2130,6 +2130,11 @@ public partial class MainWindow : Window
             }
         }
 
+        if (_pairingStep == PairingStep.Done)
+        {
+            UpdatePairingChecklist();
+        }
+
         var liveIds = devices.Select(device => device.DeviceId).ToHashSet(StringComparer.Ordinal);
         for (var index = _devices.Count - 1; index >= 0; index--)
         {

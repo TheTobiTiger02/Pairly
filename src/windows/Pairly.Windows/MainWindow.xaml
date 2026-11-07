@@ -2014,11 +2014,13 @@
                                    HorizontalAlignment="Center" Margin="0,16,0,0" />
                         <TextBlock x:Name="PairingDoneBody" Style="{StaticResource BodyText}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,8,0,0" MaxWidth="420"
                                    Text="{l:Loc pairing_done_body}" />
+                        <!-- The phone's features, live: ticks appear as they are turned on in the phone app. -->
+                        <UniformGrid x:Name="PairingDoneChecklist" Columns="2" Margin="0,18,0,0" MaxWidth="460" HorizontalAlignment="Center" />
                     </StackPanel>
 
                     <!-- Footer -->
                     <Border Grid.Row="2" Background="{DynamicResource CardFillSecondaryBrush}" BorderBrush="{DynamicResource DividerBrush}"
-                            BorderThickness="0,1,0,0" CornerRadius="0,0,8,8" Padding="28,16">
+                            BorderThickness="0,1,0,0" CornerRadius="{DynamicResource OverlayFooterRadius}" Padding="28,16">
                         <DockPanel LastChildFill="False">
                             <Button x:Name="PairingBackButton" DockPanel.Dock="Left" Content="{l:Loc need_the_app}" Style="{StaticResource SubtleButton}"
                                     Click="PairingShowGetApp_Click" />

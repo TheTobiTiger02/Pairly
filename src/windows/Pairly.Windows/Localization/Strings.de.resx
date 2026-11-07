@@ -273,7 +273,7 @@
   <data name="pairing" xml:space="preserve"><value>Kopplung</value></data>
   <data name="pairing_addresses" xml:space="preserve"><value>Adressen dieses PCs: {0}</value></data>
   <data name="pairing_code" xml:space="preserve"><value>Kopplungscode</value></data>
-  <data name="pairing_done_body" xml:space="preserve"><value>Ab jetzt verbindet es sich von selbst. Schalte in Pairly auf deinem Handy die Funktionen ein, die du willst: Benachrichtigungen, Nachrichten, Fotos und Dateien.</value></data>
+  <data name="pairing_done_body" xml:space="preserve"><value>Ab jetzt verbindet es sich von selbst. Schalte in Pairly auf dem Handy ein, was du willst; diese Liste hakt sich dabei ab.</value></data>
   <data name="pairing_done_title" xml:space="preserve"><value>Dein Handy ist gekoppelt</value></data>
   <data name="pairing_is_disabled_until_the_port_conflict" xml:space="preserve"><value>Die Kopplung ist deaktiviert, bis der Portkonflikt behoben ist.</value></data>
   <data name="pairing_no_address" xml:space="preserve"><value>Dieser PC hat gerade keine Netzwerkadresse.</value></data>
@@ -549,4 +549,7 @@
   <data name="power_mode_on" xml:space="preserve"><value>Power-Modus</value></data>
   <data name="power_mode_paused" xml:space="preserve"><value>Power-Modus pausiert</value></data>
   <data name="power_mode_tooltip" xml:space="preserve"><value>Shizuku läuft auf dem Handy: Das Spiegeln startet ohne Nachfrage und das Handy bekommt echte Touch- und Tasteneingaben. Pausiert: Öffne auf dem Handy Shizuku und tippe auf Start.</value></data>
+  <data name="pairing_done_all_set" xml:space="preserve"><value>Ab jetzt verbindet es sich von selbst, und alles ist eingeschaltet.</value></data>
+  <data name="checklist_control" xml:space="preserve"><value>Steuern vom PC</value></data>
+  <data name="checklist_clipboard" xml:space="preserve"><value>Zwischenablage im Hintergrund</value></data>
 </root>

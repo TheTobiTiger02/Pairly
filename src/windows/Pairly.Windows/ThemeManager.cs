@@ -105,6 +105,7 @@ internal static class ThemeManager
             resources["ControlRadius"] = new CornerRadius(palette.Control);
             resources["CardRadius"] = new CornerRadius(palette.Card);
             resources["OverlayRadius"] = new CornerRadius(palette.Overlay);
+            resources["OverlayFooterRadius"] = new CornerRadius(0, 0, palette.Overlay, palette.Overlay);
         }
 
         // Content on the hero is white; in high contrast the hero is a plain window, so it isn't.
