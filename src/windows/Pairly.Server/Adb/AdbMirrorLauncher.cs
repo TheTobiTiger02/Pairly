@@ -108,8 +108,7 @@ public sealed class AdbMirrorLauncher(
             return null;
         }
 
-        var devices = output.Split('
-')
+        var devices = output.Split('\n')
             .Select(line => line.Trim())
             .Where(line => line.Contains(" device ", StringComparison.Ordinal))
             .ToList();
