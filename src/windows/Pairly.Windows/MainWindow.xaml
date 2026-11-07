@@ -1129,7 +1129,7 @@
                                         <Border Style="{StaticResource SettingsCard}">
                                             <DockPanel>
                                                 <TextBlock Text="&#xE701;" Style="{StaticResource SettingsCardGlyph}" />
-                                                <CheckBox x:Name="MirrorUseAdbCheck" Style="{StaticResource ToggleSwitch}" IsChecked="True"
+                                                <CheckBox x:Name="MirrorUseAdbCheck" Style="{StaticResource ToggleSwitch}" IsChecked="False" Click="MirrorUseAdbCheck_Click"
                                                           DockPanel.Dock="Right" VerticalAlignment="Center" Margin="16,0,0,0"
                                                           AutomationProperties.Name="{l:Loc use_wireless_debugging_when_the_phone_has_it}" />
                                                 <StackPanel VerticalAlignment="Center">

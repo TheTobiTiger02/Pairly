@@ -240,7 +240,7 @@
   <data name="no_phone_selected" xml:space="preserve"><value>No phone selected</value></data>
   <data name="no_pong_for_s" xml:space="preserve"><value>No pong for {0:F0}s.</value></data>
   <data name="no_reconnects_recorded_since_this_app_starte" xml:space="preserve"><value>No reconnects recorded since this app started.</value></data>
-  <data name="no_screen_capture_prompt_exact_touch_and_key" xml:space="preserve"><value>No screen-capture prompt, exact touch and keyboard input, and it keeps working with the phone's screen off. Falls back to the app automatically.</value></data>
+  <data name="no_screen_capture_prompt_exact_touch_and_key" xml:space="preserve"><value>Only needed for app windows and mirroring with the phone's screen off. Wireless debugging must stay on for this. For everything else, Power mode on the phone already skips the prompt and gives exact touch and keys.</value></data>
   <data name="not_connected" xml:space="preserve"><value>not connected</value></data>
   <data name="notification_access" xml:space="preserve"><value>Notification access: {0}. Showing {1} of {2}.</value></data>
   <data name="notification_reply" xml:space="preserve"><value>Notification reply</value></data>
@@ -502,7 +502,7 @@
   <data name="updates_are_installed_by_the_microsoft_store" xml:space="preserve"><value>Updates are installed by the Microsoft Store.</value></data>
   <data name="use_windows_language" xml:space="preserve"><value>Use Windows language</value></data>
   <data name="use_windows_setting" xml:space="preserve"><value>Use Windows setting</value></data>
-  <data name="use_wireless_debugging_when_the_phone_has_it" xml:space="preserve"><value>Use wireless debugging when the phone has it on</value></data>
+  <data name="use_wireless_debugging_when_the_phone_has_it" xml:space="preserve"><value>Advanced: mirror over Wireless debugging</value></data>
   <data name="use_your_phone_from_this_pc" xml:space="preserve"><value>Use your phone from this PC</value></data>
   <data name="version" xml:space="preserve"><value>Version</value></data>
   <data name="version_is_ready_it_installs_the_next_time_p" xml:space="preserve"><value>Version {0} is ready. It installs the next time Pairly starts.</value></data>

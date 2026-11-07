@@ -240,7 +240,7 @@
   <data name="no_phone_selected" xml:space="preserve"><value>Kein Handy ausgewählt</value></data>
   <data name="no_pong_for_s" xml:space="preserve"><value>Seit {0:F0} s keine Antwort.</value></data>
   <data name="no_reconnects_recorded_since_this_app_starte" xml:space="preserve"><value>Seit dem Start keine Neuverbindungen.</value></data>
-  <data name="no_screen_capture_prompt_exact_touch_and_key" xml:space="preserve"><value>Keine Abfrage zur Bildschirmaufnahme, genaue Touch- und Tastatureingabe, und es funktioniert auch bei ausgeschaltetem Handybildschirm. Wechselt bei Bedarf automatisch zur App.</value></data>
+  <data name="no_screen_capture_prompt_exact_touch_and_key" xml:space="preserve"><value>Nur für App-Fenster und das Spiegeln bei ausgeschaltetem Handybildschirm nötig. Debugging über WLAN muss dafür an bleiben. Für alles andere überspringt der Power-Modus auf dem Handy die Abfrage schon und liefert genaue Touch- und Tasteneingaben.</value></data>
   <data name="not_connected" xml:space="preserve"><value>nicht verbunden</value></data>
   <data name="notification_access" xml:space="preserve"><value>Benachrichtigungszugriff: {0}. {1} von {2} werden angezeigt.</value></data>
   <data name="notification_reply" xml:space="preserve"><value>Antwort auf Benachrichtigung</value></data>
@@ -502,7 +502,7 @@
   <data name="updates_are_installed_by_the_microsoft_store" xml:space="preserve"><value>Updates werden über den Microsoft Store installiert.</value></data>
   <data name="use_windows_language" xml:space="preserve"><value>Sprache von Windows</value></data>
   <data name="use_windows_setting" xml:space="preserve"><value>Wie Windows</value></data>
-  <data name="use_wireless_debugging_when_the_phone_has_it" xml:space="preserve"><value>Debugging über WLAN nutzen, wenn es auf dem Handy an ist</value></data>
+  <data name="use_wireless_debugging_when_the_phone_has_it" xml:space="preserve"><value>Erweitert: über Debugging über WLAN spiegeln</value></data>
   <data name="use_your_phone_from_this_pc" xml:space="preserve"><value>Nutze dein Handy von diesem PC aus</value></data>
   <data name="version" xml:space="preserve"><value>Version</value></data>
   <data name="version_is_ready_it_installs_the_next_time_p" xml:space="preserve"><value>Version {0} ist bereit. Sie wird beim nächsten Start von Pairly installiert.</value></data>

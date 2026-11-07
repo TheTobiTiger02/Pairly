@@ -99,6 +99,7 @@ public partial class MainWindow : Window
         }
         _initializingPreferences = true;
         MinimizeToTrayCheck.IsChecked = _preferences.MinimizeToTray;
+        MirrorUseAdbCheck.IsChecked = _preferences.MirrorUseAdb;
         _initializingPreferences = false;
 
         _initializingStartupSetting = true;
@@ -495,6 +496,12 @@ public partial class MainWindow : Window
             _notifyIcon?.Dispose();
             base.OnClosing(e);
         }
+    }
+
+    private void MirrorUseAdbCheck_Click(object sender, RoutedEventArgs e)
+    {
+        _preferences.MirrorUseAdb = MirrorUseAdbCheck.IsChecked == true;
+        _preferences.Save();
     }
 
     private void MinimizeToTrayCheck_Changed(object sender, RoutedEventArgs e)
