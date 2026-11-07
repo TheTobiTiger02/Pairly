@@ -96,10 +96,11 @@ public sealed class AdbMirrorLauncher(
     public bool IsAvailable => FindAdb() is not null && File.Exists(ServerPath);
 
     /// <summary>
-    /// The ADB serial of the phone with this model name (as the phone reports it when pairing,
-    /// e.g. "SM-G991B"), or null when it is not connected over ADB right now.
+    /// The ADB serial of the phone with this name, or null when it is not connected over ADB right
+    /// now. The name is what the phone reports: its device name ("Tobi's Galaxy"), or for older
+    /// app versions its model ("SM-G991B"), so both are compared.
     /// </summary>
-    public async Task<string?> FindSerialAsync(string model, CancellationToken cancellationToken)
+    public async Task<string?> FindSerialAsync(string name, CancellationToken cancellationToken)
     {
         var (exit, output) = await RunAdbAsync(["devices", "-l"], cancellationToken);
         if (exit != 0)
@@ -107,14 +108,29 @@ public sealed class AdbMirrorLauncher(
             return null;
         }
 
-        var wanted = model.Replace('-', '_').Replace(' ', '_');
-        return output.Split('\n')
+        var devices = output.Split('\n')
             .Select(line => line.Trim())
             .Where(line => line.Contains(" device ", StringComparison.Ordinal))
-            .Where(line => line.Contains($"model:{wanted}", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        var wanted = name.Replace('-', '_').Replace(' ', '_');
+        var matches = devices.Where(line => line.Contains($"model:{wanted}", StringComparison.OrdinalIgnoreCase))
             .Select(line => line.Split(' ', 2)[0])
-            // The mDNS name survives the port change Samsung makes every time wireless debugging
-            // is toggled; prefer it over ip:port.
+            .ToList();
+        if (matches.Count == 0)
+        {
+            foreach (var serial in devices.Select(line => line.Split(' ', 2)[0]))
+            {
+                var (nameExit, deviceName) = await RunAdbAsync(["-s", serial, "shell", "settings get global device_name"], cancellationToken);
+                if (nameExit == 0 && string.Equals(deviceName.Trim(), name.Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    matches.Add(serial);
+                }
+            }
+        }
+
+        // The mDNS name survives the port change Samsung makes every time wireless debugging is
+        // toggled; prefer it over ip:port.
+        return matches
             .OrderByDescending(serial => serial.Contains("._adb-tls-connect", StringComparison.Ordinal))
             .FirstOrDefault();
     }

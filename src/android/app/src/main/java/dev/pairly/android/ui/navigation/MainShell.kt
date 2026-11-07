@@ -106,7 +106,9 @@ class ShellCallbacks(
     val sendFiles: (List<Uri>) -> Unit,
     val updatePrefs: ((UiPrefs) -> UiPrefs) -> Unit,
     val setLanguage: (LocaleText.Language) -> Unit,
-    val replayOnboarding: () -> Unit
+    val replayOnboarding: () -> Unit,
+    val grantAllWithShizuku: () -> Unit,
+    val setTurnOffWirelessDebugging: (Boolean) -> Unit
 )
 
 /** The app after onboarding: Home, Features, Help and Settings in a bottom bar (a rail on wide screens). */
@@ -236,7 +238,9 @@ private fun PairlyNavHost(
                         reconnect = callbacks.reconnect,
                         syncNow = callbacks.syncNow,
                         sendClipboard = { callbacks.sendClipboard(callbacks.readClipboard()) },
-                        sendFiles = callbacks.sendFiles
+                        sendFiles = callbacks.sendFiles,
+                        openPowerSetup = { nav.navigate(Routes.SHIZUKU) },
+                        grantAllWithShizuku = callbacks.grantAllWithShizuku
                     )
                 )
             }
@@ -281,7 +285,10 @@ private fun PairlyNavHost(
                     updatePrefs = callbacks.updatePrefs,
                     setLanguage = callbacks.setLanguage,
                     openHelp = openHelp,
-                    replayOnboarding = callbacks.replayOnboarding
+                    replayOnboarding = callbacks.replayOnboarding,
+                    openPowerSetup = { nav.navigate(Routes.SHIZUKU) },
+                    grantAllWithShizuku = callbacks.grantAllWithShizuku,
+                    setTurnOffWirelessDebugging = callbacks.setTurnOffWirelessDebugging
                 )
             )
         }

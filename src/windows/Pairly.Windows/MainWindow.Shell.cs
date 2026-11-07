@@ -30,7 +30,8 @@ public partial class MainWindow
     {
         AboutVersionButton.Content = CurrentVersion() ?? "dev";
         SyncChoiceCombos();
-        SelectPage(MainTabs.SelectedIndex);
+        // Start on Home with its navigation item checked (the tab control's first page is Messages).
+        SelectPage(HomeTabIndex);
         MainTabs.SelectedIndex = HomeTabIndex;
         UpdateGreeting();
         LocalizationSource.Instance.LanguageChanged += (_, _) => RefreshLocalizedCodeText();
@@ -137,6 +138,8 @@ public partial class MainWindow
     {
         _syncingChoices = true;
         SelectByTag(ThemeCombo, _preferences.Theme);
+        SelectByTag(StyleCombo, _preferences.Style);
+        SelectByTag(OnboardingStyleCombo, _preferences.Style);
         SelectByTag(OnboardingThemeCombo, _preferences.Theme);
         SelectByTag(LanguageCombo, _preferences.Language);
         SelectByTag(OnboardingLanguageCombo, _preferences.Language);
@@ -159,6 +162,19 @@ public partial class MainWindow
         _preferences.Theme = SelectedTag(sender) is { Length: > 0 } theme ? theme : "System";
         _preferences.Save();
         ThemeManager.Preference = _preferences.Theme;
+        ThemeManager.ApplySystemTheme(System.Windows.Application.Current.Resources);
+        SyncChoiceCombos();
+    }
+
+    private void StyleCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_syncingChoices || !IsInitialized)
+        {
+            return;
+        }
+        _preferences.Style = SelectedTag(sender) is { Length: > 0 } style ? style : "Aurora";
+        _preferences.Save();
+        ThemeManager.Style = _preferences.Style;
         ThemeManager.ApplySystemTheme(System.Windows.Application.Current.Resources);
         SyncChoiceCombos();
     }

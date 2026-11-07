@@ -37,14 +37,35 @@ class ContrastTest {
     }
 
     @Test
-    fun lightMeetsAa() {
-        val scheme = glassLight()
-        check("light", scheme, style(scheme, dark = false, reduceMotion = false))
+    fun auroraLightMeetsAa() {
+        val scheme = auroraLight()
+        check("aurora light", scheme, style(AppStyle.Aurora, scheme, dark = false, reduceMotion = false))
     }
 
     @Test
-    fun darkMeetsAa() {
-        val scheme = glassDark()
-        check("dark", scheme, style(scheme, dark = true, reduceMotion = false))
+    fun auroraDarkMeetsAa() {
+        val scheme = auroraDark()
+        check("aurora dark", scheme, style(AppStyle.Aurora, scheme, dark = true, reduceMotion = false))
+    }
+
+    @Test
+    fun daybreakLightMeetsAa() {
+        val scheme = daybreakLight()
+        check("daybreak light", scheme, style(AppStyle.Daybreak, scheme, dark = false, reduceMotion = false))
+    }
+
+    @Test
+    fun daybreakDarkMeetsAa() {
+        val scheme = daybreakDark()
+        check("daybreak dark", scheme, style(AppStyle.Daybreak, scheme, dark = true, reduceMotion = false))
+    }
+
+    @Test
+    fun heroTextMeetsAaOnBothEndsOfEveryGradient() {
+        // The hero gradients' ends, white text on top.
+        listOf(0xFF4B3FD8, 0xFF7C4DEB, 0xFF3B32B8, 0xFF6A41D6, 0xFFC2462A, 0xFFE8603F, 0xFFB4431F, 0xFFD0583A).forEach {
+            val value = ratio(Color.White, Color(it))
+            assertTrue("hero %08X is %.2f:1".format(it, value), value >= 3.0)
+        }
     }
 }

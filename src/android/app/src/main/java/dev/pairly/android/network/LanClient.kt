@@ -20,8 +20,13 @@ class LanClient(
     private val socketLock = Any()
     private var webSocket: WebSocket? = null
 
+    /** The endpoint of the latest [connect], open or not. */
+    @Volatile var currentEndpoint: String = ""
+        private set
+
     fun connect(host: String, pinnedCertificateFingerprint: String = "", listener: Listener): Long {
         val connectionGeneration = generation.incrementAndGet()
+        currentEndpoint = host
         synchronized(socketLock) {
             webSocket?.close(1000, "Reconnecting")
             webSocket = null

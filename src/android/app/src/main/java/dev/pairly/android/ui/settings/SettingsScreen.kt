@@ -14,6 +14,9 @@ import androidx.compose.material.icons.automirrored.rounded.HelpOutline
 import androidx.compose.material.icons.rounded.AddLink
 import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.Palette
+import dev.pairly.android.ui.features.PowerModeCard
+import dev.pairly.android.ui.features.StylePicker
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.LinkOff
 import androidx.compose.material.icons.rounded.Palette
@@ -72,7 +75,10 @@ class SettingsCallbacks(
     val updatePrefs: ((UiPrefs) -> UiPrefs) -> Unit,
     val setLanguage: (LocaleText.Language) -> Unit,
     val openHelp: () -> Unit,
-    val replayOnboarding: () -> Unit
+    val replayOnboarding: () -> Unit,
+    val openPowerSetup: () -> Unit,
+    val grantAllWithShizuku: () -> Unit,
+    val setTurnOffWirelessDebugging: (Boolean) -> Unit
 )
 
 
@@ -120,10 +126,27 @@ fun SettingsScreen(state: AppState, prefs: UiPrefs, language: LocaleText.Languag
             }
         }
 
+        // Power mode
+        item { SectionLabel(stringResource(R.string.power_title)) }
+        item {
+            PowerModeCard(
+                status = state.shizuku,
+                missingFeatures = state.permissions.missing.size,
+                onSetUp = callbacks.openPowerSetup,
+                onOpenShizuku = { actions.shizuku(dev.pairly.android.ui.ShizukuAction.OpenShizuku) },
+                onAllow = { actions.shizuku(dev.pairly.android.ui.ShizukuAction.AllowPairly) },
+                onGrantAll = callbacks.grantAllWithShizuku,
+                onTurnOffWirelessDebugging = callbacks.setTurnOffWirelessDebugging
+            )
+        }
+
         // Appearance
         item { SectionLabel(stringResource(R.string.settings_appearance)) }
         item {
             PairlyCard(Modifier.fillMaxWidth()) {
+                ListRow(stringResource(R.string.settings_style), icon = Icons.Rounded.Palette)
+                StylePicker(prefs.appStyle, onSelect = { chosen -> callbacks.updatePrefs { it.copy(appStyle = chosen) } })
+                Spacer(Modifier.height(Space.m))
                 ListRow(stringResource(R.string.settings_theme), icon = Icons.Rounded.DarkMode)
                 ChoiceRow(
                     options = listOf(

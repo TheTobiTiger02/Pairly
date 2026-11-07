@@ -1,4 +1,4 @@
-"""Side-by-side sheets of Pairly's Glass design in light and dark (Navy) mode.
+"""Side-by-side sheets of Pairly's design (Aurora style) in light and dark mode.
 
   python tools/design-compare/compare.py --android src/android/app/build/outputs/roborazzi \
       --windows artifacts/windows-screenshots --out docs/design-comparison
@@ -12,7 +12,7 @@ import os
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 ANDROID_SCREENS = [
-    ("home", "Home"), ("onboarding-00-welcome", "Setup: welcome"), ("onboarding-05-notifications", "Setup: a permission step"),
+    ("home", "Home"), ("onboarding-00-welcome", "Setup: welcome"), ("onboarding-04-powermode", "Setup: Power mode"), ("onboarding-05-permissions", "Setup: permissions"),
     ("features", "Features"), ("feature-blocked", "When Android blocks a permission"), ("settings", "Settings"),
 ]
 BG = (241, 243, 247)

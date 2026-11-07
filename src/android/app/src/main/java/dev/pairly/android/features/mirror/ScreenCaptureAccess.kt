@@ -5,7 +5,7 @@ import android.content.Context
 import android.os.Build
 import android.os.Process
 import dev.pairly.android.diagnostics.LinkDiagnostics
-import dev.pairly.android.features.clipboard.ClipboardShizukuAccess
+import dev.pairly.android.features.shizuku.ShizukuHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -45,7 +45,7 @@ object ScreenCaptureAccess {
         val app = context.applicationContext
         if (wanted(app) == isAllowed(app)) return
         // The helper calls syncInBackground once it is connected.
-        ClipboardShizukuAccess.start(app, ClipboardShizukuAccess.HOLDER_SCREEN_CAPTURE)
+        ShizukuHelper.start(app, ShizukuHelper.HOLDER_SCREEN_CAPTURE)
         syncInBackground(app)
     }
 
@@ -80,13 +80,13 @@ object ScreenCaptureAccess {
         val wanted = wanted(context)
         val allowed = isAllowed(context)
         if (wanted == allowed) {
-            ClipboardShizukuAccess.stop(ClipboardShizukuAccess.HOLDER_SCREEN_CAPTURE)
+            ShizukuHelper.stop(ShizukuHelper.HOLDER_SCREEN_CAPTURE)
             return
         }
-        val shell = ClipboardShizukuAccess.shell ?: return
+        val shell = ShizukuHelper.shell ?: return
         val ok = runCatching { shell.setScreenCaptureAllowed(context.packageName, wanted) }.getOrDefault(false)
         val now = isAllowed(context)
-        if (now == wanted) ClipboardShizukuAccess.stop(ClipboardShizukuAccess.HOLDER_SCREEN_CAPTURE)
+        if (now == wanted) ShizukuHelper.stop(ShizukuHelper.HOLDER_SCREEN_CAPTURE)
         LinkDiagnostics.record(
             LinkDiagnostics.Category.MIRROR,
             "mirror.prompt.${if (wanted) "skip" else "restore"}",

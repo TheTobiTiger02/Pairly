@@ -170,14 +170,14 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <ContentControl x:Name="NavDeviceHost" Focusable="False" IsTabStop="False">
-                <Border x:Name="DeviceCard" Style="{StaticResource PageCard}" Padding="12">
+                <Border x:Name="DeviceCard" Style="{StaticResource PageCard}" Padding="12" Background="{DynamicResource HeroBrush}" BorderThickness="0">
                     <StackPanel>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <ToggleButton x:Name="DevicePickerToggle" Style="{StaticResource SubtleToggleButton}" Padding="6"
+                            <ToggleButton x:Name="DevicePickerToggle" Style="{StaticResource SubtleToggleButton}" Padding="6" Resources="{StaticResource OnHeroResources}"
                                           IsHitTestVisible="{Binding IsOpen, ElementName=DevicePickerPopup, Converter={StaticResource InverseBool}}"
                                           AutomationProperties.Name="{l:Loc choose_phone}" ToolTip="{l:Loc choose_which_phone_to_use}">
                                 <Grid>
@@ -208,7 +208,7 @@
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                 </Grid>
                             </ToggleButton>
-                            <Button Grid.Column="1" Style="{StaticResource IconButton}" Content="&#xE710;" VerticalAlignment="Top" Margin="4,0,0,0"
+                            <Button Grid.Column="1" Style="{StaticResource IconButton}" Content="&#xE710;" VerticalAlignment="Top" Margin="4,0,0,0" Resources="{StaticResource OnHeroResources}"
                                     ToolTip="{l:Loc add_a_device}" Click="OpenPairingPanel_Click" AutomationProperties.Name="{l:Loc add_device}" />
 
                             <Popup x:Name="DevicePickerPopup" PlacementTarget="{Binding ElementName=DevicePickerToggle}" Placement="Bottom"
@@ -260,7 +260,11 @@
                         </Grid>
 
                         <!-- Battery and sync status of the selected phone. -->
-                        <Grid Style="{StaticResource DeviceSelected}" Margin="6,10,6,0">
+                        <Grid Style="{StaticResource DeviceSelected}" Margin="6,10,6,0" Resources="{StaticResource OnHeroResources}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="*" />
@@ -271,6 +275,14 @@
                                 <TextBlock Text="{Binding SelectedItem.BatteryDisplayText, ElementName=DevicesList}" Style="{StaticResource CaptionText}"
                                            VerticalAlignment="Center" />
                             </StackPanel>
+                            <Border Grid.Row="1" Grid.ColumnSpan="2" HorizontalAlignment="Left" Margin="0,8,0,0" Padding="8,3"
+                                    CornerRadius="10" Background="{DynamicResource AccentSubtleBrush}" ToolTip="{l:Loc power_mode_tooltip}"
+                                    Visibility="{Binding SelectedItem.HasPowerModeText, ElementName=DevicesList, Converter={StaticResource BoolToVisConverter}, FallbackValue=Collapsed}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE945;" Style="{StaticResource IconGlyph}" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding SelectedItem.PowerModeText, ElementName=DevicesList}" Style="{StaticResource CaptionText}" />
+                                </StackPanel>
+                            </Border>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" ToolTip="{l:Loc last_sync}">
                                 <TextBlock Text="&#xE895;" Style="{StaticResource IconGlyph}" FontSize="13"
                                            Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,7,0" />
@@ -280,7 +292,7 @@
                         </Grid>
 
                         <!-- Quick actions -->
-                        <Grid x:Name="DeviceQuickActions" Margin="0,12,-6,0">
+                        <Grid x:Name="DeviceQuickActions" Margin="0,12,-6,0" Resources="{StaticResource OnHeroResources}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition />
                                 <ColumnDefinition />
@@ -447,7 +459,17 @@
                                                     <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
                                                 <Border Style="{StaticResource Avatar}" Width="40" Height="40" CornerRadius="20">
-                                                    <TextBlock Text="{Binding Initials}" Style="{StaticResource AvatarInitials}" />
+                                                    <TextBlock Text="{Binding Initials}">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock" BasedOn="{StaticResource AvatarInitials}">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsNumberOnly}" Value="True">
+                                                                        <Setter Property="FontFamily" Value="{StaticResource IconFontFamily}" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
                                                 </Border>
                                                 <StackPanel Grid.Column="1" Margin="12,0,8,0" VerticalAlignment="Center">
                                                     <TextBlock x:Name="ThreadName" Text="{Binding DisplayName}" />
@@ -494,16 +516,32 @@
                                 <Border BorderBrush="{DynamicResource DividerBrush}" BorderThickness="0,0,0,1" Padding="20,14">
                                     <StackPanel Orientation="Horizontal">
                                         <Border Style="{StaticResource Avatar}">
-                                            <TextBlock Text="{Binding SelectedItem.Initials, ElementName=SmsThreadsList}" Style="{StaticResource AvatarInitials}" />
+                                            <TextBlock Text="{Binding SelectedItem.Initials, ElementName=SmsThreadsList}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource AvatarInitials}">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding SelectedItem.IsNumberOnly, ElementName=SmsThreadsList}" Value="True">
+                                                                <Setter Property="FontFamily" Value="{StaticResource IconFontFamily}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
                                         </Border>
                                         <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding SelectedItem.DisplayName, ElementName=SmsThreadsList}" FontWeight="SemiBold" />
-                                            <TextBlock Text="{Binding SelectedItem.Address, ElementName=SmsThreadsList}" Style="{StaticResource CaptionText}" />
+                                            <TextBlock Text="{Binding SelectedItem.Address, ElementName=SmsThreadsList}" Style="{StaticResource CaptionText}"
+                                                       Visibility="{Binding SelectedItem.ShowAddress, ElementName=SmsThreadsList, Converter={StaticResource BoolToVisConverter}}" />
                                         </StackPanel>
                                     </StackPanel>
                                 </Border>
-                                <ListBox x:Name="SmsMessagesList" Grid.Row="1" Padding="20,12" ItemContainerStyle="{StaticResource PlainListItem}"
+                                <ListBox x:Name="SmsMessagesList" Grid.Row="1" Padding="20,12"
                                          AutomationProperties.Name="{l:Loc messages_in_conversation}">
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource PlainListItem}">
+                                            <Setter Property="AutomationProperties.Name" Value="{Binding Body}" />
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
                                             <Grid Margin="0,3">
@@ -568,13 +606,13 @@
                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                 <TextBlock x:Name="PhotoSelectionText" Text="{l:Loc 0_selected}" Style="{StaticResource CaptionText}"
                                            VerticalAlignment="Center" Margin="0,0,12,0" />
-                                <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Click="SaveSelectedPhotos_Click">
+                                <Button x:Name="SavePhotosButton" IsEnabled="False" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Click="SaveSelectedPhotos_Click">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="&#xE74E;" Style="{StaticResource IconGlyph}" FontSize="14" Margin="0,0,8,0" />
                                         <TextBlock Text="{l:Loc save}" />
                                     </StackPanel>
                                 </Button>
-                                <Button Style="{StaticResource AccentButton}" Click="OpenSelectedPhoto_Click">
+                                <Button x:Name="OpenPhotoButton" IsEnabled="False" Style="{StaticResource AccentButton}" Click="OpenSelectedPhoto_Click">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="&#xE8A7;" Style="{StaticResource IconGlyph}" FontSize="14" Margin="0,0,8,0"
                                                    Foreground="{DynamicResource AccentTextBrush}" />
@@ -608,6 +646,16 @@
                                 <ComboBoxItem Content="{l:Loc large}" Tag="220" />
                             </ComboBox>
                         </Grid>
+                        <!-- Empty state: shown while there is nothing to list for the selected phone or filter. -->
+                        <StackPanel x:Name="PhotosEmptyState" Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="360"
+                                    Visibility="Collapsed" Panel.ZIndex="1" IsHitTestVisible="False">
+                            <TextBlock Text="&#xE91B;" Style="{StaticResource IconGlyph}" FontSize="40" HorizontalAlignment="Center"
+                                       Foreground="{DynamicResource AccentBrush}" />
+                            <TextBlock x:Name="PhotosEmptyTitle" Text="{l:Loc photos_empty_title}" FontSize="16" FontWeight="SemiBold"
+                                       HorizontalAlignment="Center" Margin="0,12,0,0" />
+                            <TextBlock x:Name="PhotosEmptyBody" Text="{l:Loc photos_empty_body}" Style="{StaticResource CaptionText}"
+                                       TextWrapping="Wrap" TextAlignment="Center" Margin="0,4,0,0" />
+                        </StackPanel>
                         <ListView x:Name="PhotosList" Grid.Row="2" Margin="-3,0,-12,0" SelectionMode="Extended"
                                   ItemContainerStyle="{StaticResource TileListItem}"
                                   MouseDoubleClick="PhotosList_MouseDoubleClick" SelectionChanged="PhotosList_SelectionChanged"
@@ -891,6 +939,20 @@
                                         <TextBlock Text="{l:Loc appearance}" Style="{StaticResource SettingsGroupHeader}" />
                                         <Border Style="{StaticResource SettingsCard}">
                                             <DockPanel>
+                                                <TextBlock Text="&#xE771;" Style="{StaticResource SettingsCardGlyph}" />
+                                                <ComboBox x:Name="StyleCombo" DockPanel.Dock="Right" VerticalAlignment="Center" Margin="16,0,0,0" MinWidth="200"
+                                                          SelectionChanged="StyleCombo_SelectionChanged" AutomationProperties.Name="{l:Loc style}">
+                                                    <ComboBoxItem Tag="Aurora" Content="{l:Loc style_aurora}" />
+                                                    <ComboBoxItem Tag="Daybreak" Content="{l:Loc style_daybreak}" />
+                                                </ComboBox>
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="{l:Loc style}" Style="{StaticResource SettingsCardTitle}" />
+                                                    <TextBlock Text="{l:Loc style_description}" Style="{StaticResource SettingsCardDescription}" />
+                                                </StackPanel>
+                                            </DockPanel>
+                                        </Border>
+                                        <Border Style="{StaticResource SettingsCard}">
+                                            <DockPanel>
                                                 <TextBlock Text="&#xE790;" Style="{StaticResource SettingsCardGlyph}" />
                                                 <ComboBox x:Name="ThemeCombo" DockPanel.Dock="Right" VerticalAlignment="Center" Margin="16,0,0,0" MinWidth="200"
                                                           SelectionChanged="ThemeCombo_SelectionChanged" AutomationProperties.Name="{l:Loc theme}">
@@ -1129,7 +1191,7 @@
                                         <Border Style="{StaticResource SettingsCard}">
                                             <DockPanel>
                                                 <TextBlock Text="&#xE701;" Style="{StaticResource SettingsCardGlyph}" />
-                                                <CheckBox x:Name="MirrorUseAdbCheck" Style="{StaticResource ToggleSwitch}" IsChecked="True"
+                                                <CheckBox x:Name="MirrorUseAdbCheck" Style="{StaticResource ToggleSwitch}" IsChecked="False" Click="MirrorUseAdbCheck_Click"
                                                           DockPanel.Dock="Right" VerticalAlignment="Center" Margin="16,0,0,0"
                                                           AutomationProperties.Name="{l:Loc use_wireless_debugging_when_the_phone_has_it}" />
                                                 <StackPanel VerticalAlignment="Center">
@@ -1735,7 +1797,7 @@
               Visibility="Collapsed">
             <Border x:Name="PairingPanel" Width="660" HorizontalAlignment="Center" VerticalAlignment="Center" Focusable="True"
                     Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource FlyoutStrokeBrush}" BorderThickness="1"
-                    CornerRadius="{StaticResource OverlayRadius}" Effect="{StaticResource DialogShadow}"
+                    CornerRadius="{DynamicResource OverlayRadius}" Effect="{StaticResource DialogShadow}"
                     AutomationProperties.Name="{l:Loc set_up_pairly}" RenderTransformOrigin="0.5,0.5">
                 <Border.RenderTransform>
                     <ScaleTransform x:Name="PairingPanelScale" ScaleX="1" ScaleY="1" />
@@ -1948,6 +2010,20 @@
                                 </StackPanel>
                             </DockPanel>
                         </Border>
+<Border Style="{StaticResource SettingsCard}">
+                            <DockPanel>
+                                <TextBlock Text="&#xE771;" Style="{StaticResource SettingsCardGlyph}" />
+                                <ComboBox x:Name="OnboardingStyleCombo" DockPanel.Dock="Right" VerticalAlignment="Center" Margin="16,0,0,0" MinWidth="180"
+                                          SelectionChanged="StyleCombo_SelectionChanged" AutomationProperties.Name="{l:Loc style}">
+                                    <ComboBoxItem Tag="Aurora" Content="{l:Loc style_aurora}" />
+                                    <ComboBoxItem Tag="Daybreak" Content="{l:Loc style_daybreak}" />
+                                </ComboBox>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="{l:Loc style}" Style="{StaticResource SettingsCardTitle}" />
+                                    <TextBlock Text="{l:Loc style_description}" Style="{StaticResource SettingsCardDescription}" />
+                                </StackPanel>
+                            </DockPanel>
+                        </Border>
                         <Border Style="{StaticResource SettingsCard}">
                             <DockPanel>
                                 <TextBlock Text="&#xE790;" Style="{StaticResource SettingsCardGlyph}" />
@@ -1974,11 +2050,13 @@
                                    HorizontalAlignment="Center" Margin="0,16,0,0" />
                         <TextBlock x:Name="PairingDoneBody" Style="{StaticResource BodyText}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,8,0,0" MaxWidth="420"
                                    Text="{l:Loc pairing_done_body}" />
+                        <!-- The phone's features, live: ticks appear as they are turned on in the phone app. -->
+                        <UniformGrid x:Name="PairingDoneChecklist" Columns="2" Margin="0,18,0,0" MaxWidth="460" HorizontalAlignment="Center" />
                     </StackPanel>
 
                     <!-- Footer -->
                     <Border Grid.Row="2" Background="{DynamicResource CardFillSecondaryBrush}" BorderBrush="{DynamicResource DividerBrush}"
-                            BorderThickness="0,1,0,0" CornerRadius="0,0,8,8" Padding="28,16">
+                            BorderThickness="0,1,0,0" CornerRadius="{DynamicResource OverlayFooterRadius}" Padding="28,16">
                         <DockPanel LastChildFill="False">
                             <Button x:Name="PairingBackButton" DockPanel.Dock="Left" Content="{l:Loc need_the_app}" Style="{StaticResource SubtleButton}"
                                     Click="PairingShowGetApp_Click" />
@@ -1997,7 +2075,7 @@
               Visibility="Collapsed">
             <Border Width="520" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="28,24"
                     Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource FlyoutStrokeBrush}" BorderThickness="1"
-                    CornerRadius="{StaticResource OverlayRadius}" Effect="{StaticResource DialogShadow}" AutomationProperties.Name="{l:Loc what_s_new}">
+                    CornerRadius="{DynamicResource OverlayRadius}" Effect="{StaticResource DialogShadow}" AutomationProperties.Name="{l:Loc what_s_new}">
                 <StackPanel>
                     <Border Width="48" Height="48" CornerRadius="24" Background="{DynamicResource AccentSubtleBrush}" HorizontalAlignment="Left">
                         <TextBlock Text="&#xE735;" Style="{StaticResource IconGlyph}" FontSize="22" Foreground="{DynamicResource AccentBrush}" />

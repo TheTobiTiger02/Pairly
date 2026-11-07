@@ -22,8 +22,8 @@ import androidx.compose.material.icons.rounded.Campaign
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.core.content.ContextCompat
 import dev.pairly.android.R
-import dev.pairly.android.features.clipboard.ClipboardHelperLifecycle
-import dev.pairly.android.features.clipboard.ClipboardShizukuAccess
+import dev.pairly.android.features.shizuku.ShizukuHelper
+import dev.pairly.android.features.shizuku.ShizukuHelperLifecycle
 import dev.pairly.android.features.control.PairlyAccessibilityService
 import dev.pairly.android.features.sync.FeaturePermissionState
 
@@ -136,7 +136,7 @@ data class PermissionSnapshot(
             if (PairlyAccessibilityService.isActive || accessibilityEnabled(context)) on += Feature.RemoteControl
             if (Settings.canDrawOverlays(context)) on += Feature.Mirroring
             if (power.isIgnoringBatteryOptimizations(context.packageName)) on += Feature.Background
-            if (ClipboardShizukuAccess.state.value == ClipboardHelperLifecycle.State.Ready) on += Feature.Clipboard
+            if (ShizukuHelper.helperState.value == ShizukuHelperLifecycle.State.Ready) on += Feature.Clipboard
             return PermissionSnapshot(on, RestrictedSettings.state(context))
         }
 

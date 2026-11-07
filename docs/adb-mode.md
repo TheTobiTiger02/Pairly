@@ -11,9 +11,15 @@ small server started with shell rights instead of the installed app. Compared wi
 | App windows | Each app on its own virtual display, one PC window per app | Not available |
 | Phone sound | Not yet (app mode only) | Playback capture |
 
-The mirror page's "Use wireless debugging when the phone has it on" is on by default. If the
-phone is not connected over ADB, or anything in the ADB path fails, the app falls back to app mode
-and says so. App windows ("Open in window" on the Apps page) need ADB mode.
+ADB mode is optional and **off by default** (Settings → Phone screen → "Advanced: mirror over
+Wireless debugging"). Power mode on the phone (docs/power-mode.md) already gives prompt-free
+mirroring and real input without leaving Wireless debugging on, so ADB mode is only needed for app
+windows ("Open in window" on the Apps page, which always tries ADB) and for mirroring with the
+phone's screen off. If the phone is not connected over ADB, or anything in the ADB path fails, the
+app falls back to app mode and says so.
+
+The phone is found by the name it reports: `adb devices -l` is matched by model, and otherwise each
+device's `settings get global device_name` is compared.
 
 ## How it works
 

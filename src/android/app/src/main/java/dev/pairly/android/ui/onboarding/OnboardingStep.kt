@@ -1,29 +1,20 @@
 package dev.pairly.android.ui.onboarding
 
-import dev.pairly.android.ui.features.Feature
-
-/** Onboarding, in order. The current step is saved, so a closed app resumes where it left off. */
-enum class OnboardingStep(val feature: Feature? = null) {
+/**
+ * Onboarding, in order. The current step is saved, so a closed app resumes where it left off; a
+ * saved step from an older version that no longer exists starts over at Welcome.
+ */
+enum class OnboardingStep {
     Welcome,
     Tour,
     InstallPc,
     Pair,
-    AppAlerts(Feature.AppAlerts),
-    Notifications(Feature.Notifications),
-    Messages(Feature.Messages),
-    Calls(Feature.Calls),
-    Photos(Feature.Photos),
-    Files(Feature.Files),
-    RemoteControl(Feature.RemoteControl),
-    Mirroring(Feature.Mirroring),
-    Background(Feature.Background),
-    Clipboard(Feature.Clipboard),
+    /** Optional, recommended: Shizuku, which unlocks the rest and makes permissions one tap. */
+    PowerMode,
+    /** Every permission on one screen; skipped ones are asked for when first needed. */
+    Permissions,
     Done;
 
     fun next(): OnboardingStep = entries.getOrElse(ordinal + 1) { Done }
     fun previous(): OnboardingStep = entries.getOrElse(ordinal - 1) { Welcome }
-
-    companion object {
-        val permissionSteps = entries.filter { it.feature != null && !it.feature.advanced }
-    }
 }

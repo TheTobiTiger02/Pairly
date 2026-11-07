@@ -473,11 +473,18 @@ public sealed class HostWebSocketHandler(
         var payload = envelope.ReadPayload<SessionAuthenticatePayload>()
             ?? throw new InvalidOperationException("Missing session authentication payload.");
         var challenge = connection.Challenge;
+        // A late, repeated or out-of-date proof says nothing about the pairing itself: the phone
+        // must simply try again on a fresh connection, not conclude this PC forgot it.
         if (connection.Authenticated
             || challenge is null
             || challenge.ExpiresAt <= DateTimeOffset.UtcNow
-            || !string.Equals(payload.ChallengeId, challenge.ChallengeId, StringComparison.Ordinal)
-            || !devices.AuthenticateProof(
+            || !string.Equals(payload.ChallengeId, challenge.ChallengeId, StringComparison.Ordinal))
+        {
+            await SendErrorAsync(socket, "authentication_retry", "The session challenge expired. Reconnect and try again.", envelope.Id, cancellationToken);
+            return;
+        }
+
+        if (!devices.AuthenticateProof(
                 payload.DeviceId,
                 challenge.ChallengeId,
                 challenge.Nonce,

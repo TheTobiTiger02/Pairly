@@ -1,3 +1,5 @@
+using System.Windows.Automation;
+using System.Windows.Controls;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
@@ -228,11 +230,62 @@ public partial class MainWindow
                     PairingDoneTitle.Text = L.T(paired ? "pairing_done_title" : "onboarding_done_no_phone_title");
                 }
                 PairingDoneBody.Text = L.T(paired ? "pairing_done_body" : "onboarding_done_no_phone_body");
+                UpdatePairingChecklist();
                 break;
             default:
                 _pairingTimer?.Stop();
                 break;
         }
+    }
+
+    /// <summary>What the phone already allows, shown on the last setup step and kept current while it is open.</summary>
+    private void UpdatePairingChecklist()
+    {
+        PairingDoneChecklist.Children.Clear();
+        var device = _devices.FirstOrDefault(item => item.Device.Connected)?.Device;
+        if (_pairingStep != PairingStep.Done || device?.Permissions is null)
+        {
+            PairingDoneChecklist.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        (string Key, string Label)[] features =
+        [
+            ("powerMode", "power_mode_on"),
+            ("notifications", "tour_notifications_title"),
+            ("sms", "messages"),
+            ("calls", "calls"),
+            ("photos", "photos"),
+            ("files", "files"),
+            ("control", "checklist_control"),
+            ("clipboardBackground", "checklist_clipboard")
+        ];
+        var allOn = true;
+        foreach (var (key, label) in features)
+        {
+            device.Permissions.TryGetValue(key, out var state);
+            var on = state is "granted" or "ready";
+            allOn &= on || key == "powerMode";
+            var row = new StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal, Margin = new Thickness(0, 4, 16, 4) };
+            row.Children.Add(new TextBlock
+            {
+                Text = on ? "\uE73E" : "\uE711",
+                FontFamily = (System.Windows.Media.FontFamily)FindResource("IconFontFamily"),
+                FontSize = 12,
+                Margin = new Thickness(0, 0, 8, 0),
+                VerticalAlignment = VerticalAlignment.Center,
+                Foreground = (System.Windows.Media.Brush)FindResource(on ? "SuccessBrush" : "TextTertiaryBrush")
+            });
+            row.Children.Add(new TextBlock
+            {
+                Text = L.T(label),
+                Foreground = (System.Windows.Media.Brush)FindResource(on ? "TextPrimaryBrush" : "TextSecondaryBrush")
+            });
+            AutomationProperties.SetName(row, $"{L.T(label)}: {L.T(on ? "permission_allowed" : "permission_off")}");
+            PairingDoneChecklist.Children.Add(row);
+        }
+        PairingDoneChecklist.Visibility = Visibility.Visible;
+        PairingDoneBody.Text = L.T(allOn ? "pairing_done_all_set" : "pairing_done_body");
     }
 
     private static void AnimateStepIn(FrameworkElement element, bool forward)

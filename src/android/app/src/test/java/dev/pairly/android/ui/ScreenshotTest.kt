@@ -109,15 +109,15 @@ class ScreenshotTest(private val case: Case) {
         OnboardingScreen(step, state, pairing, LocaleText.Language.System, {}, {}, {})
     }
 
-    private val shell = ShellCallbacks(pairing, {}, {}, {}, {}, {}, { "" }, { true }, {}, {}, {}, {})
+    private val shell = ShellCallbacks(pairing, {}, {}, {}, {}, {}, { "" }, { true }, {}, {}, {}, {}, {}, {})
     private val prefs get() = UiPrefs(themeMode = case.mode)
 
     @Test fun onboardingWelcome() = onboarding(OnboardingStep.Welcome)
     @Test fun onboardingTour() = onboarding(OnboardingStep.Tour)
     @Test fun onboardingInstall() = onboarding(OnboardingStep.InstallPc)
     @Test fun onboardingPair() = onboarding(OnboardingStep.Pair)
-    @Test fun onboardingPermission() = onboarding(OnboardingStep.Notifications, connected.copy(permissions = PermissionSnapshot()))
-    @Test fun onboardingClipboard() = onboarding(OnboardingStep.Clipboard, connected)
+    @Test fun onboardingPowerMode() = onboarding(OnboardingStep.PowerMode, connected)
+    @Test fun onboardingPermissions() = onboarding(OnboardingStep.Permissions, connected.copy(permissions = PermissionSnapshot()))
     @Test fun onboardingDone() = onboarding(OnboardingStep.Done, connected)
 
     @Test fun home() = capture("home") { MainShell(connected, prefs, LocaleText.Language.System, shell) }
@@ -154,7 +154,7 @@ class ScreenshotTest(private val case: Case) {
         Screen {
             SettingsScreen(
                 connected, prefs, LocaleText.Language.System,
-                SettingsCallbacks({}, {}, {}, {}, {}, {}, {}, {})
+                SettingsCallbacks({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
             )
         }
     }

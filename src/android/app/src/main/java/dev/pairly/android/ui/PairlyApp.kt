@@ -88,11 +88,11 @@ fun PairlyApp(
         if (justPaired) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
         if (justPaired && !prefs.onboardingDone && prefs.onboardingStep == OnboardingStep.Pair) {
             delay(1_200)
-            viewModel.updatePrefs { it.copy(onboardingStep = dev.pairly.android.ui.onboarding.nextUnfinished(OnboardingStep.Pair, state)) }
+            viewModel.updatePrefs { it.copy(onboardingStep = OnboardingStep.Pair.next()) }
         }
     }
 
-    PairlyTheme(prefs.themeMode, prefs.dynamicColor) {
+    PairlyTheme(prefs.themeMode, prefs.dynamicColor, prefs.appStyle) {
         val style = Pairly.style
         PairlyBackground {
             AnimatedContent(
@@ -109,7 +109,8 @@ fun PairlyApp(
                         language = language,
                         onLanguage = onLanguage,
                         onStep = { step -> viewModel.updatePrefs { it.copy(onboardingStep = step) } },
-                        onFinish = { viewModel.updatePrefs { it.copy(onboardingDone = true, onboardingStep = OnboardingStep.Welcome) } }
+                        onFinish = { viewModel.updatePrefs { it.copy(onboardingDone = true, onboardingStep = OnboardingStep.Welcome) } },
+                        onGrantAll = { viewModel.grantAllWithShizuku() }
                     )
                 } else {
                     MainShell(
@@ -128,7 +129,14 @@ fun PairlyApp(
                             sendFiles = { uris -> FileShareSender.send(context, uris) },
                             updatePrefs = viewModel::updatePrefs,
                             setLanguage = onLanguage,
-                            replayOnboarding = { viewModel.updatePrefs { it.copy(onboardingDone = false, onboardingStep = OnboardingStep.Welcome) } }
+                            replayOnboarding = { viewModel.updatePrefs { it.copy(onboardingDone = false, onboardingStep = OnboardingStep.Welcome) } },
+                            grantAllWithShizuku = {
+                                viewModel.grantAllWithShizuku { count ->
+                                    val text = context.resources.getQuantityString(dev.pairly.android.R.plurals.power_granted, count, count)
+                                    android.widget.Toast.makeText(context, text, android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            setTurnOffWirelessDebugging = viewModel::setTurnOffWirelessDebugging
                         )
                     )
                 }

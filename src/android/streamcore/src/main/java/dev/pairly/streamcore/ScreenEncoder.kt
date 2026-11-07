@@ -154,10 +154,8 @@ class ScreenEncoder(
         source.release()
     }
 
-    private fun startCodec(config: EncoderConfig) {
-        val format = buildFormat(config, activeCodec)
-        val created = MediaCodec.createEncoderByType(activeCodec.mimeType)
-        created.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+    private fun startCodec(requested: EncoderConfig) {
+        val (created, config) = createConfigured(requested)
 
         val surface = created.createInputSurface()
         created.start()
@@ -168,14 +166,52 @@ class ScreenEncoder(
         onFormatChanged(config.width, config.height, activeCodec)
     }
 
-    private fun restartCodec(config: EncoderConfig) {
-        val created = try {
-            MediaCodec.createEncoderByType(activeCodec.mimeType).also {
-                it.configure(buildFormat(config, activeCodec), null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+    /**
+     * Creates and configures an encoder for [requested], shrunk to a size the encoder supports (a
+     * software encoder, or a tall screen, can be smaller than the screen), and with a plain format
+     * if the encoder rejects the realtime tuning.
+     */
+    private fun createConfigured(requested: EncoderConfig): Pair<MediaCodec, EncoderConfig> {
+        val created = MediaCodec.createEncoderByType(activeCodec.mimeType)
+        val config = fitToEncoder(requested, created)
+        try {
+            created.configure(buildFormat(config, activeCodec, tuned = true), null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+        } catch (tunedFailure: Exception) {
+            Log.w(TAG, "Encoder ${created.name} refused the tuned format; using a plain one.", tunedFailure)
+            runCatching { created.reset() }
+            try {
+                created.configure(buildFormat(config, activeCodec, tuned = false), null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+            } catch (plainFailure: Exception) {
+                releaseQuietly(created)
+                throw plainFailure
             }
+        }
+        return created to config
+    }
+
+    private fun fitToEncoder(config: EncoderConfig, encoder: MediaCodec): EncoderConfig {
+        val video = runCatching { encoder.codecInfo.getCapabilitiesForType(activeCodec.mimeType).videoCapabilities }.getOrNull()
+            ?: return config
+        if (video.isSizeSupported(config.width, config.height)) return config
+        var scale = 1.0
+        repeat(40) {
+            scale *= 0.9
+            val width = (config.width * scale).toInt() / 16 * 16
+            val height = (config.height * scale).toInt() / 16 * 16
+            if (width >= 16 && height >= 16 && video.isSizeSupported(width, height)) {
+                Log.i(TAG, "Encoder ${encoder.name} cannot do ${config.width}x${config.height}; using ${width}x$height.")
+                return config.copy(width = width, height = height)
+            }
+        }
+        return config
+    }
+
+    private fun restartCodec(requested: EncoderConfig) {
+        val (created, config) = try {
+            createConfigured(requested)
         } catch (e: Exception) {
             // Keep streaming at the old size rather than taking the whole session down.
-            Log.w(TAG, "Encoder refused ${config.width}x${config.height}; keeping the current size.", e)
+            Log.w(TAG, "Encoder refused ${requested.width}x${requested.height}; keeping the current size.", e)
             return
         }
 
@@ -212,7 +248,7 @@ class ScreenEncoder(
         runCatching { target.release() }
     }
 
-    private fun buildFormat(config: EncoderConfig, videoCodec: VideoCodec): MediaFormat =
+    private fun buildFormat(config: EncoderConfig, videoCodec: VideoCodec, tuned: Boolean): MediaFormat =
         MediaFormat.createVideoFormat(videoCodec.mimeType, config.width, config.height).apply {
             setInteger(
                 MediaFormat.KEY_COLOR_FORMAT,
@@ -224,10 +260,12 @@ class ScreenEncoder(
 
             // Constant bitrate keeps the link's bandwidth predictable, which matters far more here
             // than the file-size efficiency VBR would buy.
-            setInteger(
-                MediaFormat.KEY_BITRATE_MODE,
-                MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR
-            )
+            if (tuned) {
+                setInteger(
+                    MediaFormat.KEY_BITRATE_MODE,
+                    MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR
+                )
+            }
 
             // Without this a static screen emits nothing at all and the PC cannot distinguish a
             // frozen stream from an idle one.
@@ -235,6 +273,9 @@ class ScreenEncoder(
                 MediaFormat.KEY_REPEAT_PREVIOUS_FRAME_AFTER,
                 MirrorQualityPolicy.REPEAT_PREVIOUS_FRAME_AFTER_US
             )
+
+            // A plain format leaves the rest to the encoder's defaults.
+            if (!tuned) return@apply
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 // B-frames reorder output, which costs latency for a compression win nobody here

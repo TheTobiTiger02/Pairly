@@ -12,8 +12,15 @@ internal sealed class DesktopPreferences
 
     public bool MinimizeToTray { get; set; } = true;
 
+    /// <summary>Mirror through the PC's own ADB connection when the phone has Wireless debugging on. Off by default:
+    /// Power mode on the phone gives the same prompt-free mirroring and real input without keeping Wireless debugging on.</summary>
+    public bool MirrorUseAdb { get; set; }
+
     /// <summary>"System", "Light" or "Dark".</summary>
     public string Theme { get; set; } = "System";
+
+    /// <summary>"Aurora" or "Daybreak", the same looks as the phone app.</summary>
+    public string Style { get; set; } = "Aurora";
 
     /// <summary>"" follows Windows; "en" or "de".</summary>
     public string Language { get; set; } = string.Empty;

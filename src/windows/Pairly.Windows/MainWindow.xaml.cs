@@ -63,6 +63,9 @@ public partial class MainWindow : Window
     private readonly Dictionary<MirrorWindow, AdbStreamSession> _adbSessions = new();
     private bool _refreshInProgress;
     private string? _storageDeviceId;
+    /// <summary>Whether a listing of the phone's storage has succeeded for the selected phone.</summary>
+    private bool _storageLoaded;
+    private const int FilesTabIndex = 2;
     private bool _initializingStartupSetting;
     private bool _initializingPreferences;
     private bool _firstRunPairingShown;
@@ -99,6 +102,7 @@ public partial class MainWindow : Window
         }
         _initializingPreferences = true;
         MinimizeToTrayCheck.IsChecked = _preferences.MinimizeToTray;
+        MirrorUseAdbCheck.IsChecked = _preferences.MirrorUseAdb;
         _initializingPreferences = false;
 
         _initializingStartupSetting = true;
@@ -497,6 +501,12 @@ public partial class MainWindow : Window
         }
     }
 
+    private void MirrorUseAdbCheck_Click(object sender, RoutedEventArgs e)
+    {
+        _preferences.MirrorUseAdb = MirrorUseAdbCheck.IsChecked == true;
+        _preferences.Save();
+    }
+
     private void MinimizeToTrayCheck_Changed(object sender, RoutedEventArgs e)
     {
         if (_initializingPreferences)
@@ -568,11 +578,19 @@ public partial class MainWindow : Window
             _ = LoadAppsAsync(force: false);
         }
 
+        // The first listing can fail before the phone allowed storage access; try again whenever the
+        // page is opened until one succeeds.
+        if (ReferenceEquals(e.Source, MainTabs) && MainTabs.SelectedIndex == FilesTabIndex && !_storageLoaded
+            && _storageDeviceId is { } storageDevice)
+        {
+            _ = LoadStorageDirectoryAsync(storageDevice, _currentStoragePath);
+        }
+
         if (e.Source is System.Windows.Controls.TabControl && e.AddedItems.Count > 0)
         {
             if (e.AddedItems[0] is System.Windows.Controls.TabItem tabItem && tabItem.Content is FrameworkElement element)
             {
-                if (!SystemParameters.ClientAreaAnimation)
+                if (!Motion.Enabled)
                 {
                     element.Opacity = 1.0;
                     return;
@@ -1131,6 +1149,8 @@ public partial class MainWindow : Window
 
     private void ReconcileSmsThreads(IReadOnlyList<SmsThreadViewModel> latest)
     {
+        var open = SmsThreadsList.SelectedItem as SmsThreadViewModel;
+        var openUpdatedAt = open?.UpdatedAt;
         var latestIds = latest.Select(thread => thread.ThreadKey).ToHashSet(StringComparer.Ordinal);
         for (var index = _smsThreads.Count - 1; index >= 0; index--)
         {
@@ -1154,11 +1174,22 @@ public partial class MainWindow : Window
         }
 
         _allSmsThreads = _smsThreads.ToArray();
+
+        // A new message in the open conversation (received, or a reply sent from here): show it.
+        if (open is not null && ReferenceEquals(SmsThreadsList.SelectedItem, open) && open.UpdatedAt != openUpdatedAt)
+        {
+            _ = LoadSmsMessagesAsync(open);
+        }
     }
 
-    private async void SmsThreadsList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    private void SmsThreadsList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
-        if (SmsThreadsList.SelectedItem is not SmsThreadViewModel thread)
+        _ = LoadSmsMessagesAsync(SmsThreadsList.SelectedItem as SmsThreadViewModel);
+    }
+
+    private async Task LoadSmsMessagesAsync(SmsThreadViewModel? thread)
+    {
+        if (thread is null)
         {
             SmsMessagesList.ItemsSource = Array.Empty<SmsMessagePayload>();
             return;
@@ -1175,7 +1206,10 @@ public partial class MainWindow : Window
             var messages = await _host.GetFromJsonAsync<SmsMessagePayload[]>(
                 $"v1/sms/{Uri.EscapeDataString(thread.DeviceId)}/threads/{Uri.EscapeDataString(thread.ThreadId)}/messages",
                 JsonOptions) ?? Array.Empty<SmsMessagePayload>();
-            SmsMessagesList.ItemsSource = messages;
+            if (ReferenceEquals(SmsThreadsList.SelectedItem, thread))
+            {
+                SmsMessagesList.ItemsSource = messages;
+            }
         }
         catch (Exception ex)
         {
@@ -1758,7 +1792,7 @@ public partial class MainWindow : Window
 
         try
         {
-            PhotosStatusText.Text = $"Downloading {photo.FileName}...";
+            PhotosStatusText.Text = L.F("downloading_item", photo.FileName);
             using var response = await _host.GetAsync(
                 $"v1/media/{Uri.EscapeDataString(device.DeviceId)}/{Uri.EscapeDataString(photo.MediaId)}/content");
             if (!response.IsSuccessStatusCode)
@@ -1789,7 +1823,7 @@ public partial class MainWindow : Window
             {
                 UseShellExecute = true
             });
-            PhotosStatusText.Text = $"Opened {targetPath}.";
+            PhotosStatusText.Text = L.F("opened_item", System.IO.Path.GetFileName(targetPath));
         }
         catch (Exception ex)
         {
@@ -1813,7 +1847,10 @@ public partial class MainWindow : Window
     {
         if (PhotoSelectionText is not null)
         {
-            PhotoSelectionText.Text = $"{PhotosList.SelectedItems.Count} selected";
+            var count = PhotosList.SelectedItems.Count;
+            PhotoSelectionText.Text = L.F("n_selected", count);
+            SavePhotosButton.IsEnabled = count > 0;
+            OpenPhotoButton.IsEnabled = count == 1;
         }
     }
 
@@ -1909,7 +1946,7 @@ public partial class MainWindow : Window
 
                 if (saveDialog.ShowDialog() == true)
                 {
-                    PhotosStatusText.Text = $"Downloading {photo.FileName}...";
+                    PhotosStatusText.Text = L.F("downloading_item", photo.FileName);
                     using var response = await _host.GetAsync(
                         $"v1/media/{Uri.EscapeDataString(device.DeviceId)}/{Uri.EscapeDataString(photo.MediaId)}/content");
                     if (!response.IsSuccessStatusCode)
@@ -2038,6 +2075,7 @@ public partial class MainWindow : Window
                 if (!string.Equals(_storageDeviceId, selectedDevice.DeviceId, StringComparison.Ordinal))
                 {
                     _storageDeviceId = selectedDevice.DeviceId;
+                    _storageLoaded = false;
                     _currentStoragePath = "/";
                     _storagePathHistory.Clear();
                     _ = LoadStorageDirectoryAsync(selectedDevice.DeviceId, "/");
@@ -2081,7 +2119,7 @@ public partial class MainWindow : Window
                 && DateTimeOffset.UtcNow - device.LastSeenAt < TimeSpan.FromMinutes(2));
             StatusText.Text = devicesData.Length == 0
                 ? L.T("pairly_is_ready_add_a_phone_to_get_started")
-                : $"{onlineCount} online | {reconnectingCount} reconnecting | {devicesData.Length - onlineCount - reconnectingCount} offline";
+                : L.F("devices_status_summary", onlineCount, reconnectingCount, devicesData.Length - onlineCount - reconnectingCount);
         }
         catch (Exception ex)
         {
@@ -2109,6 +2147,11 @@ public partial class MainWindow : Window
             {
                 _devices.Add(new DeviceViewModel(device));
             }
+        }
+
+        if (_pairingStep == PairingStep.Done)
+        {
+            UpdatePairingChecklist();
         }
 
         var liveIds = devices.Select(device => device.DeviceId).ToHashSet(StringComparer.Ordinal);
@@ -2245,6 +2288,12 @@ public partial class MainWindow : Window
         {
             PhotosStatusText.Text = L.F("showing_of_photo_s", visibleCount, _allPhotos.Length);
         }
+        if (PhotosEmptyState is not null)
+        {
+            var empty = _photosView.IsEmpty;
+            PhotosEmptyState.Visibility = empty ? Visibility.Visible : Visibility.Collapsed;
+            PhotosEmptyBody.Text = L.T(_photos.Count == 0 ? "photos_empty_body" : "photos_empty_filtered");
+        }
     }
 
     private void ReconcilePhotos(IReadOnlyList<MediaItemViewModel> latest)
@@ -2286,7 +2335,9 @@ public partial class MainWindow : Window
         }
 
         var existingById = _notifications.ToDictionary(notification => notification.NotificationId, StringComparer.Ordinal);
-        foreach (var incoming in latest)
+        // A notification with neither title nor text (a group summary or a placeholder some apps
+        // post) would only show as an empty card.
+        foreach (var incoming in latest.Where(item => !string.IsNullOrWhiteSpace(item.Title) || !string.IsNullOrWhiteSpace(item.Text)))
         {
             if (existingById.TryGetValue(incoming.NotificationId, out var existing))
             {
@@ -2433,6 +2484,27 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>A phone storage error as a sentence: the phone's JSON error unwrapped, access problems explained.</summary>
+    private static string StorageErrorText(string raw)
+    {
+        var message = raw;
+        try
+        {
+            using var json = System.Text.Json.JsonDocument.Parse(raw);
+            if (json.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object
+                && json.RootElement.TryGetProperty("message", out var value) && value.GetString() is { Length: > 0 } text)
+            {
+                message = text;
+            }
+        }
+        catch (System.Text.Json.JsonException)
+        {
+        }
+        return message.Contains("not been granted", StringComparison.OrdinalIgnoreCase)
+            ? L.T("files_need_access")
+            : L.F("failed_to_load_folder", message);
+    }
+
     private async Task LoadStorageDirectoryAsync(string deviceId, string path)
     {
         if (App.DemoMode) return;
@@ -2441,8 +2513,8 @@ public partial class MainWindow : Window
             var response = await _host.PostAsJsonAsync($"v1/devices/{Uri.EscapeDataString(deviceId)}/storage/list", new StorageListRequestPayload(Guid.NewGuid().ToString(), path));
             if (!response.IsSuccessStatusCode)
             {
-                var errorText = await response.Content.ReadAsStringAsync();
-                Dispatcher.Invoke(() => StorageStatusText.Text = L.F("failed_to_load_folder", errorText));
+                var errorText = StorageErrorText(await response.Content.ReadAsStringAsync());
+                Dispatcher.Invoke(() => StorageStatusText.Text = errorText);
                 return;
             }
 
@@ -2454,7 +2526,8 @@ public partial class MainWindow : Window
             }
             if (!string.IsNullOrEmpty(result.Error))
             {
-                Dispatcher.Invoke(() => StorageStatusText.Text = $"Failed: {result.Error}");
+                var errorText = StorageErrorText(result.Error);
+                Dispatcher.Invoke(() => StorageStatusText.Text = errorText);
                 return;
             }
 
@@ -2464,7 +2537,8 @@ public partial class MainWindow : Window
                 _allStorageItems = result.Items.Select(item => new StorageItemViewModel(item)).ToArray();
                 FilterStorageItems();
                 UpdateBreadcrumbs(_currentStoragePath);
-                StorageStatusText.Text = $"Path: {_currentStoragePath}";
+                StorageStatusText.Text = _currentStoragePath == "/" ? L.T("files_phone_storage") : _currentStoragePath;
+                _storageLoaded = true;
             });
         }
         catch (Exception ex)
@@ -2475,7 +2549,7 @@ public partial class MainWindow : Window
 
     private async Task DownloadAndOpenStorageFileAsync(string deviceId, StorageItemViewModel item)
     {
-        StorageStatusText.Text = $"Downloading {item.Name}...";
+        StorageStatusText.Text = L.F("downloading_item", item.Name);
         try
         {
             var response = await _host.PostAsJsonAsync($"v1/devices/{Uri.EscapeDataString(deviceId)}/storage/file", new StorageFileRequestPayload(Guid.NewGuid().ToString(), item.Payload.Path));
@@ -2503,7 +2577,7 @@ public partial class MainWindow : Window
             {
                 UseShellExecute = true
             });
-            StorageStatusText.Text = $"Opened {item.Name}.";
+            StorageStatusText.Text = L.F("opened_item", item.Name);
         }
         catch (Exception ex)
         {
@@ -2566,7 +2640,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        StorageStatusText.Text = $"Downloading {item.Name}...";
+        StorageStatusText.Text = L.F("downloading_item", item.Name);
         try
         {
             var response = await _host.PostAsJsonAsync($"v1/devices/{Uri.EscapeDataString(selectedDevice.DeviceId)}/storage/file", new StorageFileRequestPayload(Guid.NewGuid().ToString(), item.Payload.Path));
@@ -2624,7 +2698,7 @@ public partial class MainWindow : Window
         var resultConfirm = MessageBox.Show(L.F("are_you_sure_you_want_to_delete", item.Name), L.T("confirm_delete"), MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (resultConfirm != MessageBoxResult.Yes) return;
 
-        StorageStatusText.Text = $"Deleting {item.Name}...";
+        StorageStatusText.Text = L.F("deleting_item", item.Name);
         try
         {
             var response = await _host.DeleteAsync($"v1/devices/{Uri.EscapeDataString(selectedDevice.DeviceId)}/storage?filePath={Uri.EscapeDataString(item.Payload.Path)}");
@@ -2634,7 +2708,7 @@ public partial class MainWindow : Window
                 return;
             }
 
-            StorageStatusText.Text = $"Deleted {item.Name}.";
+            StorageStatusText.Text = L.F("deleted_item", item.Name);
             await LoadStorageDirectoryAsync(selectedDevice.DeviceId, _currentStoragePath);
         }
         catch (Exception ex)
@@ -2697,14 +2771,14 @@ public partial class MainWindow : Window
 
     private static string PermissionText(LinkedDevice device, string feature)
     {
-        if (device.Permissions is not null
-            && device.Permissions.TryGetValue(feature, out var value)
-            && !string.IsNullOrWhiteSpace(value))
+        var value = device.Permissions is not null && device.Permissions.TryGetValue(feature, out var state) ? state : null;
+        return value switch
         {
-            return value.Replace('_', ' ');
-        }
-
-        return L.T("needs_user_action");
+            "granted" => L.T("permission_allowed"),
+            "denied" => L.T("permission_denied"),
+            "disabled" => L.T("permission_off"),
+            _ => L.T("needs_user_action")
+        };
     }
 
     private static bool PermissionGranted(LinkedDevice device, string feature) =>
@@ -3100,6 +3174,12 @@ internal sealed class SmsThreadViewModel : INotifyPropertyChanged
         Payload = payload;
     }
 
+    /// <summary>What a screen reader announces for the conversation.</summary>
+    public override string ToString() => $"{DisplayName}, {Payload.Snippet}";
+
+    /// <summary>The number under the name, unless the name already is the number.</summary>
+    public bool ShowAddress => !string.Equals(DisplayName?.Trim(), Payload.Address?.Trim(), StringComparison.Ordinal);
+
     public string DeviceId { get; }
     public SmsThreadPayload Payload { get; private set; }
     public string ThreadKey => $"{DeviceId}:{Payload.ThreadId}";
@@ -3111,11 +3191,16 @@ internal sealed class SmsThreadViewModel : INotifyPropertyChanged
     public int UnreadCount => Payload.UnreadCount;
     public bool HasUnread => UnreadCount > 0;
 
+    public bool IsNumberOnly => !string.IsNullOrWhiteSpace(DisplayName)
+        && DisplayName.All(character => char.IsDigit(character) || character is '+' or ' ' or '-' or '(' or ')');
+
     public string Initials
     {
         get
         {
             if (string.IsNullOrWhiteSpace(DisplayName)) return "?";
+            // A bare phone number has no initials: show a person glyph (Segoe Fluent Icons) instead.
+            if (IsNumberOnly) return "";
             var parts = DisplayName.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length == 0) return "?";
             if (parts.Length == 1) return parts[0][0].ToString().ToUpperInvariant();
@@ -3169,6 +3254,19 @@ public sealed class DeviceViewModel : INotifyPropertyChanged
     public System.Windows.Media.Brush? StatusBrush => System.Windows.Application.Current?.TryFindResource(
         Device.Connected ? "SuccessBrush" : StatusText == L.T("reconnecting") ? "CautionBrush" : "TextTertiaryBrush") as System.Windows.Media.Brush;
 
+    /// <summary>"Power mode" while the phone runs Shizuku for Pairly; empty otherwise (the chip hides).</summary>
+    public string PowerModeText => Device.Connected && Device.Permissions is not null
+        && Device.Permissions.TryGetValue("powerMode", out var power)
+            ? power switch
+            {
+                "ready" => L.T("power_mode_on"),
+                "notRunning" => L.T("power_mode_paused"),
+                _ => string.Empty
+            }
+            : string.Empty;
+
+    public bool HasPowerModeText => PowerModeText.Length > 0;
+
     public string BatteryDisplayText => string.IsNullOrWhiteSpace(BatteryStatusText) ? L.T("unavailable") : BatteryStatusText;
 
     public string LastSeenText
@@ -3189,7 +3287,7 @@ public sealed class DeviceViewModel : INotifyPropertyChanged
         get
         {
             if (!Device.Connected || Device.BatteryLevel == null) return string.Empty;
-            return $"{Device.BatteryLevel}%" + (Device.IsCharging == true ? " (Charging)" : "");
+            return $"{Device.BatteryLevel}%" + (Device.IsCharging == true ? " · " + L.T("charging") : "");
         }
     }
 
@@ -3226,7 +3324,8 @@ public sealed class DeviceViewModel : INotifyPropertyChanged
         foreach (var propertyName in new[]
         {
             nameof(Device), nameof(DisplayName), nameof(Connected), nameof(Permissions), nameof(StatusText), nameof(StatusBrush),
-            nameof(BatteryStatusText), nameof(BatteryDisplayText), nameof(BatteryGlyph), nameof(LastSeenText)
+            nameof(BatteryStatusText), nameof(BatteryDisplayText), nameof(BatteryGlyph), nameof(LastSeenText),
+            nameof(PowerModeText), nameof(HasPowerModeText)
         })
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

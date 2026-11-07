@@ -8,6 +8,8 @@ import dev.pairly.streamcore.ControlMessageCodec
 import dev.pairly.streamcore.MirrorProfile
 import dev.pairly.streamcore.MirrorQualityPolicy
 import dev.pairly.streamcore.ScreenEncoder
+import dev.pairly.streamcore.Shell
+import dev.pairly.streamcore.ShellInputSink
 import dev.pairly.streamcore.StreamProtocol
 import dev.pairly.streamcore.VideoCodec
 import java.io.BufferedOutputStream
@@ -86,9 +88,11 @@ object Server {
 
         options["launch"]?.let { launch(it, source.displayId) }
 
-        val sink = InjectorInputSink(
+        val sink = ShellInputSink(
             displayId = { source.displayId },
-            displaySize = { source.sourceWidth to source.sourceHeight }
+            displaySize = { source.sourceWidth to source.sourceHeight },
+            setClipboard = Platform::setClipboard,
+            readClipboard = Platform::readClipboard
         )
         options["controlTicket"]?.let { ticket ->
             startControl(port, ticket, options.getValue("controlStreamId").toLong(), sink, encoder, source)
@@ -110,7 +114,7 @@ object Server {
         port: Int,
         ticket: String,
         streamId: Long,
-        sink: InjectorInputSink,
+        sink: ShellInputSink,
         encoder: ScreenEncoder,
         source: DisplayVideoSource
     ) {

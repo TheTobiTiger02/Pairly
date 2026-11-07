@@ -14,6 +14,8 @@ import android.view.WindowManager
 import dev.pairly.android.network.PairlyConnection
 import dev.pairly.android.protocol.ProtocolJson
 import dev.pairly.android.features.control.AccessibilityInputSink
+import dev.pairly.android.features.shizuku.ShizukuHelper
+import dev.pairly.android.features.shizuku.ShizukuInputSink
 import dev.pairly.streamcore.ControlMessage
 import dev.pairly.streamcore.ControlMessageCodec
 import dev.pairly.streamcore.MirrorProfile
@@ -59,7 +61,7 @@ class StreamMirrorSession(
     private var socket: StreamSocketClient? = null
     private var controlSocket: StreamSocketClient? = null
     private var audio: PlaybackAudioStreamer? = null
-    private val inputSink by lazy { AccessibilityInputSink(context) }
+    private val inputSink by lazy { ShizukuInputSink(AccessibilityInputSink(context)) }
     private var source: ProjectionVideoSource? = null
     private var encoder: ScreenEncoder? = null
 
@@ -76,6 +78,8 @@ class StreamMirrorSession(
      * worker thread does not have.
      */
     fun start() {
+        // Power mode: real input while the PC mirrors, when Shizuku runs.
+        ShizukuHelper.start(context, ShizukuHelper.HOLDER_INPUT)
         Thread({
             val client = try {
                 StreamSocketClient.connect(
@@ -140,8 +144,9 @@ class StreamMirrorSession(
             )
             screenEncoder.start(config, codec)
 
-            Log.i(TAG, "Mirror streaming ${config.width}x${config.height}@${config.frameRate} " +
-                "${config.bitrateBps / 1000} kbps ${screenEncoder.currentCodec.wireName}")
+            val active = screenEncoder.currentConfig ?: config
+            Log.i(TAG, "Mirror streaming ${active.width}x${active.height}@${active.frameRate} " +
+                "${active.bitrateBps / 1000} kbps ${screenEncoder.currentCodec.wireName}")
             publishState("streaming")
             startControlChannel()
             startAudioChannel()
@@ -306,6 +311,7 @@ class StreamMirrorSession(
         }
         Log.i(TAG, "Stopping mirror session: $reason")
         stopped = true
+        ShizukuHelper.stop(ShizukuHelper.HOLDER_INPUT)
 
         runCatching { audio?.stop() }
         audio = null

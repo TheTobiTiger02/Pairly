@@ -1,0 +1,18 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Content on the style's gradient hero (the phone card): white text and translucent white
+         controls, in light and dark alike. Merged into the hero's children, not the card itself,
+         so popups opened from it keep the normal palette. -->
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="#E6FFFFFF" />
+    <SolidColorBrush x:Key="TextTertiaryBrush" Color="#CCFFFFFF" />
+    <SolidColorBrush x:Key="AccentBrush" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="AccentSubtleBrush" Color="#2EFFFFFF" />
+    <SolidColorBrush x:Key="ControlFillBrush" Color="#24FFFFFF" />
+    <SolidColorBrush x:Key="ControlFillHoverBrush" Color="#38FFFFFF" />
+    <SolidColorBrush x:Key="ControlFillPressedBrush" Color="#1AFFFFFF" />
+    <SolidColorBrush x:Key="ControlStrokeBrush" Color="#1FFFFFFF" />
+    <SolidColorBrush x:Key="SurfaceHoverBrush" Color="#1FFFFFFF" />
+    <SolidColorBrush x:Key="SurfacePressedBrush" Color="#14FFFFFF" />
+    <SolidColorBrush x:Key="ControlElevationBorderBrush" Color="#1FFFFFFF" />
+</ResourceDictionary>

@@ -140,7 +140,7 @@ object FeatureSyncController {
         PairlyConnection.send(
             ProtocolJson.deviceState(
                 deviceId = deviceId(context),
-                displayName = Build.MODEL ?: "Android device",
+                displayName = DeviceName.of(context),
                 connected = true,
                 permissions = FeaturePermissionState.permissions(context, mirroringActive),
                 batteryLevel = batteryPct,

@@ -96,22 +96,14 @@ class AppSmokeTest {
         screenshot("pair")
         click(R.string.action_skip_for_now)
 
-        // One step per permission, then the optional clipboard step: skip or continue each.
-        var steps = 0
-        while (!exists(R.string.onboarding_done_title)) {
-            check(++steps <= 15) { "Setup did not reach the summary." }
-            compose.waitUntil(30_000) {
-                exists(R.string.action_skip) || exists(R.string.action_maybe_later) ||
-                    exists(R.string.action_continue) || exists(R.string.onboarding_done_title)
-            }
-            if (exists(R.string.onboarding_done_title)) break
-            screenshot("setup-step-$steps")
-            when {
-                exists(R.string.action_skip) -> click(R.string.action_skip)
-                exists(R.string.action_maybe_later) -> click(R.string.action_maybe_later)
-                else -> click(R.string.action_continue)
-            }
-        }
+        // Power mode (optional), then every permission on one screen.
+        waitFor(R.string.onboarding_power_label)
+        screenshot("power-mode")
+        click(R.string.action_not_now)
+        waitFor(R.string.onboarding_permissions_title)
+        screenshot("permissions")
+        click(R.string.action_skip_for_now)
+        waitFor(R.string.onboarding_done_title)
         screenshot("done")
         click(R.string.action_start_using)
 

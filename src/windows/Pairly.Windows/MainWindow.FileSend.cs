@@ -111,7 +111,7 @@ public partial class MainWindow
 
                 if (files.Length == 1)
                 {
-                    StatusText.Text = outcome.Message;
+                    StatusText.Text = outcome.Succeeded ? L.F("file_sent_to_downloads", name, deviceName) : outcome.Message;
                 }
             }
         }

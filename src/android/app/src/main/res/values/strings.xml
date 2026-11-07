@@ -89,7 +89,7 @@
     <string name="tour_private_title">Private by design</string>
     <string name="tour_private_body">No account, no cloud. Everything stays between your own devices, encrypted.</string>
     <string name="install_title">Get Pairly on your PC</string>
-    <string name="install_body">Install the Windows app on the PC you want to connect. Use one of the two options.</string>
+    <string name="install_body">Install the Windows app on the PC you want to connect. Get it from the Microsoft Store or as an installer, or send yourself the link.</string>
     <string name="install_store_title">Microsoft Store</string>
     <string name="install_store_detail">Recommended. Updates through the Store.</string>
     <string name="install_exe_title">Download the installer</string>
@@ -174,7 +174,7 @@
     <string name="feature_mirror_summary">Mirror your screen when your PC asks</string>
     <string name="feature_mirror_description">See your phone’s screen in a window on your PC. Android asks you to confirm every time before anything is shared.</string>
     <string name="feature_mirror_why">Pairly needs to appear on top of other apps to show Android’s screen-sharing prompt while you’re using another app.</string>
-    <string name="feature_mirror_step2">Turn on Allow display over other apps.</string>
+    <string name="feature_mirror_step2">Find Pairly in the list, tap it and turn on Allow display over other apps.</string>
     <string name="feature_background">Stay connected</string>
     <string name="feature_background_summary">Keep the connection while the screen is off</string>
     <string name="feature_background_description">Lets Pairly stay connected to your PC while your phone is locked, so notifications and calls arrive right away.</string>
@@ -342,7 +342,7 @@
     <string name="action_try_again">Try again</string>
     <string name="feature_control_step_tap_pairly">Tap Pairly.</string>
     <string name="feature_control_step_oneui">Tap Installed apps, then Pairly.</string>
-    <string name="feature_control_step_highlighted">Tap Pairly. It’s highlighted under Downloaded apps.</string>
+    <string name="feature_control_step_highlighted">Tap Pairly under Downloaded apps (or Installed apps).</string>
     <string name="pair_not_found_title">No PC found yet</string>
     <string name="pair_not_found_app">Open Pairly on your PC and choose Add phone.</string>
     <string name="pair_not_found_wifi">Make sure the phone and PC are on the same Wi-Fi (not a guest network).</string>
@@ -360,4 +360,48 @@
     <string name="mirror_check_shizuku_allowed">Pairly allowed in Shizuku</string>
     <string name="mirror_check_prompt_skipped">Android’s prompt switched off</string>
     <string name="mirror_skip_prompt_setup_action">Set up Shizuku</string>
+    <!-- Power mode and style -->
+    <string name="power_title">Power mode</string>
+    <string name="power_on">Power mode is on</string>
+    <string name="power_on_detail">Shizuku is running. Clipboard syncs in the background, mirroring starts without asking, and your PC taps and types for real.</string>
+    <string name="power_wd_off">Wireless debugging is off. Shizuku keeps running without it.</string>
+    <string name="power_wd_on">Wireless debugging is still on.</string>
+    <string name="power_wd_switch">Turn off Wireless debugging</string>
+    <string name="power_wd_switch_detail">Shizuku only needs it to start. Pairly switches it off again right after.</string>
+    <string name="power_boot_auto">Starts again by itself after a restart.</string>
+    <string name="power_boot_manual">After a restart, open Shizuku and tap Start.</string>
+    <string name="power_paused">Power mode is paused</string>
+    <string name="power_paused_detail">Shizuku stopped, usually after a restart. Open Shizuku and tap Start; everything else stays set up.</string>
+    <string name="power_allow">Allow Pairly in Shizuku</string>
+    <string name="power_allow_detail">Shizuku is running. Pairly still needs your OK to use it.</string>
+    <string name="power_off">Turn on Power mode</string>
+    <string name="power_off_detail">A one-time, five-minute setup with the free Shizuku app. Unlocks background clipboard, prompt-free mirroring, real touch and keys, and one-tap permissions.</string>
+    <string name="power_setup">Set up Power mode</string>
+    <string name="power_open_shizuku">Open Shizuku</string>
+    <string name="power_nothing_missing">Everything is already switched on.</string>
+    <string name="power_benefit_clipboard">Clipboard syncs in the background</string>
+    <string name="power_benefit_mirror">Mirroring starts without a prompt</string>
+    <string name="power_benefit_input">Real touch and keys from your PC</string>
+    <string name="power_benefit_grants">All permissions in one tap</string>
+    <string name="settings_style">Style</string>
+    <string name="style_aurora">Aurora</string>
+    <string name="style_aurora_detail">Indigo, calm</string>
+    <string name="style_daybreak">Daybreak</string>
+    <string name="style_daybreak_detail">Warm, playful</string>
+    <plurals name="power_grant_all">
+        <item quantity="one">Turn on %1$d feature in one tap</item>
+        <item quantity="other">Turn on %1$d features in one tap</item>
+    </plurals>
+    <plurals name="power_granted">
+        <item quantity="one">%1$d feature switched on</item>
+        <item quantity="other">%1$d features switched on</item>
+    </plurals>
+    <string name="onboarding_power_label">Optional · Recommended</string>
+    <string name="onboarding_power_ready">Power mode is ready. Next, Pairly can switch on everything in one tap.</string>
+    <string name="onboarding_permissions_title">Choose what Pairly can do</string>
+    <string name="onboarding_permissions_body">Turn on what you want now. Anything you skip can be turned on later under Features, and Pairly asks when you first need it.</string>
+    <string name="onboarding_permissions_power">Power mode is on, so one tap is enough.</string>
+    <string name="action_turn_on">Turn on</string>
+    <string name="action_not_now">Not now</string>
+    <string name="action_set_up_power">Set up Power mode</string>
 </resources>
