@@ -276,6 +276,9 @@ class PairlyConnectionService : Service() {
             }
             ACTION_CONNECT, null -> {
                 intent?.getStringExtra(EXTRA_HOST)?.takeIf { it.isNotBlank() }?.let { settings.host = it }
+                // "Reconnect now" tries again even after a rejection: the PC answers again if it
+                // really removed this phone, and a stale rejection no longer locks the user out.
+                if (intent?.getBooleanExtra(EXTRA_USER_RETRY, false) == true) settings.clearRejectedSavedPairing()
                 if (settings.savedPairingRejected && settings.trustKey.isNotBlank()) {
                     publishState(ConnectionPhase.Rejected, t(R.string.svc_pc_forgot_us))
                     return START_STICKY
@@ -346,6 +349,11 @@ class PairlyConnectionService : Service() {
         }
 
         if (connecting) {
+            return
+        }
+        // Already connected (or authenticating) to this endpoint: a second socket would race the
+        // first one's challenge and get its proof rejected.
+        if (PairlyConnection.isTransportConnected && migrationCandidate == null && endpoint == PairlyConnection.client.currentEndpoint) {
             return
         }
 
@@ -647,7 +655,12 @@ class PairlyConnectionService : Service() {
                     val errorMessage = payload?.optString("message").orEmpty()
                     val errorCode = payload?.optString("code").orEmpty()
                     LinkDiagnostics.record(LinkDiagnostics.Category.TRANSPORT, "host.message.rejected", "$errorCode: $errorMessage", LinkDiagnostics.Severity.WARNING)
-                    if (errorCode == "authentication_rejected" && verifyingLegacyCandidates) {
+                    if (errorCode == "authentication_retry") {
+                        // The challenge went stale (a slow phone or a replaced socket): try a fresh connection.
+                        resetStaleSocket()
+                        scheduleReconnect(statusText = t(R.string.svc_paired_reconnecting))
+                        "PC asked for a fresh connection."
+                    } else if (errorCode == "authentication_rejected" && verifyingLegacyCandidates) {
                         advanceAfterLegacyCandidateFailure("Legacy pairing proof rejected")
                         "Saved pairing proof did not match this PC."
                     } else if (errorCode == "authentication_rejected") {
@@ -716,7 +729,11 @@ class PairlyConnectionService : Service() {
         }
 
         pendingMigrationCandidate?.let { candidate ->
-            if (authenticatedChallengeHostId != candidate.hostId) {
+            // Only a legacy pairing (no saved host id) learns its PC here and must prove the
+            // candidate is the one that answered the challenge. A known host id was already
+            // checked by handleSessionChallenge; a rediscovered address must not fail on a
+            // reconnect that reset the challenge state meanwhile.
+            if (settings.hostId.isBlank() && authenticatedChallengeHostId != candidate.hostId) {
                 if (verifyingLegacyCandidates) {
                     advanceAfterLegacyCandidateFailure("Candidate authentication identity mismatch")
                     return "Legacy pairing migration identity did not match; trying the next secure PC"
@@ -2389,6 +2406,7 @@ class PairlyConnectionService : Service() {
         }
 
         const val ACTION_CONNECT = "dev.pairly.android.CONNECT"
+        private const val EXTRA_USER_RETRY = "dev.pairly.android.extra.USER_RETRY"
         const val ACTION_DISCONNECT = "dev.pairly.android.DISCONNECT"
         const val ACTION_FORGET = "dev.pairly.android.FORGET"
         const val ACTION_PAIR = "dev.pairly.android.PAIR"
@@ -2424,8 +2442,9 @@ class PairlyConnectionService : Service() {
         private const val FORGET_CONFIRM_TIMEOUT_MS = 1_500L
         private const val MIRROR_PERMISSION_NOTIFICATION_ID = 1002
 
-        fun startConnect(context: Context, host: String? = null) {
+        fun startConnect(context: Context, host: String? = null, userRetry: Boolean = false) {
             val intent = Intent(context, PairlyConnectionService::class.java).setAction(ACTION_CONNECT)
+                .putExtra(EXTRA_USER_RETRY, userRetry)
             if (!host.isNullOrBlank()) {
                 intent.putExtra(EXTRA_HOST, host)
             }
