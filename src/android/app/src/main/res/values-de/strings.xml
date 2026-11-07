@@ -89,7 +89,7 @@
     <string name="tour_private_title">Privat von Anfang an</string>
     <string name="tour_private_body">Kein Konto, keine Cloud. Alles bleibt verschlüsselt zwischen deinen eigenen Geräten.</string>
     <string name="install_title">Hol dir Pairly auf deinen PC</string>
-    <string name="install_body">Installiere die Windows-App auf dem PC, den du verbinden willst. Nutze eine der beiden Möglichkeiten.</string>
+    <string name="install_body">Installiere die Windows-App auf dem PC, den du verbinden willst. Hol sie aus dem Microsoft Store oder als Installer, oder schick dir den Link.</string>
     <string name="install_store_title">Microsoft Store</string>
     <string name="install_store_detail">Empfohlen. Updates über den Store.</string>
     <string name="install_exe_title">Installationsprogramm laden</string>
@@ -174,7 +174,7 @@
     <string name="feature_mirror_summary">Bildschirm spiegeln, wenn dein PC fragt</string>
     <string name="feature_mirror_description">Sieh den Bildschirm deines Handys in einem Fenster auf deinem PC. Android fragt jedes Mal nach, bevor etwas geteilt wird.</string>
     <string name="feature_mirror_why">Pairly muss über anderen Apps erscheinen dürfen, um Androids Freigabe-Abfrage anzuzeigen, während du eine andere App nutzt.</string>
-    <string name="feature_mirror_step2">Schalte Über anderen Apps einblenden ein.</string>
+    <string name="feature_mirror_step2">Such Pairly in der Liste, tippe darauf und schalte Über anderen Apps einblenden ein.</string>
     <string name="feature_background">Verbunden bleiben</string>
     <string name="feature_background_summary">Verbindung halten, wenn der Bildschirm aus ist</string>
     <string name="feature_background_description">Lässt Pairly mit deinem PC verbunden bleiben, während dein Handy gesperrt ist, damit Benachrichtigungen und Anrufe sofort ankommen.</string>
@@ -342,7 +342,7 @@
     <string name="action_try_again">Erneut versuchen</string>
     <string name="feature_control_step_tap_pairly">Tippe auf Pairly.</string>
     <string name="feature_control_step_oneui">Tippe auf Installierte Apps und dann auf Pairly.</string>
-    <string name="feature_control_step_highlighted">Tippe auf Pairly. Es ist unter Heruntergeladene Apps hervorgehoben.</string>
+    <string name="feature_control_step_highlighted">Tippe unter Heruntergeladene Apps (oder Installierte Apps) auf Pairly.</string>
     <string name="pair_not_found_title">Noch kein PC gefunden</string>
     <string name="pair_not_found_app">Öffne Pairly auf deinem PC und wähle Handy hinzufügen.</string>
     <string name="pair_not_found_wifi">Achte darauf, dass Handy und PC im selben WLAN sind (kein Gastnetz).</string>
@@ -396,4 +396,12 @@
         <item quantity="one">%1$d Funktion eingeschaltet</item>
         <item quantity="other">%1$d Funktionen eingeschaltet</item>
     </plurals>
+    <string name="onboarding_power_label">Optional · Empfohlen</string>
+    <string name="onboarding_power_ready">Der Power-Modus ist bereit. Als Nächstes kann Pairly alles mit einem Tipp einschalten.</string>
+    <string name="onboarding_permissions_title">Wähle, was Pairly darf</string>
+    <string name="onboarding_permissions_body">Schalte jetzt ein, was du möchtest. Alles Übersprungene kannst du später unter Funktionen einschalten, und Pairly fragt, wenn du es zum ersten Mal brauchst.</string>
+    <string name="onboarding_permissions_power">Der Power-Modus ist an, ein Tipp genügt.</string>
+    <string name="action_turn_on">Einschalten</string>
+    <string name="action_not_now">Nicht jetzt</string>
+    <string name="action_set_up_power">Power-Modus einrichten</string>
 </resources>

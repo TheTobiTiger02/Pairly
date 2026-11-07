@@ -89,7 +89,7 @@
     <string name="tour_private_title">Private by design</string>
     <string name="tour_private_body">No account, no cloud. Everything stays between your own devices, encrypted.</string>
     <string name="install_title">Get Pairly on your PC</string>
-    <string name="install_body">Install the Windows app on the PC you want to connect. Use one of the two options.</string>
+    <string name="install_body">Install the Windows app on the PC you want to connect. Get it from the Microsoft Store or as an installer, or send yourself the link.</string>
     <string name="install_store_title">Microsoft Store</string>
     <string name="install_store_detail">Recommended. Updates through the Store.</string>
     <string name="install_exe_title">Download the installer</string>
@@ -174,7 +174,7 @@
     <string name="feature_mirror_summary">Mirror your screen when your PC asks</string>
     <string name="feature_mirror_description">See your phone’s screen in a window on your PC. Android asks you to confirm every time before anything is shared.</string>
     <string name="feature_mirror_why">Pairly needs to appear on top of other apps to show Android’s screen-sharing prompt while you’re using another app.</string>
-    <string name="feature_mirror_step2">Turn on Allow display over other apps.</string>
+    <string name="feature_mirror_step2">Find Pairly in the list, tap it and turn on Allow display over other apps.</string>
     <string name="feature_background">Stay connected</string>
     <string name="feature_background_summary">Keep the connection while the screen is off</string>
     <string name="feature_background_description">Lets Pairly stay connected to your PC while your phone is locked, so notifications and calls arrive right away.</string>
@@ -342,7 +342,7 @@
     <string name="action_try_again">Try again</string>
     <string name="feature_control_step_tap_pairly">Tap Pairly.</string>
     <string name="feature_control_step_oneui">Tap Installed apps, then Pairly.</string>
-    <string name="feature_control_step_highlighted">Tap Pairly. It’s highlighted under Downloaded apps.</string>
+    <string name="feature_control_step_highlighted">Tap Pairly under Downloaded apps (or Installed apps).</string>
     <string name="pair_not_found_title">No PC found yet</string>
     <string name="pair_not_found_app">Open Pairly on your PC and choose Add phone.</string>
     <string name="pair_not_found_wifi">Make sure the phone and PC are on the same Wi-Fi (not a guest network).</string>
@@ -396,4 +396,12 @@
         <item quantity="one">%1$d feature switched on</item>
         <item quantity="other">%1$d features switched on</item>
     </plurals>
+    <string name="onboarding_power_label">Optional · Recommended</string>
+    <string name="onboarding_power_ready">Power mode is ready. Next, Pairly can switch on everything in one tap.</string>
+    <string name="onboarding_permissions_title">Choose what Pairly can do</string>
+    <string name="onboarding_permissions_body">Turn on what you want now. Anything you skip can be turned on later under Features, and Pairly asks when you first need it.</string>
+    <string name="onboarding_permissions_power">Power mode is on, so one tap is enough.</string>
+    <string name="action_turn_on">Turn on</string>
+    <string name="action_not_now">Not now</string>
+    <string name="action_set_up_power">Set up Power mode</string>
 </resources>

@@ -88,7 +88,7 @@ fun PairlyApp(
         if (justPaired) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
         if (justPaired && !prefs.onboardingDone && prefs.onboardingStep == OnboardingStep.Pair) {
             delay(1_200)
-            viewModel.updatePrefs { it.copy(onboardingStep = dev.pairly.android.ui.onboarding.nextUnfinished(OnboardingStep.Pair, state)) }
+            viewModel.updatePrefs { it.copy(onboardingStep = OnboardingStep.Pair.next()) }
         }
     }
 
@@ -109,7 +109,8 @@ fun PairlyApp(
                         language = language,
                         onLanguage = onLanguage,
                         onStep = { step -> viewModel.updatePrefs { it.copy(onboardingStep = step) } },
-                        onFinish = { viewModel.updatePrefs { it.copy(onboardingDone = true, onboardingStep = OnboardingStep.Welcome) } }
+                        onFinish = { viewModel.updatePrefs { it.copy(onboardingDone = true, onboardingStep = OnboardingStep.Welcome) } },
+                        onGrantAll = { viewModel.grantAllWithShizuku() }
                     )
                 } else {
                     MainShell(

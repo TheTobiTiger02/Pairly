@@ -116,8 +116,8 @@ class ScreenshotTest(private val case: Case) {
     @Test fun onboardingTour() = onboarding(OnboardingStep.Tour)
     @Test fun onboardingInstall() = onboarding(OnboardingStep.InstallPc)
     @Test fun onboardingPair() = onboarding(OnboardingStep.Pair)
-    @Test fun onboardingPermission() = onboarding(OnboardingStep.Notifications, connected.copy(permissions = PermissionSnapshot()))
-    @Test fun onboardingClipboard() = onboarding(OnboardingStep.Clipboard, connected)
+    @Test fun onboardingPowerMode() = onboarding(OnboardingStep.PowerMode, connected)
+    @Test fun onboardingPermissions() = onboarding(OnboardingStep.Permissions, connected.copy(permissions = PermissionSnapshot()))
     @Test fun onboardingDone() = onboarding(OnboardingStep.Done, connected)
 
     @Test fun home() = capture("home") { MainShell(connected, prefs, LocaleText.Language.System, shell) }

@@ -2,6 +2,14 @@ package dev.pairly.android.ui.onboarding
 
 import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material.icons.rounded.Bolt
+import androidx.compose.material.icons.rounded.DoneAll
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.ui.res.pluralStringResource
+import dev.pairly.android.ui.features.PowerBenefits
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -103,7 +111,8 @@ fun OnboardingScreen(
     language: LocaleText.Language,
     onLanguage: (LocaleText.Language) -> Unit,
     onStep: (OnboardingStep) -> Unit,
-    onFinish: () -> Unit
+    onFinish: () -> Unit,
+    onGrantAll: () -> Unit = {}
 ) {
     // Android 14+ previews the back gesture: the step follows the finger before it changes.
     var backProgress by remember { mutableFloatStateOf(0f) }
@@ -157,28 +166,16 @@ fun OnboardingScreen(
                             OnboardingStep.Welcome -> WelcomeStep(language, onLanguage) { onStep(current.next()) }
                             OnboardingStep.Tour -> TourStep { onStep(current.next()) }
                             OnboardingStep.InstallPc -> InstallPcStep { onStep(current.next()) }
-                            OnboardingStep.Pair -> PairStep(state, pairing) { onStep(nextUnfinished(current, state)) }
-                            OnboardingStep.Clipboard -> ClipboardStep(state) { onStep(current.next()) }
+                            OnboardingStep.Pair -> PairStep(state, pairing) { onStep(current.next()) }
+                            OnboardingStep.PowerMode -> PowerModeStep(state) { onStep(current.next()) }
+                            OnboardingStep.Permissions -> PermissionsStep(state, onGrantAll) { onStep(current.next()) }
                             OnboardingStep.Done -> DoneStep(state, onFinish)
-                            else -> PermissionStep(current, state) { onStep(nextUnfinished(current, state)) }
                         }
                     }
                 }
             }
         }
     }
-}
-
-/**
- * The step after [step], skipping permission steps whose permission is already granted (Pairly
- * notifications on Android 12 and older, or a reinstall). The summary still lists them as on.
- */
-internal fun nextUnfinished(step: OnboardingStep, state: AppState): OnboardingStep {
-    var next = step.next()
-    while (next.feature != null && !next.feature.advanced && state.permissions.isOn(next.feature)) {
-        next = next.next()
-    }
-    return next
 }
 
 /** Scrollable content with the actions pinned to the bottom. */
@@ -272,17 +269,17 @@ private fun WelcomeStep(language: LocaleText.Language, onLanguage: (LocaleText.L
     )
 }
 
-private data class TourPage(val icon: ImageVector, val title: Int, val body: Int)
+private data class TourPage(val icon: ImageVector, val title: Int, val body: Int, val scene: TourScene)
 
 @Composable
 private fun TourStep(onNext: () -> Unit) {
     val pages = listOf(
-        TourPage(Icons.Rounded.NotificationsActive, R.string.tour_notifications_title, R.string.tour_notifications_body),
-        TourPage(Icons.Rounded.Call, R.string.tour_calls_title, R.string.tour_calls_body),
-        TourPage(Icons.Rounded.PhotoLibrary, R.string.tour_photos_title, R.string.tour_photos_body),
-        TourPage(Icons.Rounded.ContentPaste, R.string.tour_clipboard_title, R.string.tour_clipboard_body),
-        TourPage(Icons.Rounded.ScreenShare, R.string.tour_screen_title, R.string.tour_screen_body),
-        TourPage(Icons.Rounded.Lock, R.string.tour_private_title, R.string.tour_private_body)
+        TourPage(Icons.Rounded.NotificationsActive, R.string.tour_notifications_title, R.string.tour_notifications_body, TourScene.PhoneToPc),
+        TourPage(Icons.Rounded.Call, R.string.tour_calls_title, R.string.tour_calls_body, TourScene.Ring),
+        TourPage(Icons.Rounded.PhotoLibrary, R.string.tour_photos_title, R.string.tour_photos_body, TourScene.PhoneToPc),
+        TourPage(Icons.Rounded.ContentPaste, R.string.tour_clipboard_title, R.string.tour_clipboard_body, TourScene.BothWays),
+        TourPage(Icons.Rounded.ScreenShare, R.string.tour_screen_title, R.string.tour_screen_body, TourScene.Mirror),
+        TourPage(Icons.Rounded.Lock, R.string.tour_private_title, R.string.tour_private_body, TourScene.Shield)
     )
     val pager = rememberPagerState { pages.size }
     val scope = rememberCoroutineScope()
@@ -295,12 +292,13 @@ private fun TourStep(onNext: () -> Unit) {
         )
         HorizontalPager(pager, Modifier.weight(1f)) { index ->
             val page = pages[index]
+            val visible = pager.currentPage == index
             Column(
                 Modifier.fillMaxSize().padding(horizontal = Space.xxl),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                TourIllustration(page.icon)
+                TourAnimation(page.icon, page.scene, playing = visible, modifier = Modifier.fillMaxWidth().height(240.dp))
                 Spacer(Modifier.height(Space.xxxl))
                 Text(stringResource(page.title), style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
                 Spacer(Modifier.height(Space.m))
@@ -330,19 +328,6 @@ private fun TourStep(onNext: () -> Unit) {
                 onClick = { if (last) onNext() else scope.launch { pager.animateScrollToPage(pager.currentPage + 1) } }
             )
             QuietButton(stringResource(R.string.action_skip_tour), onClick = onNext)
-        }
-    }
-}
-
-/** A large icon on a soft halo; works in every variant without bitmap art. */
-@Composable
-private fun TourIllustration(icon: ImageVector) {
-    val style = Pairly.style
-    Box(contentAlignment = Alignment.Center) {
-        Box(Modifier.size(220.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)))
-        Box(Modifier.size(160.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)))
-        Box(Modifier.size(104.dp).clip(CircleShape).background(style.heroBrush), contentAlignment = Alignment.Center) {
-            Icon(icon, contentDescription = null, tint = style.onHero, modifier = Modifier.size(52.dp))
         }
     }
 }
@@ -413,65 +398,90 @@ private fun PairStep(state: AppState, pairing: PairingCallbacks, onNext: () -> U
 }
 
 @Composable
-private fun PermissionStep(step: OnboardingStep, state: AppState, onNext: () -> Unit) {
-    val feature = step.feature ?: return
-    val actions = LocalFeatureActions.current
-    val granted = state.permissions.isOn(feature)
-    val index = OnboardingStep.permissionSteps.indexOf(step) + 1
-    // Move on by itself once the permission arrives (the user comes back from Settings).
-    val wasGranted = rememberSaveable(step) { granted }
-    LaunchedEffect(granted) {
-        if (granted && !wasGranted) {
-            delay(900)
-            onNext()
-        }
-    }
+private fun PowerModeStep(state: AppState, onNext: () -> Unit) {
+    var showGuide by rememberSaveable { mutableStateOf(false) }
+    val ready = state.shizuku.ready
     StepLayout(
         content = {
-            Text(
-                stringResource(R.string.onboarding_setup_counter, index, OnboardingStep.permissionSteps.size),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Text(stringResource(R.string.onboarding_power_label), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.height(Space.m))
-            FeatureHeader(feature, granted)
-            Spacer(Modifier.height(Space.xl))
-            FeatureSetupContent(feature, state.permissions, showAction = false)
+            TourAnimation(Icons.Rounded.Bolt, TourScene.Shield, playing = !ready, modifier = Modifier.fillMaxWidth().height(160.dp))
+            Spacer(Modifier.height(Space.l))
+            StepTitle(
+                stringResource(if (ready) R.string.power_on else R.string.power_off),
+                stringResource(if (ready) R.string.onboarding_power_ready else R.string.power_off_detail)
+            )
+            PowerBenefits()
+            if (showGuide || (state.shizuku.installed && !ready)) {
+                Spacer(Modifier.height(Space.xl))
+                ShizukuGuide(state.shizuku)
+            }
         },
         actions = {
-            if (granted) {
-                PrimaryButton(stringResource(R.string.action_continue), onClick = onNext)
-            } else {
-                FeatureSetupActions(feature, state.permissions)
-                QuietButton(stringResource(R.string.action_skip), onClick = onNext)
+            when {
+                ready -> PrimaryButton(stringResource(R.string.action_continue), onClick = onNext)
+                showGuide || state.shizuku.installed -> QuietButton(stringResource(R.string.action_not_now), onClick = onNext)
+                else -> {
+                    PrimaryButton(stringResource(R.string.action_set_up_power), onClick = { showGuide = true }, icon = Icons.Rounded.Bolt)
+                    QuietButton(stringResource(R.string.action_not_now), onClick = onNext)
+                }
             }
         }
     )
 }
 
 @Composable
-private fun ClipboardStep(state: AppState, onNext: () -> Unit) {
-    var showGuide by rememberSaveable { mutableStateOf(false) }
-    val ready = state.shizuku.ready
+private fun PermissionsStep(state: AppState, onGrantAll: () -> Unit, onNext: () -> Unit) {
+    val actions = LocalFeatureActions.current
+    val missing = state.permissions.missing
+    val power = state.shizuku.ready && missing.isNotEmpty()
+    var expanded by rememberSaveable { mutableStateOf<String?>(null) }
     StepLayout(
         content = {
-            Text(stringResource(R.string.onboarding_optional), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-            Spacer(Modifier.height(Space.m))
-            FeatureHeader(Feature.Clipboard, ready)
-            Spacer(Modifier.height(Space.xl))
-            Text(stringResource(Feature.Clipboard.description), style = MaterialTheme.typography.bodyLarge)
-            Spacer(Modifier.height(Space.l))
-            Text(stringResource(Feature.Clipboard.why), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(Modifier.height(Space.xl))
-            if (showGuide || ready) ShizukuGuide(state.shizuku)
+            StepTitle(
+                stringResource(R.string.onboarding_permissions_title),
+                stringResource(if (power) R.string.onboarding_permissions_power else R.string.onboarding_permissions_body)
+            )
+            if (power) {
+                PrimaryButton(
+                    pluralStringResource(R.plurals.power_grant_all, missing.size, missing.size),
+                    onClick = onGrantAll,
+                    icon = Icons.Rounded.DoneAll
+                )
+                Spacer(Modifier.height(Space.l))
+            }
+            PairlyCard(Modifier.fillMaxWidth(), contentPadding = PaddingValues(vertical = Space.s)) {
+                Feature.setupOrder.forEach { feature ->
+                    val on = state.permissions.isOn(feature)
+                    val open = expanded == feature.key
+                    Column(Modifier.fillMaxWidth()) {
+                        Row(
+                            Modifier.fillMaxWidth().heightIn(min = 64.dp)
+                                .clickable { expanded = if (open) null else feature.key }
+                                .padding(horizontal = Space.l),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            FeatureIcon(feature.icon(), size = 36.dp, highlighted = on)
+                            Spacer(Modifier.width(Space.m))
+                            Column(Modifier.weight(1f).padding(vertical = Space.s)) {
+                                Text(stringResource(feature.title), style = MaterialTheme.typography.titleSmall)
+                                Text(stringResource(feature.summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            Spacer(Modifier.width(Space.s))
+                            AnimatedContent(on, label = "on-${feature.key}") { isOn ->
+                                if (isOn) CheckBadge(28.dp)
+                                else FilledTonalButton(onClick = { actions.enable(feature) }) { Text(stringResource(R.string.action_turn_on)) }
+                            }
+                        }
+                        AnimatedVisibility(open && !on) {
+                            FeatureSetupContent(feature, state.permissions, Modifier.padding(horizontal = Space.l, vertical = Space.s), showAction = false)
+                        }
+                    }
+                }
+            }
         },
         actions = {
-            if (ready || showGuide) {
-                PrimaryButton(stringResource(R.string.action_continue), onClick = onNext)
-            } else {
-                PrimaryButton(stringResource(R.string.action_set_up_now), onClick = { showGuide = true })
-                QuietButton(stringResource(R.string.action_maybe_later), onClick = onNext)
-            }
+            PrimaryButton(stringResource(if (missing.isEmpty()) R.string.action_continue else R.string.action_skip_for_now), onClick = onNext)
         }
     )
 }
