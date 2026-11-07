@@ -556,4 +556,10 @@
   <data name="photos_empty_title" xml:space="preserve"><value>No photos to show</value></data>
   <data name="photos_empty_body" xml:space="preserve"><value>Photos from your phone appear here. If none do, allow Photos in Pairly on your phone.</value></data>
   <data name="photos_empty_filtered" xml:space="preserve"><value>Nothing matches this search or album.</value></data>
+  <data name="downloading_item" xml:space="preserve"><value>Downloading {0}…</value></data>
+  <data name="opened_item" xml:space="preserve"><value>Opened {0}.</value></data>
+  <data name="deleting_item" xml:space="preserve"><value>Deleting {0}…</value></data>
+  <data name="deleted_item" xml:space="preserve"><value>Deleted {0}.</value></data>
+  <data name="opening_app" xml:space="preserve"><value>Opening {0}…</value></data>
+  <data name="file_sent_to_downloads" xml:space="preserve"><value>{0} is in the Downloads folder on {1}.</value></data>
 </root>

@@ -1792,7 +1792,7 @@ public partial class MainWindow : Window
 
         try
         {
-            PhotosStatusText.Text = $"Downloading {photo.FileName}...";
+            PhotosStatusText.Text = L.F("downloading_item", photo.FileName);
             using var response = await _host.GetAsync(
                 $"v1/media/{Uri.EscapeDataString(device.DeviceId)}/{Uri.EscapeDataString(photo.MediaId)}/content");
             if (!response.IsSuccessStatusCode)
@@ -1823,7 +1823,7 @@ public partial class MainWindow : Window
             {
                 UseShellExecute = true
             });
-            PhotosStatusText.Text = $"Opened {targetPath}.";
+            PhotosStatusText.Text = L.F("opened_item", System.IO.Path.GetFileName(targetPath));
         }
         catch (Exception ex)
         {
@@ -1946,7 +1946,7 @@ public partial class MainWindow : Window
 
                 if (saveDialog.ShowDialog() == true)
                 {
-                    PhotosStatusText.Text = $"Downloading {photo.FileName}...";
+                    PhotosStatusText.Text = L.F("downloading_item", photo.FileName);
                     using var response = await _host.GetAsync(
                         $"v1/media/{Uri.EscapeDataString(device.DeviceId)}/{Uri.EscapeDataString(photo.MediaId)}/content");
                     if (!response.IsSuccessStatusCode)
@@ -2549,7 +2549,7 @@ public partial class MainWindow : Window
 
     private async Task DownloadAndOpenStorageFileAsync(string deviceId, StorageItemViewModel item)
     {
-        StorageStatusText.Text = $"Downloading {item.Name}...";
+        StorageStatusText.Text = L.F("downloading_item", item.Name);
         try
         {
             var response = await _host.PostAsJsonAsync($"v1/devices/{Uri.EscapeDataString(deviceId)}/storage/file", new StorageFileRequestPayload(Guid.NewGuid().ToString(), item.Payload.Path));
@@ -2577,7 +2577,7 @@ public partial class MainWindow : Window
             {
                 UseShellExecute = true
             });
-            StorageStatusText.Text = $"Opened {item.Name}.";
+            StorageStatusText.Text = L.F("opened_item", item.Name);
         }
         catch (Exception ex)
         {
@@ -2640,7 +2640,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        StorageStatusText.Text = $"Downloading {item.Name}...";
+        StorageStatusText.Text = L.F("downloading_item", item.Name);
         try
         {
             var response = await _host.PostAsJsonAsync($"v1/devices/{Uri.EscapeDataString(selectedDevice.DeviceId)}/storage/file", new StorageFileRequestPayload(Guid.NewGuid().ToString(), item.Payload.Path));
@@ -2698,7 +2698,7 @@ public partial class MainWindow : Window
         var resultConfirm = MessageBox.Show(L.F("are_you_sure_you_want_to_delete", item.Name), L.T("confirm_delete"), MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (resultConfirm != MessageBoxResult.Yes) return;
 
-        StorageStatusText.Text = $"Deleting {item.Name}...";
+        StorageStatusText.Text = L.F("deleting_item", item.Name);
         try
         {
             var response = await _host.DeleteAsync($"v1/devices/{Uri.EscapeDataString(selectedDevice.DeviceId)}/storage?filePath={Uri.EscapeDataString(item.Payload.Path)}");
@@ -2708,7 +2708,7 @@ public partial class MainWindow : Window
                 return;
             }
 
-            StorageStatusText.Text = $"Deleted {item.Name}.";
+            StorageStatusText.Text = L.F("deleted_item", item.Name);
             await LoadStorageDirectoryAsync(selectedDevice.DeviceId, _currentStoragePath);
         }
         catch (Exception ex)

@@ -104,7 +104,7 @@ public partial class MainWindow
             return;
         }
 
-        AppsStatusText.Text = $"Opening {app.Label}...";
+        AppsStatusText.Text = L.F("opening_app", app.Label);
         try
         {
             using var response = await _host.PostAsync(
