@@ -459,7 +459,17 @@
                                                     <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
                                                 <Border Style="{StaticResource Avatar}" Width="40" Height="40" CornerRadius="20">
-                                                    <TextBlock Text="{Binding Initials}" Style="{StaticResource AvatarInitials}" />
+                                                    <TextBlock Text="{Binding Initials}">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock" BasedOn="{StaticResource AvatarInitials}">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsNumberOnly}" Value="True">
+                                                                        <Setter Property="FontFamily" Value="{StaticResource IconFontFamily}" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
                                                 </Border>
                                                 <StackPanel Grid.Column="1" Margin="12,0,8,0" VerticalAlignment="Center">
                                                     <TextBlock x:Name="ThreadName" Text="{Binding DisplayName}" />
@@ -506,16 +516,32 @@
                                 <Border BorderBrush="{DynamicResource DividerBrush}" BorderThickness="0,0,0,1" Padding="20,14">
                                     <StackPanel Orientation="Horizontal">
                                         <Border Style="{StaticResource Avatar}">
-                                            <TextBlock Text="{Binding SelectedItem.Initials, ElementName=SmsThreadsList}" Style="{StaticResource AvatarInitials}" />
+                                            <TextBlock Text="{Binding SelectedItem.Initials, ElementName=SmsThreadsList}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource AvatarInitials}">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding SelectedItem.IsNumberOnly, ElementName=SmsThreadsList}" Value="True">
+                                                                <Setter Property="FontFamily" Value="{StaticResource IconFontFamily}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
                                         </Border>
                                         <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding SelectedItem.DisplayName, ElementName=SmsThreadsList}" FontWeight="SemiBold" />
-                                            <TextBlock Text="{Binding SelectedItem.Address, ElementName=SmsThreadsList}" Style="{StaticResource CaptionText}" />
+                                            <TextBlock Text="{Binding SelectedItem.Address, ElementName=SmsThreadsList}" Style="{StaticResource CaptionText}"
+                                                       Visibility="{Binding SelectedItem.ShowAddress, ElementName=SmsThreadsList, Converter={StaticResource BoolToVisConverter}}" />
                                         </StackPanel>
                                     </StackPanel>
                                 </Border>
-                                <ListBox x:Name="SmsMessagesList" Grid.Row="1" Padding="20,12" ItemContainerStyle="{StaticResource PlainListItem}"
+                                <ListBox x:Name="SmsMessagesList" Grid.Row="1" Padding="20,12"
                                          AutomationProperties.Name="{l:Loc messages_in_conversation}">
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource PlainListItem}">
+                                            <Setter Property="AutomationProperties.Name" Value="{Binding Body}" />
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
                                             <Grid Margin="0,3">

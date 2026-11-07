@@ -1149,6 +1149,8 @@ public partial class MainWindow : Window
 
     private void ReconcileSmsThreads(IReadOnlyList<SmsThreadViewModel> latest)
     {
+        var open = SmsThreadsList.SelectedItem as SmsThreadViewModel;
+        var openUpdatedAt = open?.UpdatedAt;
         var latestIds = latest.Select(thread => thread.ThreadKey).ToHashSet(StringComparer.Ordinal);
         for (var index = _smsThreads.Count - 1; index >= 0; index--)
         {
@@ -1172,11 +1174,22 @@ public partial class MainWindow : Window
         }
 
         _allSmsThreads = _smsThreads.ToArray();
+
+        // A new message in the open conversation (received, or a reply sent from here): show it.
+        if (open is not null && ReferenceEquals(SmsThreadsList.SelectedItem, open) && open.UpdatedAt != openUpdatedAt)
+        {
+            _ = LoadSmsMessagesAsync(open);
+        }
     }
 
-    private async void SmsThreadsList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    private void SmsThreadsList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
-        if (SmsThreadsList.SelectedItem is not SmsThreadViewModel thread)
+        _ = LoadSmsMessagesAsync(SmsThreadsList.SelectedItem as SmsThreadViewModel);
+    }
+
+    private async Task LoadSmsMessagesAsync(SmsThreadViewModel? thread)
+    {
+        if (thread is null)
         {
             SmsMessagesList.ItemsSource = Array.Empty<SmsMessagePayload>();
             return;
@@ -1193,7 +1206,10 @@ public partial class MainWindow : Window
             var messages = await _host.GetFromJsonAsync<SmsMessagePayload[]>(
                 $"v1/sms/{Uri.EscapeDataString(thread.DeviceId)}/threads/{Uri.EscapeDataString(thread.ThreadId)}/messages",
                 JsonOptions) ?? Array.Empty<SmsMessagePayload>();
-            SmsMessagesList.ItemsSource = messages;
+            if (ReferenceEquals(SmsThreadsList.SelectedItem, thread))
+            {
+                SmsMessagesList.ItemsSource = messages;
+            }
         }
         catch (Exception ex)
         {
@@ -3158,6 +3174,12 @@ internal sealed class SmsThreadViewModel : INotifyPropertyChanged
         Payload = payload;
     }
 
+    /// <summary>What a screen reader announces for the conversation.</summary>
+    public override string ToString() => $"{DisplayName}, {Payload.Snippet}";
+
+    /// <summary>The number under the name, unless the name already is the number.</summary>
+    public bool ShowAddress => !string.Equals(DisplayName?.Trim(), Payload.Address?.Trim(), StringComparison.Ordinal);
+
     public string DeviceId { get; }
     public SmsThreadPayload Payload { get; private set; }
     public string ThreadKey => $"{DeviceId}:{Payload.ThreadId}";
@@ -3169,11 +3191,16 @@ internal sealed class SmsThreadViewModel : INotifyPropertyChanged
     public int UnreadCount => Payload.UnreadCount;
     public bool HasUnread => UnreadCount > 0;
 
+    public bool IsNumberOnly => !string.IsNullOrWhiteSpace(DisplayName)
+        && DisplayName.All(character => char.IsDigit(character) || character is '+' or ' ' or '-' or '(' or ')');
+
     public string Initials
     {
         get
         {
             if (string.IsNullOrWhiteSpace(DisplayName)) return "?";
+            // A bare phone number has no initials: show a person glyph (Segoe Fluent Icons) instead.
+            if (IsNumberOnly) return "";
             var parts = DisplayName.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length == 0) return "?";
             if (parts.Length == 1) return parts[0][0].ToString().ToUpperInvariant();

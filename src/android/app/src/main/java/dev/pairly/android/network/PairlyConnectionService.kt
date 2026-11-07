@@ -1536,6 +1536,9 @@ class PairlyConnectionService : Service() {
         sendCommandResult(requestId, "sms", sent, message)
         if (sent) {
             FeatureSyncController.scheduleSmsSync(this)
+            // Android writes the sent message to the SMS provider only once the network accepted it,
+            // often after the first sync; look again so the PC shows the reply in the thread.
+            mainHandler.postDelayed({ FeatureSyncController.scheduleSmsSync(this) }, 4_000L)
         } else {
             FeatureSyncController.sendDeviceState(this)
         }
