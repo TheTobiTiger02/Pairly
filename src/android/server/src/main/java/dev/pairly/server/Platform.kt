@@ -9,7 +9,6 @@ import android.hardware.display.DisplayManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import android.view.InputEvent
 
 /**
  * The hidden framework entry points the server needs, all behind reflection.
@@ -109,29 +108,15 @@ object Platform {
         )
     }
 
-    private val injector: Pair<Any, java.lang.reflect.Method> by lazy {
-        // Android 14 moved injection from InputManager to InputManagerGlobal.
-        val owner = runCatching { Class.forName("android.hardware.input.InputManagerGlobal") }
-            .getOrElse { Class.forName("android.hardware.input.InputManager") }
-        val instance = owner.getDeclaredMethod("getInstance").invoke(null)!!
-        val inject = owner.getMethod("injectInputEvent", InputEvent::class.java, Int::class.javaPrimitiveType)
-        instance to inject
+    fun setClipboard(value: String): Boolean {
+        val clipboard = clipboard ?: return false
+        return runCatching { clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Pairly", value)) }
+            .onFailure { Log.w("Setting the clipboard failed", it) }
+            .isSuccess
     }
 
-    private val setDisplayId by lazy {
-        InputEvent::class.java.getMethod("setDisplayId", Int::class.javaPrimitiveType)
-    }
-
-    /** Injects without waiting for the target app: a slow app must not stall the input stream. */
-    fun inject(event: InputEvent, displayId: Int): Boolean {
-        if (displayId != 0) {
-            runCatching { setDisplayId.invoke(event, displayId) }
-        }
-        val (instance, method) = injector
-        return method.invoke(instance, event, INJECT_ASYNC) as Boolean
-    }
-
-    private const val INJECT_ASYNC = 0
+    fun readClipboard(): String? =
+        runCatching { clipboard?.primaryClip?.getItemAt(0)?.coerceToText(shellContext)?.toString() }.getOrNull()
 
     private class ShellContext(base: Context) : ContextWrapper(base) {
         override fun getPackageName(): String = SHELL_PACKAGE

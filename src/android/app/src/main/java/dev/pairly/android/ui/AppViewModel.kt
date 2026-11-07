@@ -1,14 +1,14 @@
 package dev.pairly.android.ui
 
 import android.app.Application
-import android.content.pm.PackageManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dev.pairly.android.BuildConfig
 import dev.pairly.android.R
 import dev.pairly.android.features.clipboard.ClipboardRelay
-import dev.pairly.android.features.clipboard.ClipboardShizukuAccess
 import dev.pairly.android.features.clipboard.ClipboardSyncController
+import dev.pairly.android.features.shizuku.ShizukuGrants
+import dev.pairly.android.features.shizuku.ShizukuHelper
 import dev.pairly.android.features.sync.FeatureSyncController
 import dev.pairly.android.features.update.ReleaseNotes
 import dev.pairly.android.features.update.isNewerVersion
@@ -27,15 +27,21 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import rikka.shizuku.Shizuku
 
-/** What the Shizuku guide checks off live. */
+/** Power mode (Shizuku), as the guide and the status cards show it. */
 data class ShizukuStatus(
     val developerOptions: Boolean = false,
+    /** The guide's Wireless debugging step: on now, or no longer needed because Shizuku runs. */
     val wirelessDebugging: Boolean = false,
     val installed: Boolean = false,
     val running: Boolean = false,
-    val allowed: Boolean = false
+    val allowed: Boolean = false,
+    val hasRunBefore: Boolean = false,
+    val startsOnBoot: Boolean = false,
+    /** Wireless debugging is switched on right now. */
+    val wirelessDebuggingOn: Boolean = false,
+    /** The user's setting: switch Wireless debugging off whenever Shizuku runs. */
+    val turnOffWirelessDebugging: Boolean = true
 ) {
     val ready: Boolean get() = installed && running && allowed
 }
@@ -89,14 +95,13 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     init {
         PairlyConnection.deviceId = settings.deviceId
         PairlyConnection.host = settings.endpoint
-        ClipboardShizukuAccess.init(application)
+        ShizukuHelper.init(application)
         dev.pairly.android.features.mirror.ScreenCaptureAccess.ensure(application)
         if (settings.autoConnectEnabled && settings.trustKey.isNotBlank()) {
             PairlyConnectionService.startConnect(application)
         }
-        viewModelScope.launch {
-            ClipboardShizukuAccess.state.collect { refresh() }
-        }
+        viewModelScope.launch { ShizukuHelper.helperState.collect { refresh() } }
+        viewModelScope.launch { ShizukuHelper.status.collect { refresh() } }
         checkWhatsNew()
     }
 
@@ -124,17 +129,26 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     )
 
     private fun readShizuku(): ShizukuStatus {
-        val installed = runCatching { app.packageManager.getPackageInfo(ClipboardShizukuAccess.PACKAGE, 0) }.isSuccess
-        val running = installed && runCatching { Shizuku.pingBinder() && !Shizuku.isPreV11() }.getOrDefault(false)
-        val allowed = running && runCatching { Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED }.getOrDefault(false)
-        val resolver = app.contentResolver
-        val developer = runCatching { android.provider.Settings.Global.getInt(resolver, android.provider.Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) == 1 }.getOrDefault(false)
-        val wireless = runCatching { android.provider.Settings.Global.getInt(resolver, "adb_wifi_enabled", 0) == 1 }.getOrDefault(false)
-        return ShizukuStatus(developer || running, wireless || running, installed, running, allowed)
+        val shizuku = ShizukuHelper.status.value
+        val developer = runCatching {
+            android.provider.Settings.Global.getInt(app.contentResolver, android.provider.Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) == 1
+        }.getOrDefault(false)
+        return ShizukuStatus(
+            developerOptions = developer || shizuku.running,
+            wirelessDebugging = shizuku.wirelessDebuggingOn || shizuku.running,
+            installed = shizuku.installed,
+            running = shizuku.running,
+            allowed = shizuku.allowed,
+            hasRunBefore = shizuku.hasRunBefore,
+            startsOnBoot = shizuku.startsOnBoot,
+            wirelessDebuggingOn = shizuku.wirelessDebuggingOn,
+            turnOffWirelessDebugging = settings.wirelessDebuggingOffWithShizuku
+        )
     }
 
     /** Re-reads permissions and settings; called whenever the app comes back to the foreground. */
     fun refresh() {
+        ShizukuHelper.refresh()
         mutableState.update {
             it.copy(
                 hasPairing = settings.trustKey.isNotBlank(),
@@ -173,7 +187,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     val savedManualAddress: String get() = settings.host
 
-    fun reconnect() = PairlyConnectionService.startConnect(app)
+    fun reconnect() = PairlyConnectionService.startConnect(app, userRetry = true)
 
     fun forget() {
         PairlyConnectionService.forget(app)
@@ -193,6 +207,25 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun syncNow() = FeatureSyncController.syncAll(app)
+
+    fun setTurnOffWirelessDebugging(enabled: Boolean) {
+        settings.wirelessDebuggingOffWithShizuku = enabled
+        ShizukuHelper.refresh()
+        refresh()
+    }
+
+    /**
+     * Power mode's one tap: grants every permission Pairly still lacks through Shizuku, then
+     * reports how many features were switched on.
+     */
+    fun grantAllWithShizuku(done: (granted: Int) -> Unit = {}) {
+        val missing = mutableState.value.permissions.missing.map { it.key }.filter { it in ShizukuGrants.keys }
+        if (missing.isEmpty()) { done(0); return }
+        ShizukuHelper.grant(app, missing) { granted ->
+            refresh()
+            done(granted.size)
+        }
+    }
 
     fun readClipboard(): String = clipboard.readFocusedText().orEmpty()
 

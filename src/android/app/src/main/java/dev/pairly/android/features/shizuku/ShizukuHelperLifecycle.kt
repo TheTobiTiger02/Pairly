@@ -1,7 +1,7 @@
-package dev.pairly.android.features.clipboard
+package dev.pairly.android.features.shizuku
 
 /** Rejects late bind callbacks after stop, permission loss, or a helper restart. */
-class ClipboardHelperLifecycle {
+class ShizukuHelperLifecycle {
     enum class State { NotInstalled, NotRunning, NotAllowed, Connecting, Ready, Error, Paused }
     var wanted = false
         private set

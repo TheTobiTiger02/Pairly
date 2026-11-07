@@ -30,7 +30,8 @@ class ConnectionSettings(context: Context) {
     var clipboardSyncEnabled: Boolean
         get() = preferences.getBoolean("clipboard_sync_enabled", true)
         set(value) { preferences.edit().putBoolean("clipboard_sync_enabled", value).apply() }
-    var clipboardWirelessDebuggingOff: Boolean
+    /** Switch Wireless debugging off whenever Shizuku is running (it only needs it to start). */
+    var wirelessDebuggingOffWithShizuku: Boolean
         get() = preferences.getBoolean("clipboard_wireless_debugging_off", true)
         set(value) { preferences.edit().putBoolean("clipboard_wireless_debugging_off", value).apply() }
     private val appContext = context.applicationContext

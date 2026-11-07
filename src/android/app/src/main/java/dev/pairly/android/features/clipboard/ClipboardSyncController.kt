@@ -1,5 +1,7 @@
 package dev.pairly.android.features.clipboard
 
+import dev.pairly.android.features.shizuku.IShizukuShell
+import dev.pairly.android.features.shizuku.ShizukuHelper
 import android.content.ClipboardManager
 import android.content.Context
 import android.os.Bundle
@@ -23,13 +25,12 @@ object ClipboardSyncController {
     private var clipboardManager: ClipboardManager? = null
     private var clipListener: ClipboardManager.OnPrimaryClipChangedListener? = null
     private var poll: ScheduledFuture<*>? = null
-    @Volatile private var settledHelper: IClipboardShizuku? = null
-    private var captureHelper: IClipboardShizuku? = null
+    private var captureHelper: IShizukuShell? = null
     val isForegroundSyncActive: Boolean get() = foregroundSyncActive
 
     @Synchronized fun start(context: Context) {
         val app = context.applicationContext
-        ClipboardShizukuAccess.init(app)
+        ShizukuHelper.init(app)
         val settings = ConnectionSettings(app)
         if (!settings.clipboardSyncEnabled || settings.trustKey.isBlank() || settings.savedPairingRejected) { stop(); return }
         if (running) return
@@ -41,12 +42,12 @@ object ClipboardSyncController {
         val manager = app.getSystemService(ClipboardManager::class.java)
         clipboardManager = manager
         clipListener = ClipboardManager.OnPrimaryClipChangedListener {
-            if (foregroundSyncActive && ClipboardShizukuAccess.shell == null) worker.execute { captureFocused(app, true) }
+            if (foregroundSyncActive && ShizukuHelper.shell == null) worker.execute { captureFocused(app, true) }
         }.also { manager.addPrimaryClipChangedListener(it) }
-        ClipboardShizukuAccess.start(app)
+        ShizukuHelper.start(app, ShizukuHelper.HOLDER_CLIPBOARD)
         poll = worker.scheduleWithFixedDelay({
             if (running) {
-                val helper = ClipboardShizukuAccess.shell
+                val helper = ShizukuHelper.shell
                 if (helper != null) captureShizuku(app, helper)
                 else if (foregroundSyncActive) captureFocused(app, true)
             }
@@ -57,14 +58,13 @@ object ClipboardSyncController {
         running = false
         poll?.cancel(false); poll = null
         clipListener?.let { clipboardManager?.removePrimaryClipChangedListener(it) }
-        clipListener = null; clipboardManager = null; settledHelper = null; captureHelper = null
+        clipListener = null; clipboardManager = null; captureHelper = null
         ordering.clear()
-        ClipboardShizukuAccess.stop()
+        ShizukuHelper.stop(ShizukuHelper.HOLDER_CLIPBOARD)
     }
-    fun startForegroundSync(context: Context) { foregroundSyncActive = true; ClipboardShizukuAccess.init(context) }
+    fun startForegroundSync(context: Context) { foregroundSyncActive = true; ShizukuHelper.init(context) }
     fun stopForegroundSync() { foregroundSyncActive = false }
     fun resetSession() { ordering.resetSession() }
-    fun wirelessSettingChanged() { settledHelper = null }
 
     private fun observe(app: Context, metadata: Bundle, content: ClipboardState.Identity?, version: Long): Boolean = synchronized(ordering) {
         val signature = metadata.getString("signature") ?: return false
@@ -79,7 +79,7 @@ object ClipboardSyncController {
         changed && allowed
     }
 
-    private fun readShizuku(helper: IClipboardShizuku, metadata: Bundle): ByteArray? {
+    private fun readShizuku(helper: IShizukuShell, metadata: Bundle): ByteArray? {
         val type = metadata.getString("type").orEmpty()
         if (!ClipboardTransferPolicy.mayCapture(metadata.getBoolean("sensitive"), type)) return null
         val descriptor = helper.openContent(metadata.getLong("revision")) ?: return null
@@ -97,18 +97,14 @@ object ClipboardSyncController {
         }
     }
 
-    private fun captureShizuku(app: Context, helper: IClipboardShizuku) {
+    private fun captureShizuku(app: Context, helper: IShizukuShell) {
         try {
             val metadata = helper.snapshot() ?: return
-            if (captureHelper !== helper) { captureHelper = helper; ordering.resetBaseline() }
-            ClipboardShizukuAccess.healthy(helper)
-            if (settledHelper !== helper) {
-                settledHelper = helper
-                if (ConnectionSettings(app).clipboardWirelessDebuggingOff) runCatching { helper.turnOffWirelessDebugging() }
-                    .onFailure { PairlyConnection.updateStatus("Clipboard sync is ready, but wireless debugging could not be turned off. Turn it off in Settings.") }
-                val wireless = helper.snapshot()?.getInt("wirelessDebugging", -1)
-                LinkDiagnostics.record(LinkDiagnostics.Category.CLIPBOARD, "clipboard.helper.ready", "Background monitoring active; wireless debugging setting=$wireless.")
+            if (captureHelper !== helper) {
+                captureHelper = helper; ordering.resetBaseline()
+                LinkDiagnostics.record(LinkDiagnostics.Category.CLIPBOARD, "clipboard.helper.ready", "Background monitoring active.")
             }
+            ShizukuHelper.healthy(helper)
             val signature = metadata.getString("signature") ?: return
             if (!running || ordering.observed(signature)) return
             val version = ordering.version()
@@ -132,7 +128,7 @@ object ClipboardSyncController {
             LinkDiagnostics.record(LinkDiagnostics.Category.CLIPBOARD, "clipboard.capture.failed", "${failure.javaClass.simpleName}: ${failure.message}", LinkDiagnostics.Severity.ERROR)
             PairlyConnection.updateStatus(if (failure is IllegalArgumentException) failure.message ?: "Clipboard content exceeds the sync limits."
                 else "Background clipboard could not be read. Check Shizuku and the copied item's access.")
-            if (failure !is IllegalArgumentException) ClipboardShizukuAccess.failed(helper)
+            if (failure !is IllegalArgumentException) ShizukuHelper.failed(helper)
         }
     }
 
@@ -211,8 +207,8 @@ object ClipboardSyncController {
     /** Run on an IO worker before committing a remote delivery, including between polling ticks. */
     fun checkBeforeApply(app: Context) {
         if (!running) return
-        val helper = ClipboardShizukuAccess.shell ?: return
-        val metadata = runCatching { helper.snapshot() }.getOrElse { ClipboardShizukuAccess.failed(helper); return }
+        val helper = ShizukuHelper.shell ?: return
+        val metadata = runCatching { helper.snapshot() }.getOrElse { ShizukuHelper.failed(helper); return }
         val signature = metadata?.getString("signature") ?: return
         if (ordering.observed(signature)) return
         val version = ordering.version()

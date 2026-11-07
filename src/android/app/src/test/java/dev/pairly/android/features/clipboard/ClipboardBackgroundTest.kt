@@ -1,5 +1,6 @@
 package dev.pairly.android.features.clipboard
 
+import dev.pairly.android.features.shizuku.ShizukuHelperLifecycle
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -134,31 +135,31 @@ class ClipboardBackgroundTest {
     }
 
     @Test fun helperStopRevocationAndRestartRejectLateCallbacks() {
-        val helper = ClipboardHelperLifecycle()
+        val helper = ShizukuHelperLifecycle()
         helper.start()
         assertFalse(helper.availability(false, false, false))
-        assertEquals(ClipboardHelperLifecycle.State.NotInstalled, helper.state)
+        assertEquals(ShizukuHelperLifecycle.State.NotInstalled, helper.state)
         assertFalse(helper.availability(true, false, false))
-        assertEquals(ClipboardHelperLifecycle.State.NotRunning, helper.state)
+        assertEquals(ShizukuHelperLifecycle.State.NotRunning, helper.state)
         assertFalse(helper.availability(true, true, false))
-        assertEquals(ClipboardHelperLifecycle.State.NotAllowed, helper.state)
+        assertEquals(ShizukuHelperLifecycle.State.NotAllowed, helper.state)
         assertTrue(helper.availability(true, true, true))
         val first = helper.binding()
-        assertEquals(ClipboardHelperLifecycle.State.Connecting, helper.state)
+        assertEquals(ShizukuHelperLifecycle.State.Connecting, helper.state)
         assertTrue(helper.healthy(first))
-        assertEquals(ClipboardHelperLifecycle.State.Ready, helper.state)
+        assertEquals(ShizukuHelperLifecycle.State.Ready, helper.state)
         helper.availability(true, true, false)
         assertFalse(helper.healthy(first))
         helper.availability(true, true, true)
         val second = helper.binding()
         assertTrue(helper.failed(second))
-        assertEquals(ClipboardHelperLifecycle.State.Error, helper.state)
+        assertEquals(ShizukuHelperLifecycle.State.Error, helper.state)
         val third = helper.binding()
         assertFalse(helper.healthy(second))
         assertTrue(helper.healthy(third))
         helper.stop()
         assertFalse(helper.healthy(third))
-        assertEquals(ClipboardHelperLifecycle.State.Paused, helper.state)
+        assertEquals(ShizukuHelperLifecycle.State.Paused, helper.state)
     }
 
     @Test fun retriesKeepIdentityAndDelayedClearCannotEraseNewCopy() {

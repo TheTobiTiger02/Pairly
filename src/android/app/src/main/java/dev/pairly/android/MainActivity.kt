@@ -26,7 +26,7 @@ import com.google.android.gms.common.GoogleApiAvailability
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
-import dev.pairly.android.features.clipboard.ClipboardShizukuAccess
+import dev.pairly.android.features.shizuku.ShizukuHelper
 import dev.pairly.android.features.clipboard.ClipboardSyncController
 import dev.pairly.android.features.mirror.MirrorConsentGate
 import dev.pairly.android.features.notifications.NotificationRelayService
@@ -166,12 +166,12 @@ class MainActivity : ComponentActivity(), FeatureActions {
             ShizukuAction.OpenAboutPhone -> start(Intent(Settings.ACTION_DEVICE_INFO_SETTINGS))
             ShizukuAction.OpenDeveloperOptions -> start(Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS))
             ShizukuAction.GetShizuku -> {
-                if (!start(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=${ClipboardShizukuAccess.PACKAGE}")))) {
+                if (!start(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=${ShizukuHelper.PACKAGE}")))) {
                     openUrl(Links.SHIZUKU_DOWNLOAD)
                 }
             }
-            ShizukuAction.OpenShizuku -> ClipboardShizukuAccess.open(this)
-            ShizukuAction.AllowPairly -> ClipboardShizukuAccess.requestPermission(this)
+            ShizukuAction.OpenShizuku -> ShizukuHelper.open(this)
+            ShizukuAction.AllowPairly -> ShizukuHelper.requestPermission(this)
         }
     }
 

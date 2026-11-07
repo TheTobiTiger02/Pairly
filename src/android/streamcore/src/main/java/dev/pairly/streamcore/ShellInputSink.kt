@@ -1,27 +1,32 @@
-package dev.pairly.server
+package dev.pairly.streamcore
 
-import android.content.ClipData
+import android.annotation.SuppressLint
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.view.InputDevice
+import android.view.InputEvent
 import android.view.KeyCharacterMap
 import android.view.KeyEvent
 import android.view.MotionEvent
-import dev.pairly.streamcore.ControlMessageCodec
-import dev.pairly.streamcore.InputSink
 
 /**
  * Real input events injected with shell rights: exact touch paths, true multi-touch, every key, and
- * text in any language - the ADB-mode counterpart to the app's accessibility sink.
+ * text in any language. Used by both shell-uid processes Pairly runs: the ADB-mode server and the
+ * Shizuku helper. Only works in a process running as the shell user (or root).
  *
  * Coordinates arrive in video pixels together with the video size they were computed against; they
  * are scaled to the display here. [displaySize] is read per event, so a rotation between the PC's
  * click and its arrival lands on the rotated screen rather than off it.
+ *
+ * Text the virtual keyboard map cannot produce goes through [setClipboard] and a paste; the
+ * clipboard belongs to the caller because each process reaches it differently.
  */
-class InjectorInputSink(
+class ShellInputSink(
     private val displayId: () -> Int,
-    private val displaySize: () -> Pair<Int, Int>
+    private val displaySize: () -> Pair<Int, Int>,
+    private val setClipboard: (String) -> Boolean,
+    private val readClipboard: () -> String?
 ) : InputSink {
 
     // localId is the MotionEvent pointer id: it must stay the same for a finger's whole gesture,
@@ -108,7 +113,7 @@ class InjectorInputSink(
             now, now, MotionEvent.ACTION_SCROLL, 1, properties, coords, 0, 0, 1f, 1f, 0, 0,
             InputDevice.SOURCE_MOUSE, 0
         )
-        Platform.inject(event, displayId())
+        InputInjector.inject(event, displayId())
         event.recycle()
     }
 
@@ -131,7 +136,7 @@ class InjectorInputSink(
     override fun text(value: String) {
         val events = keyMap.getEvents(value.toCharArray())
         if (events != null) {
-            events.forEach { Platform.inject(it, displayId()) }
+            events.forEach { InputInjector.inject(it, displayId()) }
             return
         }
         setClipboard(value, paste = true)
@@ -155,9 +160,7 @@ class InjectorInputSink(
     }
 
     override fun setClipboard(value: String, paste: Boolean) {
-        val clipboard = Platform.clipboard ?: return
-        runCatching { clipboard.setPrimaryClip(ClipData.newPlainText("Pairly", value)) }
-            .onFailure { Log.w("Setting the clipboard failed", it); return }
+        if (!setClipboard(value)) return
         if (paste) {
             val now = SystemClock.uptimeMillis()
             injectKey(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_PASTE, 0, 0, now)
@@ -165,9 +168,7 @@ class InjectorInputSink(
         }
     }
 
-    override fun getClipboard(): String? =
-        runCatching { Platform.clipboard?.primaryClip?.getItemAt(0)?.coerceToText(Platform.shellContext)?.toString() }
-            .getOrNull()
+    override fun getClipboard(): String? = readClipboard()
 
     private fun injectTouch(action: Int, time: Long) {
         val count = pointers.size
@@ -189,7 +190,7 @@ class InjectorInputSink(
             downTime, time, action, count, properties, coords, 0, 0, 1f, 1f, 0, 0,
             InputDevice.SOURCE_TOUCHSCREEN, 0
         )
-        Platform.inject(event, displayId())
+        InputInjector.inject(event, displayId())
         event.recycle()
     }
 
@@ -198,7 +199,7 @@ class InjectorInputSink(
             time, time, action, keyCode, repeat, metaState,
             KeyCharacterMap.VIRTUAL_KEYBOARD, 0, 0, InputDevice.SOURCE_KEYBOARD
         )
-        Platform.inject(event, displayId())
+        InputInjector.inject(event, displayId())
     }
 
     private fun scale(x: Int, y: Int, screenWidth: Int, screenHeight: Int): Pair<Float, Float>? {
@@ -214,10 +215,45 @@ class InjectorInputSink(
     }
 }
 
-/** Runs a shell command as the server's own (shell) user and returns its output. */
+/** InputManager's hidden injection call; succeeds only for the shell user or root. */
+@SuppressLint("PrivateApi", "DiscouragedPrivateApi", "SoonBlockedPrivateApi")
+object InputInjector {
+    private val injector: Pair<Any, java.lang.reflect.Method> by lazy {
+        // Android 14 moved injection from InputManager to InputManagerGlobal.
+        val owner = runCatching { Class.forName("android.hardware.input.InputManagerGlobal") }
+            .getOrElse { Class.forName("android.hardware.input.InputManager") }
+        val instance = owner.getDeclaredMethod("getInstance").invoke(null)!!
+        val inject = owner.getMethod("injectInputEvent", InputEvent::class.java, Int::class.javaPrimitiveType)
+        instance to inject
+    }
+
+    private val setDisplayId by lazy {
+        InputEvent::class.java.getMethod("setDisplayId", Int::class.javaPrimitiveType)
+    }
+
+    /** Injects without waiting for the target app: a slow app must not stall the input stream. */
+    fun inject(event: InputEvent, displayId: Int): Boolean {
+        if (displayId != 0) {
+            runCatching { setDisplayId.invoke(event, displayId) }
+        }
+        val (instance, method) = injector
+        return method.invoke(instance, event, INJECT_ASYNC) as Boolean
+    }
+
+    private const val INJECT_ASYNC = 0
+}
+
+/** Runs a command as the calling process's user and returns its output; "" on failure. */
 object Shell {
     fun run(vararg command: String): String = runCatching {
         val process = ProcessBuilder(*command).redirectErrorStream(true).start()
         process.inputStream.bufferedReader().readText().also { process.waitFor() }
     }.getOrElse { "" }
+
+    /** Runs a command and reports whether it exited with 0 within [timeoutSeconds]. */
+    fun ok(vararg command: String, timeoutSeconds: Long = 10): Boolean = runCatching {
+        val process = ProcessBuilder(*command).redirectErrorStream(true).start()
+        process.inputStream.use { input -> val buffer = ByteArray(1024); while (input.read(buffer) >= 0) { } }
+        process.waitFor(timeoutSeconds, java.util.concurrent.TimeUnit.SECONDS) && process.exitValue() == 0
+    }.getOrDefault(false)
 }

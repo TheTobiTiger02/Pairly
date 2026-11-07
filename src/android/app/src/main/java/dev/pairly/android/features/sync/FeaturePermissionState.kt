@@ -8,6 +8,8 @@ import android.os.Build
 import android.provider.Settings
 import androidx.core.content.ContextCompat
 import dev.pairly.android.features.notifications.NotificationRelayService
+import dev.pairly.android.features.shizuku.ShizukuHelper
+import dev.pairly.android.features.shizuku.ShizukuHelperLifecycle
 
 object FeaturePermissionState {
     private const val PREFS = "pairly_feature_permissions"
@@ -15,15 +17,26 @@ object FeaturePermissionState {
     private const val KEY_SMS_DENIED = "sms_denied"
     private const val KEY_POST_NOTIFICATIONS_DENIED = "post_notifications_denied"
 
-    fun permissions(context: Context, mirroringActive: Boolean = false): Map<String, String> = mapOf(
-        "clipboard" to "granted",
-        "clipboardBackground" to if (!dev.pairly.android.network.ConnectionSettings(context).clipboardSyncEnabled) "disabled"
-            else if (dev.pairly.android.features.clipboard.ClipboardShizukuAccess.state.value == dev.pairly.android.features.clipboard.ClipboardHelperLifecycle.State.Ready) "granted" else "needs_user_action",
-        "photos" to runtimePermissionState(context, photoPermissions(context), KEY_PHOTOS_DENIED),
-        "notifications" to notificationState(context),
-        "sms" to runtimePermissionState(context, smsPermissions(), KEY_SMS_DENIED),
-        "mirroring" to if (mirroringActive) "granted" else "needs_user_action"
-    )
+    fun permissions(context: Context, mirroringActive: Boolean = false): Map<String, String> {
+        val snapshot = dev.pairly.android.ui.features.PermissionSnapshot.read(context)
+        fun state(feature: dev.pairly.android.ui.features.Feature) = if (snapshot.isOn(feature)) "granted" else "needs_user_action"
+        return mapOf(
+            "clipboard" to "granted",
+            "clipboardBackground" to if (!dev.pairly.android.network.ConnectionSettings(context).clipboardSyncEnabled) "disabled"
+                else if (ShizukuHelper.helperState.value == ShizukuHelperLifecycle.State.Ready) "granted" else "needs_user_action",
+            "photos" to runtimePermissionState(context, photoPermissions(context), KEY_PHOTOS_DENIED),
+            "notifications" to notificationState(context),
+            "sms" to runtimePermissionState(context, smsPermissions(), KEY_SMS_DENIED),
+            "mirroring" to if (mirroringActive) "granted" else "needs_user_action",
+            // For the PC's setup checklist and status.
+            "calls" to state(dev.pairly.android.ui.features.Feature.Calls),
+            "files" to state(dev.pairly.android.ui.features.Feature.Files),
+            "control" to if (ShizukuHelper.status.value.ready) "granted" else state(dev.pairly.android.ui.features.Feature.RemoteControl),
+            "background" to state(dev.pairly.android.ui.features.Feature.Background),
+            // Power mode (Shizuku): ready | notRunning | notAllowed | notInstalled
+            "powerMode" to ShizukuHelper.status.value.wireName
+        )
+    }
 
     fun photoPermissions(context: Context): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
