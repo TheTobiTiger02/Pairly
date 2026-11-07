@@ -93,7 +93,9 @@ class HomeCallbacks(
     val syncNow: () -> Unit,
     /** Sends what's on the phone's clipboard now; false when there was nothing to send. */
     val sendClipboard: () -> Boolean,
-    val sendFiles: (List<Uri>) -> Unit
+    val sendFiles: (List<Uri>) -> Unit,
+    val openPowerSetup: () -> Unit,
+    val grantAllWithShizuku: () -> Unit
 )
 
 @Composable
@@ -102,6 +104,19 @@ fun HomeScreen(state: AppState, callbacks: HomeCallbacks) {
         item { HomeTopBar(state, callbacks) }
         item { PcHeroCard(state, callbacks) }
         if (state.hasPairing) item { SendCard(state, callbacks) }
+        if (state.hasPairing) item {
+            val actions = dev.pairly.android.ui.LocalFeatureActions.current
+            dev.pairly.android.ui.features.PowerModeCard(
+                status = state.shizuku,
+                missingFeatures = state.permissions.missing.size,
+                onSetUp = callbacks.openPowerSetup,
+                onOpenShizuku = { actions.shizuku(dev.pairly.android.ui.ShizukuAction.OpenShizuku) },
+                onAllow = { actions.shizuku(dev.pairly.android.ui.ShizukuAction.AllowPairly) },
+                onGrantAll = callbacks.grantAllWithShizuku,
+                onTurnOffWirelessDebugging = {},
+                showSettings = false
+            )
+        }
         item { FeaturesCard(state, callbacks.openFeature) }
         if (!state.hasPairing) item { HelpLink(callbacks.openHelp) }
     }
@@ -306,7 +321,7 @@ private fun Modifier.clickableButton(label: String, onClick: () -> Unit): Modifi
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun FeaturesCard(state: AppState, openFeature: (Feature) -> Unit) {
-    val features = Feature.setupOrder
+    val features = Feature.setupOrder + Feature.Clipboard
     val on = features.count { state.permissions.isOn(it) }
     val progress by animateFloatAsState(on / features.size.toFloat(), label = "setup")
     PairlyCard(Modifier.fillMaxWidth()) {
@@ -332,7 +347,7 @@ private fun FeaturesCard(state: AppState, openFeature: (Feature) -> Unit) {
         }
         Spacer(Modifier.height(Space.m))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Space.s), verticalArrangement = Arrangement.spacedBy(Space.xs)) {
-            (features + Feature.Clipboard).forEach { feature ->
+            features.forEach { feature ->
                 val enabled = state.permissions.isOn(feature)
                 val name = stringResource(feature.title)
                 val status = stringResource(if (enabled) R.string.permission_on else R.string.permission_off)

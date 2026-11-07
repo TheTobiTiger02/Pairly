@@ -360,4 +360,40 @@
     <string name="mirror_check_shizuku_allowed">Pairly allowed in Shizuku</string>
     <string name="mirror_check_prompt_skipped">Android’s prompt switched off</string>
     <string name="mirror_skip_prompt_setup_action">Set up Shizuku</string>
+    <!-- Power mode and style -->
+    <string name="power_title">Power mode</string>
+    <string name="power_on">Power mode is on</string>
+    <string name="power_on_detail">Shizuku is running. Clipboard syncs in the background, mirroring starts without asking, and your PC taps and types for real.</string>
+    <string name="power_wd_off">Wireless debugging is off. Shizuku keeps running without it.</string>
+    <string name="power_wd_on">Wireless debugging is still on.</string>
+    <string name="power_wd_switch">Turn off Wireless debugging</string>
+    <string name="power_wd_switch_detail">Shizuku only needs it to start. Pairly switches it off again right after.</string>
+    <string name="power_boot_auto">Starts again by itself after a restart.</string>
+    <string name="power_boot_manual">After a restart, open Shizuku and tap Start.</string>
+    <string name="power_paused">Power mode is paused</string>
+    <string name="power_paused_detail">Shizuku stopped, usually after a restart. Open Shizuku and tap Start; everything else stays set up.</string>
+    <string name="power_allow">Allow Pairly in Shizuku</string>
+    <string name="power_allow_detail">Shizuku is running. Pairly still needs your OK to use it.</string>
+    <string name="power_off">Turn on Power mode</string>
+    <string name="power_off_detail">A one-time, five-minute setup with the free Shizuku app. Unlocks background clipboard, prompt-free mirroring, real touch and keys, and one-tap permissions.</string>
+    <string name="power_setup">Set up Power mode</string>
+    <string name="power_open_shizuku">Open Shizuku</string>
+    <string name="power_nothing_missing">Everything is already switched on.</string>
+    <string name="power_benefit_clipboard">Clipboard syncs in the background</string>
+    <string name="power_benefit_mirror">Mirroring starts without a prompt</string>
+    <string name="power_benefit_input">Real touch and keys from your PC</string>
+    <string name="power_benefit_grants">All permissions in one tap</string>
+    <string name="settings_style">Style</string>
+    <string name="style_aurora">Aurora</string>
+    <string name="style_aurora_detail">Indigo, calm</string>
+    <string name="style_daybreak">Daybreak</string>
+    <string name="style_daybreak_detail">Warm, playful</string>
+    <plurals name="power_grant_all">
+        <item quantity="one">Turn on %1$d feature in one tap</item>
+        <item quantity="other">Turn on %1$d features in one tap</item>
+    </plurals>
+    <plurals name="power_granted">
+        <item quantity="one">%1$d feature switched on</item>
+        <item quantity="other">%1$d features switched on</item>
+    </plurals>
 </resources>

@@ -65,6 +65,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
@@ -128,7 +129,9 @@ fun ScreenList(
     content: LazyListScope.() -> Unit
 ) {
     LazyColumn(
-        modifier = modifier.fillMaxSize(),
+        // Cards animate their size and fade, and drawing for those can spill past the list; keep
+        // everything below the status bar.
+        modifier = modifier.fillMaxSize().clipToBounds(),
         contentPadding = contentPadding,
         verticalArrangement = Arrangement.spacedBy(Space.m),
         content = content

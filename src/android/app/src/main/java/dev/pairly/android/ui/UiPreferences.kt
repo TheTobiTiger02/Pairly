@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import dev.pairly.android.network.ConnectionSettings
 import dev.pairly.android.ui.onboarding.OnboardingStep
+import dev.pairly.android.ui.theme.AppStyle
 import dev.pairly.android.ui.theme.ThemeMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 data class UiPrefs(
     val themeMode: ThemeMode = ThemeMode.System,
+    val appStyle: AppStyle = AppStyle.Aurora,
     val dynamicColor: Boolean = false,
     val onboardingDone: Boolean = false,
     val onboardingStep: OnboardingStep = OnboardingStep.Welcome,
@@ -32,6 +34,7 @@ class UiPreferences private constructor(context: Context) {
         val pairedBefore = ConnectionSettings(context).trustKey.isNotBlank()
         return UiPrefs(
             themeMode = enumOr(prefs.getString(KEY_THEME, null), ThemeMode.System),
+            appStyle = enumOr(prefs.getString(KEY_STYLE, null), AppStyle.Aurora),
             dynamicColor = prefs.getBoolean(KEY_DYNAMIC, false),
             onboardingDone = prefs.getBoolean(KEY_ONBOARDING_DONE, pairedBefore),
             onboardingStep = enumOr(prefs.getString(KEY_ONBOARDING_STEP, null), OnboardingStep.Welcome),
@@ -44,6 +47,7 @@ class UiPreferences private constructor(context: Context) {
         state.value = next
         prefs.edit()
             .putString(KEY_THEME, next.themeMode.name)
+            .putString(KEY_STYLE, next.appStyle.name)
             .putBoolean(KEY_DYNAMIC, next.dynamicColor)
             .putBoolean(KEY_ONBOARDING_DONE, next.onboardingDone)
             .putString(KEY_ONBOARDING_STEP, next.onboardingStep.name)
@@ -53,6 +57,7 @@ class UiPreferences private constructor(context: Context) {
 
     companion object {
         private const val KEY_THEME = "theme_mode"
+        private const val KEY_STYLE = "app_style"
         private const val KEY_DYNAMIC = "dynamic_color"
         private const val KEY_ONBOARDING_DONE = "onboarding_done"
         private const val KEY_ONBOARDING_STEP = "onboarding_step"

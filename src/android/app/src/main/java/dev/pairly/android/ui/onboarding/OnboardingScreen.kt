@@ -64,6 +64,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.Spring
 import dev.pairly.android.ui.navigation.Motion
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -188,7 +189,7 @@ private fun StepLayout(
 ) {
     Column(Modifier.fillMaxSize()) {
         Column(
-            Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = Space.xxl, vertical = Space.m),
+            Modifier.weight(1f).clipToBounds().verticalScroll(rememberScrollState()).padding(horizontal = Space.xxl, vertical = Space.m),
             content = content
         )
         Column(
