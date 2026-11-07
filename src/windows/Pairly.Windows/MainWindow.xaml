@@ -170,14 +170,14 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <ContentControl x:Name="NavDeviceHost" Focusable="False" IsTabStop="False">
-                <Border x:Name="DeviceCard" Style="{StaticResource PageCard}" Padding="12">
+                <Border x:Name="DeviceCard" Style="{StaticResource PageCard}" Padding="12" Background="{DynamicResource HeroBrush}" BorderThickness="0">
                     <StackPanel>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <ToggleButton x:Name="DevicePickerToggle" Style="{StaticResource SubtleToggleButton}" Padding="6"
+                            <ToggleButton x:Name="DevicePickerToggle" Style="{StaticResource SubtleToggleButton}" Padding="6" Resources="{StaticResource OnHeroResources}"
                                           IsHitTestVisible="{Binding IsOpen, ElementName=DevicePickerPopup, Converter={StaticResource InverseBool}}"
                                           AutomationProperties.Name="{l:Loc choose_phone}" ToolTip="{l:Loc choose_which_phone_to_use}">
                                 <Grid>
@@ -208,7 +208,7 @@
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
                                 </Grid>
                             </ToggleButton>
-                            <Button Grid.Column="1" Style="{StaticResource IconButton}" Content="&#xE710;" VerticalAlignment="Top" Margin="4,0,0,0"
+                            <Button Grid.Column="1" Style="{StaticResource IconButton}" Content="&#xE710;" VerticalAlignment="Top" Margin="4,0,0,0" Resources="{StaticResource OnHeroResources}"
                                     ToolTip="{l:Loc add_a_device}" Click="OpenPairingPanel_Click" AutomationProperties.Name="{l:Loc add_device}" />
 
                             <Popup x:Name="DevicePickerPopup" PlacementTarget="{Binding ElementName=DevicePickerToggle}" Placement="Bottom"
@@ -260,7 +260,11 @@
                         </Grid>
 
                         <!-- Battery and sync status of the selected phone. -->
-                        <Grid Style="{StaticResource DeviceSelected}" Margin="6,10,6,0">
+                        <Grid Style="{StaticResource DeviceSelected}" Margin="6,10,6,0" Resources="{StaticResource OnHeroResources}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="*" />
@@ -271,6 +275,14 @@
                                 <TextBlock Text="{Binding SelectedItem.BatteryDisplayText, ElementName=DevicesList}" Style="{StaticResource CaptionText}"
                                            VerticalAlignment="Center" />
                             </StackPanel>
+                            <Border Grid.Row="1" Grid.ColumnSpan="2" HorizontalAlignment="Left" Margin="0,8,0,0" Padding="8,3"
+                                    CornerRadius="10" Background="{DynamicResource AccentSubtleBrush}" ToolTip="{l:Loc power_mode_tooltip}"
+                                    Visibility="{Binding SelectedItem.HasPowerModeText, ElementName=DevicesList, Converter={StaticResource BoolToVisConverter}, FallbackValue=Collapsed}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE945;" Style="{StaticResource IconGlyph}" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding SelectedItem.PowerModeText, ElementName=DevicesList}" Style="{StaticResource CaptionText}" />
+                                </StackPanel>
+                            </Border>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" ToolTip="{l:Loc last_sync}">
                                 <TextBlock Text="&#xE895;" Style="{StaticResource IconGlyph}" FontSize="13"
                                            Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,7,0" />
@@ -280,7 +292,7 @@
                         </Grid>
 
                         <!-- Quick actions -->
-                        <Grid x:Name="DeviceQuickActions" Margin="0,12,-6,0">
+                        <Grid x:Name="DeviceQuickActions" Margin="0,12,-6,0" Resources="{StaticResource OnHeroResources}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition />
                                 <ColumnDefinition />
@@ -889,6 +901,20 @@
                                     <StackPanel Margin="16,20,32,32" MaxWidth="1000">
                                         <TextBlock Text="{l:Loc general}" Style="{StaticResource PageTitle}" Margin="0,0,0,8" />
                                         <TextBlock Text="{l:Loc appearance}" Style="{StaticResource SettingsGroupHeader}" />
+                                        <Border Style="{StaticResource SettingsCard}">
+                                            <DockPanel>
+                                                <TextBlock Text="&#xE771;" Style="{StaticResource SettingsCardGlyph}" />
+                                                <ComboBox x:Name="StyleCombo" DockPanel.Dock="Right" VerticalAlignment="Center" Margin="16,0,0,0" MinWidth="200"
+                                                          SelectionChanged="StyleCombo_SelectionChanged" AutomationProperties.Name="{l:Loc style}">
+                                                    <ComboBoxItem Tag="Aurora" Content="{l:Loc style_aurora}" />
+                                                    <ComboBoxItem Tag="Daybreak" Content="{l:Loc style_daybreak}" />
+                                                </ComboBox>
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="{l:Loc style}" Style="{StaticResource SettingsCardTitle}" />
+                                                    <TextBlock Text="{l:Loc style_description}" Style="{StaticResource SettingsCardDescription}" />
+                                                </StackPanel>
+                                            </DockPanel>
+                                        </Border>
                                         <Border Style="{StaticResource SettingsCard}">
                                             <DockPanel>
                                                 <TextBlock Text="&#xE790;" Style="{StaticResource SettingsCardGlyph}" />
@@ -1735,7 +1761,7 @@
               Visibility="Collapsed">
             <Border x:Name="PairingPanel" Width="660" HorizontalAlignment="Center" VerticalAlignment="Center" Focusable="True"
                     Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource FlyoutStrokeBrush}" BorderThickness="1"
-                    CornerRadius="{StaticResource OverlayRadius}" Effect="{StaticResource DialogShadow}"
+                    CornerRadius="{DynamicResource OverlayRadius}" Effect="{StaticResource DialogShadow}"
                     AutomationProperties.Name="{l:Loc set_up_pairly}" RenderTransformOrigin="0.5,0.5">
                 <Border.RenderTransform>
                     <ScaleTransform x:Name="PairingPanelScale" ScaleX="1" ScaleY="1" />
@@ -1948,6 +1974,20 @@
                                 </StackPanel>
                             </DockPanel>
                         </Border>
+<Border Style="{StaticResource SettingsCard}">
+                            <DockPanel>
+                                <TextBlock Text="&#xE771;" Style="{StaticResource SettingsCardGlyph}" />
+                                <ComboBox x:Name="OnboardingStyleCombo" DockPanel.Dock="Right" VerticalAlignment="Center" Margin="16,0,0,0" MinWidth="180"
+                                          SelectionChanged="StyleCombo_SelectionChanged" AutomationProperties.Name="{l:Loc style}">
+                                    <ComboBoxItem Tag="Aurora" Content="{l:Loc style_aurora}" />
+                                    <ComboBoxItem Tag="Daybreak" Content="{l:Loc style_daybreak}" />
+                                </ComboBox>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="{l:Loc style}" Style="{StaticResource SettingsCardTitle}" />
+                                    <TextBlock Text="{l:Loc style_description}" Style="{StaticResource SettingsCardDescription}" />
+                                </StackPanel>
+                            </DockPanel>
+                        </Border>
                         <Border Style="{StaticResource SettingsCard}">
                             <DockPanel>
                                 <TextBlock Text="&#xE790;" Style="{StaticResource SettingsCardGlyph}" />
@@ -1997,7 +2037,7 @@
               Visibility="Collapsed">
             <Border Width="520" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="28,24"
                     Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource FlyoutStrokeBrush}" BorderThickness="1"
-                    CornerRadius="{StaticResource OverlayRadius}" Effect="{StaticResource DialogShadow}" AutomationProperties.Name="{l:Loc what_s_new}">
+                    CornerRadius="{DynamicResource OverlayRadius}" Effect="{StaticResource DialogShadow}" AutomationProperties.Name="{l:Loc what_s_new}">
                 <StackPanel>
                     <Border Width="48" Height="48" CornerRadius="24" Background="{DynamicResource AccentSubtleBrush}" HorizontalAlignment="Left">
                         <TextBlock Text="&#xE735;" Style="{StaticResource IconGlyph}" FontSize="22" Foreground="{DynamicResource AccentBrush}" />

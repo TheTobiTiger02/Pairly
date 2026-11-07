@@ -27,7 +27,7 @@
     </Window.Resources>
 
     <!-- The outer margin leaves room for the shadow inside the transparent window. -->
-    <Border Margin="12,8,12,16" Background="{DynamicResource SurfaceBrush}" CornerRadius="{StaticResource OverlayRadius}"
+    <Border Margin="12,8,12,16" Background="{DynamicResource SurfaceBrush}" CornerRadius="{DynamicResource OverlayRadius}"
             BorderBrush="{DynamicResource FlyoutStrokeBrush}" BorderThickness="1" Effect="{StaticResource DialogShadow}">
         <Grid Margin="16,12,16,16">
             <Grid.RowDefinitions>

@@ -2100,7 +2100,7 @@ public partial class MainWindow : Window
                 && DateTimeOffset.UtcNow - device.LastSeenAt < TimeSpan.FromMinutes(2));
             StatusText.Text = devicesData.Length == 0
                 ? L.T("pairly_is_ready_add_a_phone_to_get_started")
-                : $"{onlineCount} online | {reconnectingCount} reconnecting | {devicesData.Length - onlineCount - reconnectingCount} offline";
+                : L.F("devices_status_summary", onlineCount, reconnectingCount, devicesData.Length - onlineCount - reconnectingCount);
         }
         catch (Exception ex)
         {
@@ -2739,14 +2739,14 @@ public partial class MainWindow : Window
 
     private static string PermissionText(LinkedDevice device, string feature)
     {
-        if (device.Permissions is not null
-            && device.Permissions.TryGetValue(feature, out var value)
-            && !string.IsNullOrWhiteSpace(value))
+        var value = device.Permissions is not null && device.Permissions.TryGetValue(feature, out var state) ? state : null;
+        return value switch
         {
-            return value.Replace('_', ' ');
-        }
-
-        return L.T("needs_user_action");
+            "granted" => L.T("permission_allowed"),
+            "denied" => L.T("permission_denied"),
+            "disabled" => L.T("permission_off"),
+            _ => L.T("needs_user_action")
+        };
     }
 
     private static bool PermissionGranted(LinkedDevice device, string feature) =>
@@ -3211,6 +3211,19 @@ public sealed class DeviceViewModel : INotifyPropertyChanged
     public System.Windows.Media.Brush? StatusBrush => System.Windows.Application.Current?.TryFindResource(
         Device.Connected ? "SuccessBrush" : StatusText == L.T("reconnecting") ? "CautionBrush" : "TextTertiaryBrush") as System.Windows.Media.Brush;
 
+    /// <summary>"Power mode" while the phone runs Shizuku for Pairly; empty otherwise (the chip hides).</summary>
+    public string PowerModeText => Device.Connected && Device.Permissions is not null
+        && Device.Permissions.TryGetValue("powerMode", out var power)
+            ? power switch
+            {
+                "ready" => L.T("power_mode_on"),
+                "notRunning" => L.T("power_mode_paused"),
+                _ => string.Empty
+            }
+            : string.Empty;
+
+    public bool HasPowerModeText => PowerModeText.Length > 0;
+
     public string BatteryDisplayText => string.IsNullOrWhiteSpace(BatteryStatusText) ? L.T("unavailable") : BatteryStatusText;
 
     public string LastSeenText
@@ -3231,7 +3244,7 @@ public sealed class DeviceViewModel : INotifyPropertyChanged
         get
         {
             if (!Device.Connected || Device.BatteryLevel == null) return string.Empty;
-            return $"{Device.BatteryLevel}%" + (Device.IsCharging == true ? " (Charging)" : "");
+            return $"{Device.BatteryLevel}%" + (Device.IsCharging == true ? " · " + L.T("charging") : "");
         }
     }
 
@@ -3268,7 +3281,8 @@ public sealed class DeviceViewModel : INotifyPropertyChanged
         foreach (var propertyName in new[]
         {
             nameof(Device), nameof(DisplayName), nameof(Connected), nameof(Permissions), nameof(StatusText), nameof(StatusBrush),
-            nameof(BatteryStatusText), nameof(BatteryDisplayText), nameof(BatteryGlyph), nameof(LastSeenText)
+            nameof(BatteryStatusText), nameof(BatteryDisplayText), nameof(BatteryGlyph), nameof(LastSeenText),
+            nameof(PowerModeText), nameof(HasPowerModeText)
         })
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

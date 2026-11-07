@@ -537,4 +537,16 @@
   <data name="file_received_detail" xml:space="preserve"><value>{0} is in Downloads\Pairly.</value></data>
   <data name="files_phone_storage" xml:space="preserve"><value>Phone storage</value></data>
   <data name="files_need_access" xml:space="preserve"><value>Your phone hasn't allowed file access yet. In Pairly on the phone, turn on Files, or turn on Power mode to allow everything at once.</value></data>
+  <data name="style" xml:space="preserve"><value>Style</value></data>
+  <data name="style_aurora" xml:space="preserve"><value>Aurora</value></data>
+  <data name="style_daybreak" xml:space="preserve"><value>Daybreak</value></data>
+  <data name="style_description" xml:space="preserve"><value>Aurora is calm indigo, Daybreak warm and rounder. Matches the phone app.</value></data>
+  <data name="permission_allowed" xml:space="preserve"><value>allowed</value></data>
+  <data name="permission_denied" xml:space="preserve"><value>not allowed</value></data>
+  <data name="permission_off" xml:space="preserve"><value>off</value></data>
+  <data name="devices_status_summary" xml:space="preserve"><value>{0} online · {1} reconnecting · {2} offline</value></data>
+  <data name="charging" xml:space="preserve"><value>charging</value></data>
+  <data name="power_mode_on" xml:space="preserve"><value>Power mode</value></data>
+  <data name="power_mode_paused" xml:space="preserve"><value>Power mode paused</value></data>
+  <data name="power_mode_tooltip" xml:space="preserve"><value>Shizuku runs on the phone: mirroring starts without asking and the phone gets real touch and keys. Paused: open Shizuku on the phone and tap Start.</value></data>
 </root>

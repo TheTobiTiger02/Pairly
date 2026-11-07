@@ -19,6 +19,9 @@ internal sealed class DesktopPreferences
     /// <summary>"System", "Light" or "Dark".</summary>
     public string Theme { get; set; } = "System";
 
+    /// <summary>"Aurora" or "Daybreak", the same looks as the phone app.</summary>
+    public string Style { get; set; } = "Aurora";
+
     /// <summary>"" follows Windows; "en" or "de".</summary>
     public string Language { get; set; } = string.Empty;
 

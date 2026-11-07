@@ -537,4 +537,16 @@
   <data name="file_received_detail" xml:space="preserve"><value>{0} liegt unter Downloads\Pairly.</value></data>
   <data name="files_phone_storage" xml:space="preserve"><value>Handyspeicher</value></data>
   <data name="files_need_access" xml:space="preserve"><value>Dein Handy hat den Dateizugriff noch nicht erlaubt. Schalte in Pairly auf dem Handy Dateien ein oder aktiviere den Power-Modus, um alles auf einmal zu erlauben.</value></data>
+  <data name="style" xml:space="preserve"><value>Stil</value></data>
+  <data name="style_aurora" xml:space="preserve"><value>Aurora</value></data>
+  <data name="style_daybreak" xml:space="preserve"><value>Daybreak</value></data>
+  <data name="style_description" xml:space="preserve"><value>Aurora ist ruhiges Indigo, Daybreak warm und runder. Wie in der Handy-App.</value></data>
+  <data name="permission_allowed" xml:space="preserve"><value>erlaubt</value></data>
+  <data name="permission_denied" xml:space="preserve"><value>nicht erlaubt</value></data>
+  <data name="permission_off" xml:space="preserve"><value>aus</value></data>
+  <data name="devices_status_summary" xml:space="preserve"><value>{0} online · {1} verbinden neu · {2} offline</value></data>
+  <data name="charging" xml:space="preserve"><value>lädt</value></data>
+  <data name="power_mode_on" xml:space="preserve"><value>Power-Modus</value></data>
+  <data name="power_mode_paused" xml:space="preserve"><value>Power-Modus pausiert</value></data>
+  <data name="power_mode_tooltip" xml:space="preserve"><value>Shizuku läuft auf dem Handy: Das Spiegeln startet ohne Nachfrage und das Handy bekommt echte Touch- und Tasteneingaben. Pausiert: Öffne auf dem Handy Shizuku und tippe auf Start.</value></data>
 </root>

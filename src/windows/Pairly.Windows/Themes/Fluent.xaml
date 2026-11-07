@@ -9,6 +9,7 @@
     <FontFamily x:Key="IconFontFamily">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
     <Thickness x:Key="PagePadding">24</Thickness>
     <Thickness x:Key="CardPadding">16</Thickness>
+    <ResourceDictionary x:Key="OnHeroResources" Source="OnHero.xaml" />
     <CornerRadius x:Key="SmallRadius">4</CornerRadius>
     <CornerRadius x:Key="ControlRadius">4</CornerRadius>
     <CornerRadius x:Key="CardRadius">8</CornerRadius>
@@ -100,7 +101,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="Chrome" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{StaticResource ControlRadius}"
+                            BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{DynamicResource ControlRadius}"
                             Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
                         <ContentPresenter x:Name="Content" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                           VerticalAlignment="{TemplateBinding VerticalContentAlignment}" RecognizesAccessKey="True" />
@@ -132,7 +133,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="Chrome" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{StaticResource ControlRadius}"
+                            BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{DynamicResource ControlRadius}"
                             Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
                         <ContentPresenter x:Name="Content" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                           VerticalAlignment="{TemplateBinding VerticalContentAlignment}" RecognizesAccessKey="True" />
@@ -164,7 +165,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="Chrome" Background="{TemplateBinding Background}" CornerRadius="{StaticResource ControlRadius}"
+                    <Border x:Name="Chrome" Background="{TemplateBinding Background}" CornerRadius="{DynamicResource ControlRadius}"
                             Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
                         <ContentPresenter x:Name="Content" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                           VerticalAlignment="{TemplateBinding VerticalContentAlignment}" RecognizesAccessKey="True" />
@@ -232,7 +233,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
                     <Grid>
-                        <Border x:Name="Chrome" CornerRadius="{StaticResource ControlRadius}" Background="{TemplateBinding Background}"
+                        <Border x:Name="Chrome" CornerRadius="{DynamicResource ControlRadius}" Background="{TemplateBinding Background}"
                                 Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
@@ -269,7 +270,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
-                    <Border x:Name="Chrome" CornerRadius="{StaticResource ControlRadius}" Background="{TemplateBinding Background}">
+                    <Border x:Name="Chrome" CornerRadius="{DynamicResource ControlRadius}" Background="{TemplateBinding Background}">
                         <Grid>
                             <Border x:Name="Indicator" Width="3" Height="16" CornerRadius="1.5" HorizontalAlignment="Left"
                                     Background="{DynamicResource AccentBrush}" Visibility="Hidden" />
@@ -301,7 +302,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ToggleButton">
-                    <Border x:Name="Chrome" Background="{TemplateBinding Background}" CornerRadius="{StaticResource ControlRadius}"
+                    <Border x:Name="Chrome" Background="{TemplateBinding Background}" CornerRadius="{DynamicResource ControlRadius}"
                             Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
                     </Border>
@@ -332,7 +333,7 @@
         <Setter Property="Background" Value="{DynamicResource FlyoutBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource FlyoutStrokeBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="{StaticResource OverlayRadius}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource OverlayRadius}" />
         <Setter Property="Padding" Value="4" />
         <Setter Property="Margin" Value="12,4,12,16" />
         <Setter Property="Effect" Value="{StaticResource FlyoutShadow}" />
@@ -354,7 +355,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
                     <Border x:Name="Chrome" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{StaticResource ControlRadius}"
+                            BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{DynamicResource ControlRadius}"
                             SnapsToDevicePixels="True">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -397,7 +398,7 @@
     <!-- ComboBox -->
     <ControlTemplate x:Key="ThemedComboBoxToggle" TargetType="ToggleButton">
         <Border x:Name="Chrome" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
-                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{StaticResource ControlRadius}">
+                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{DynamicResource ControlRadius}">
             <TextBlock x:Name="Chevron" Text="&#xE70D;" Style="{StaticResource IconGlyph}" FontSize="12"
                        Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Right" Margin="0,0,11,0" />
         </Border>
@@ -462,7 +463,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ComboBoxItem">
-                    <Border x:Name="Row" Background="Transparent" CornerRadius="{StaticResource ControlRadius}">
+                    <Border x:Name="Row" Background="Transparent" CornerRadius="{DynamicResource ControlRadius}">
                         <Grid>
                             <Border x:Name="Indicator" Width="3" Height="16" CornerRadius="1.5" HorizontalAlignment="Left"
                                     Background="{DynamicResource AccentBrush}" Visibility="Hidden" />
@@ -497,7 +498,7 @@
                             <ColumnDefinition Width="20" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <Border x:Name="Box" Width="20" Height="20" CornerRadius="{StaticResource ControlRadius}" VerticalAlignment="Center"
+                        <Border x:Name="Box" Width="20" Height="20" CornerRadius="{DynamicResource ControlRadius}" VerticalAlignment="Center"
                                 Background="{DynamicResource ControlFillInputBrush}" BorderBrush="{DynamicResource StrokeStrongBrush}"
                                 BorderThickness="1">
                             <TextBlock x:Name="Check" Text="&#xE73E;" Style="{StaticResource IconGlyph}" FontSize="12"
@@ -718,7 +719,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
-                    <Border x:Name="Chrome" Background="{TemplateBinding Background}" CornerRadius="{StaticResource ControlRadius}"
+                    <Border x:Name="Chrome" Background="{TemplateBinding Background}" CornerRadius="{DynamicResource ControlRadius}"
                             Padding="{TemplateBinding Padding}">
                         <Grid>
                             <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" />
@@ -767,10 +768,10 @@
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
                     <Grid Margin="3">
-                        <Border x:Name="Chrome" Background="Transparent" CornerRadius="{StaticResource CardRadius}">
+                        <Border x:Name="Chrome" Background="Transparent" CornerRadius="{DynamicResource CardRadius}">
                             <ContentPresenter />
                         </Border>
-                        <Border x:Name="Ring" CornerRadius="{StaticResource CardRadius}" BorderThickness="2"
+                        <Border x:Name="Ring" CornerRadius="{DynamicResource CardRadius}" BorderThickness="2"
                                 BorderBrush="{DynamicResource AccentBrush}" Visibility="Hidden" />
                         <Border x:Name="Badge" Width="20" Height="20" CornerRadius="10" Margin="0,7,7,0"
                                 HorizontalAlignment="Right" VerticalAlignment="Top" Background="{DynamicResource AccentBrush}"
@@ -832,7 +833,7 @@
         <Setter Property="Background" Value="{DynamicResource CardFillBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="{StaticResource CardRadius}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource CardRadius}" />
         <Setter Property="Padding" Value="{StaticResource CardPadding}" />
     </Style>
 
@@ -851,7 +852,7 @@
         <Setter Property="Background" Value="{DynamicResource CardFillSecondaryBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="{StaticResource CardRadius}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource CardRadius}" />
         <Setter Property="Padding" Value="14,11" />
     </Style>
 
@@ -859,7 +860,7 @@
         <Setter Property="Background" Value="{DynamicResource ControlFillBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="{StaticResource PillRadius}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource PillRadius}" />
         <Setter Property="Padding" Value="8,3" />
     </Style>
 
@@ -899,7 +900,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="MenuItem">
-                    <Border x:Name="Chrome" Background="Transparent" CornerRadius="{StaticResource ControlRadius}"
+                    <Border x:Name="Chrome" Background="Transparent" CornerRadius="{DynamicResource ControlRadius}"
                             Padding="{TemplateBinding Padding}" Margin="0,1">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -946,7 +947,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="ToolTip">
                     <Border Background="{DynamicResource FlyoutBrush}" BorderBrush="{DynamicResource FlyoutStrokeBrush}" BorderThickness="1"
-                            CornerRadius="{StaticResource ControlRadius}" Padding="8,5,8,7" Margin="8,4,8,12" MaxWidth="320"
+                            CornerRadius="{DynamicResource ControlRadius}" Padding="8,5,8,7" Margin="8,4,8,12" MaxWidth="320"
                             Effect="{StaticResource FlyoutShadow}">
                         <ContentPresenter>
                             <ContentPresenter.Resources>

@@ -102,4 +102,10 @@
         <GradientStop Offset="0.92" Color="#14FFFFFF" />
         <GradientStop Offset="1" Color="#33000000" />
     </LinearGradientBrush>
+
+    <!-- The style's gradient hero (phone card); ThemeManager swaps it for the chosen style. -->
+    <LinearGradientBrush x:Key="HeroBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Offset="0" Color="#FF3B32B8" />
+        <GradientStop Offset="1" Color="#FF6A41D6" />
+    </LinearGradientBrush>
 </ResourceDictionary>

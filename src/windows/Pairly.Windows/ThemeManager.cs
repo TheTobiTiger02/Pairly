@@ -24,9 +24,25 @@ internal static class ThemeManager
     /// <summary>"System" follows Windows; "Light" and "Dark" override it. High contrast always wins.</summary>
     public static string Preference { get; set; } = "System";
 
-    // Pairly's indigo, as on the phone: a lighter tint on dark surfaces, the brand shade on light ones.
-    private static readonly Color BrandLight = Color.FromRgb(0x4F, 0x5B, 0xE8);
-    private static readonly Color BrandDark = Color.FromRgb(0x9A, 0xA2, 0xFF);
+    /// <summary>"Aurora" (indigo-violet, calm) or "Daybreak" (warm coral, rounder); the same two looks as the phone app.</summary>
+    public static string Style { get; set; } = "Aurora";
+
+    private static bool Daybreak => string.Equals(Style, "Daybreak", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>One look in one mode: accent, its text, surfaces, hero gradient and corner radii.</summary>
+    private sealed record Palette(
+        Color Accent, Color OnAccent, Color Window, Color Navigation, Color Surface, Color Elevated,
+        Color HeroStart, Color HeroEnd, double Control, double Card, double Overlay);
+
+    private static Palette CurrentPalette(bool dark) => (Daybreak, dark) switch
+    {
+        (false, false) => new(Rgb(0x4B3FD8), Colors.White, Rgb(0xF4F3FF), Rgb(0xEFEDFF), Rgb(0xFFFFFF), Rgb(0xFFFFFF), Rgb(0x4B3FD8), Rgb(0x7C4DEB), 6, 12, 12),
+        (false, true) => new(Rgb(0xA9A3FF), Rgb(0x1C1477), Rgb(0x13121F), Rgb(0x1A1929), Rgb(0x1E1D30), Rgb(0x26243A), Rgb(0x3B32B8), Rgb(0x6A41D6), 6, 12, 12),
+        (true, false) => new(Rgb(0xC2462A), Colors.White, Rgb(0xFFF7F1), Rgb(0xFBEFE8), Rgb(0xFFFFFF), Rgb(0xFFFFFF), Rgb(0xC2462A), Rgb(0xE8603F), 10, 18, 18),
+        (true, true) => new(Rgb(0xFFB59E), Rgb(0x5C1806), Rgb(0x1C1411), Rgb(0x231915), Rgb(0x2B1F1A), Rgb(0x352721), Rgb(0xB4431F), Rgb(0xD0583A), 10, 18, 18)
+    };
+
+    private static Color Rgb(int value) => Color.FromRgb((byte)(value >> 16), (byte)(value >> 8), (byte)value);
 
     public static void ApplySystemTheme(ResourceDictionary resources)
     {
@@ -64,26 +80,47 @@ internal static class ThemeManager
 
         if (!IsHighContrast)
         {
-            var accent = IsDark ? BrandDark : BrandLight;
-            SetBrush(currentTheme, "AccentBrush", accent);
-            SetBrush(currentTheme, "AccentHoverBrush", WithAlpha(accent, 0xE6));
-            SetBrush(currentTheme, "AccentPressedBrush", WithAlpha(accent, 0xCC));
-            SetBrush(currentTheme, "AccentSubtleBrush", WithAlpha(accent, IsDark ? (byte)0x2E : (byte)0x1F));
-            SetBrush(currentTheme, "AccentTextBrush", IsDark ? Color.FromRgb(0x11, 0x16, 0x50) : Colors.White);
+            var palette = CurrentPalette(IsDark);
+            SetBrush(currentTheme, "AccentBrush", palette.Accent);
+            SetBrush(currentTheme, "AccentHoverBrush", WithAlpha(palette.Accent, 0xE6));
+            SetBrush(currentTheme, "AccentPressedBrush", WithAlpha(palette.Accent, 0xCC));
+            SetBrush(currentTheme, "AccentSubtleBrush", WithAlpha(palette.Accent, IsDark ? (byte)0x2E : (byte)0x1F));
+            SetBrush(currentTheme, "AccentTextBrush", palette.OnAccent);
+            SetBrush(currentTheme, "SolidBackgroundBrush", palette.Window);
+            SetBrush(currentTheme, "WindowBrush", palette.Window);
+            SetBrush(currentTheme, "NavigationBrush", palette.Navigation);
+            SetBrush(currentTheme, "SurfaceBrush", IsDark ? palette.Surface : Rgb(0xFCFCFF));
+            SetBrush(currentTheme, "FlyoutBrush", IsDark ? palette.Surface : Colors.White);
+            SetBrush(currentTheme, "SurfaceElevatedBrush", palette.Elevated);
+            // Cards: solid in the style's color in dark mode; translucent white over Mica in light mode.
+            if (IsDark)
+            {
+                SetBrush(currentTheme, "CardFillBrush", palette.Surface);
+                SetBrush(currentTheme, "CardFillSecondaryBrush", palette.Navigation);
+            }
+
+            var hero = new LinearGradientBrush(palette.HeroStart, palette.HeroEnd, new System.Windows.Point(0, 0), new System.Windows.Point(1, 1));
+            hero.Freeze();
+            currentTheme["HeroBrush"] = hero;
+            resources["ControlRadius"] = new CornerRadius(palette.Control);
+            resources["CardRadius"] = new CornerRadius(palette.Card);
+            resources["OverlayRadius"] = new CornerRadius(palette.Overlay);
         }
 
-        if (IsDark && !IsHighContrast)
+        // Content on the hero is white; in high contrast the hero is a plain window, so it isn't.
+        if (resources["OnHeroResources"] is ResourceDictionary onHero)
         {
-            // Deep navy surfaces, the same as the phone app's dark mode.
-            var window = Color.FromRgb(0x0D, 0x12, 0x20);
-            var raised = Color.FromRgb(0x14, 0x1A, 0x2B);
-            var elevated = Color.FromRgb(0x1B, 0x22, 0x36);
-            SetBrush(currentTheme, "SolidBackgroundBrush", window);
-            SetBrush(currentTheme, "WindowBrush", window);
-            SetBrush(currentTheme, "NavigationBrush", raised);
-            SetBrush(currentTheme, "SurfaceBrush", raised);
-            SetBrush(currentTheme, "FlyoutBrush", raised);
-            SetBrush(currentTheme, "SurfaceElevatedBrush", elevated);
+            if (IsHighContrast)
+            {
+                onHero.Clear();
+            }
+            else if (onHero.Count == 0)
+            {
+                foreach (var key in new ResourceDictionary { Source = new Uri("pack://application:,,,/Themes/OnHero.xaml") }.Keys.Cast<object>().ToArray())
+                {
+                    onHero[key] = new ResourceDictionary { Source = new Uri("pack://application:,,,/Themes/OnHero.xaml") }[key];
+                }
+            }
         }
 
         ThemeChanged?.Invoke(null, EventArgs.Empty);
