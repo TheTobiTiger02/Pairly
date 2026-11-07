@@ -63,6 +63,9 @@ public partial class MainWindow : Window
     private readonly Dictionary<MirrorWindow, AdbStreamSession> _adbSessions = new();
     private bool _refreshInProgress;
     private string? _storageDeviceId;
+    /// <summary>Whether a listing of the phone's storage has succeeded for the selected phone.</summary>
+    private bool _storageLoaded;
+    private const int FilesTabIndex = 2;
     private bool _initializingStartupSetting;
     private bool _initializingPreferences;
     private bool _firstRunPairingShown;
@@ -575,11 +578,19 @@ public partial class MainWindow : Window
             _ = LoadAppsAsync(force: false);
         }
 
+        // The first listing can fail before the phone allowed storage access; try again whenever the
+        // page is opened until one succeeds.
+        if (ReferenceEquals(e.Source, MainTabs) && MainTabs.SelectedIndex == FilesTabIndex && !_storageLoaded
+            && _storageDeviceId is { } storageDevice)
+        {
+            _ = LoadStorageDirectoryAsync(storageDevice, _currentStoragePath);
+        }
+
         if (e.Source is System.Windows.Controls.TabControl && e.AddedItems.Count > 0)
         {
             if (e.AddedItems[0] is System.Windows.Controls.TabItem tabItem && tabItem.Content is FrameworkElement element)
             {
-                if (!SystemParameters.ClientAreaAnimation)
+                if (!Motion.Enabled)
                 {
                     element.Opacity = 1.0;
                     return;
@@ -2045,6 +2056,7 @@ public partial class MainWindow : Window
                 if (!string.Equals(_storageDeviceId, selectedDevice.DeviceId, StringComparison.Ordinal))
                 {
                     _storageDeviceId = selectedDevice.DeviceId;
+                    _storageLoaded = false;
                     _currentStoragePath = "/";
                     _storagePathHistory.Clear();
                     _ = LoadStorageDirectoryAsync(selectedDevice.DeviceId, "/");
@@ -2440,6 +2452,27 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>A phone storage error as a sentence: the phone's JSON error unwrapped, access problems explained.</summary>
+    private static string StorageErrorText(string raw)
+    {
+        var message = raw;
+        try
+        {
+            using var json = System.Text.Json.JsonDocument.Parse(raw);
+            if (json.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object
+                && json.RootElement.TryGetProperty("message", out var value) && value.GetString() is { Length: > 0 } text)
+            {
+                message = text;
+            }
+        }
+        catch (System.Text.Json.JsonException)
+        {
+        }
+        return message.Contains("not been granted", StringComparison.OrdinalIgnoreCase)
+            ? L.T("files_need_access")
+            : L.F("failed_to_load_folder", message);
+    }
+
     private async Task LoadStorageDirectoryAsync(string deviceId, string path)
     {
         if (App.DemoMode) return;
@@ -2448,8 +2481,8 @@ public partial class MainWindow : Window
             var response = await _host.PostAsJsonAsync($"v1/devices/{Uri.EscapeDataString(deviceId)}/storage/list", new StorageListRequestPayload(Guid.NewGuid().ToString(), path));
             if (!response.IsSuccessStatusCode)
             {
-                var errorText = await response.Content.ReadAsStringAsync();
-                Dispatcher.Invoke(() => StorageStatusText.Text = L.F("failed_to_load_folder", errorText));
+                var errorText = StorageErrorText(await response.Content.ReadAsStringAsync());
+                Dispatcher.Invoke(() => StorageStatusText.Text = errorText);
                 return;
             }
 
@@ -2461,7 +2494,8 @@ public partial class MainWindow : Window
             }
             if (!string.IsNullOrEmpty(result.Error))
             {
-                Dispatcher.Invoke(() => StorageStatusText.Text = $"Failed: {result.Error}");
+                var errorText = StorageErrorText(result.Error);
+                Dispatcher.Invoke(() => StorageStatusText.Text = errorText);
                 return;
             }
 
@@ -2471,7 +2505,8 @@ public partial class MainWindow : Window
                 _allStorageItems = result.Items.Select(item => new StorageItemViewModel(item)).ToArray();
                 FilterStorageItems();
                 UpdateBreadcrumbs(_currentStoragePath);
-                StorageStatusText.Text = $"Path: {_currentStoragePath}";
+                StorageStatusText.Text = _currentStoragePath == "/" ? L.T("files_phone_storage") : _currentStoragePath;
+                _storageLoaded = true;
             });
         }
         catch (Exception ex)

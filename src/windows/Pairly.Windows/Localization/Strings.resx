@@ -535,4 +535,6 @@
   <data name="received_files_hint" xml:space="preserve"><value>Shared from your phone. Saved in Downloads\Pairly.</value></data>
   <data name="file_received" xml:space="preserve"><value>File received</value></data>
   <data name="file_received_detail" xml:space="preserve"><value>{0} is in Downloads\Pairly.</value></data>
+  <data name="files_phone_storage" xml:space="preserve"><value>Phone storage</value></data>
+  <data name="files_need_access" xml:space="preserve"><value>Your phone hasn't allowed file access yet. In Pairly on the phone, turn on Files, or turn on Power mode to allow everything at once.</value></data>
 </root>

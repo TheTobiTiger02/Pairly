@@ -535,4 +535,6 @@
   <data name="received_files_hint" xml:space="preserve"><value>Von deinem Handy geteilt. Gespeichert unter Downloads\Pairly.</value></data>
   <data name="file_received" xml:space="preserve"><value>Datei empfangen</value></data>
   <data name="file_received_detail" xml:space="preserve"><value>{0} liegt unter Downloads\Pairly.</value></data>
+  <data name="files_phone_storage" xml:space="preserve"><value>Handyspeicher</value></data>
+  <data name="files_need_access" xml:space="preserve"><value>Dein Handy hat den Dateizugriff noch nicht erlaubt. Schalte in Pairly auf dem Handy Dateien ein oder aktiviere den Power-Modus, um alles auf einmal zu erlauben.</value></data>
 </root>
