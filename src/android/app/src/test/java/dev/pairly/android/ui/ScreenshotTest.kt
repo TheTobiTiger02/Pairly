@@ -109,7 +109,7 @@ class ScreenshotTest(private val case: Case) {
         OnboardingScreen(step, state, pairing, LocaleText.Language.System, {}, {}, {})
     }
 
-    private val shell = ShellCallbacks(pairing, {}, {}, {}, {}, {}, { "" }, { true }, {}, {}, {}, {})
+    private val shell = ShellCallbacks(pairing, {}, {}, {}, {}, {}, { "" }, { true }, {}, {}, {}, {}, {}, {})
     private val prefs get() = UiPrefs(themeMode = case.mode)
 
     @Test fun onboardingWelcome() = onboarding(OnboardingStep.Welcome)
@@ -154,7 +154,7 @@ class ScreenshotTest(private val case: Case) {
         Screen {
             SettingsScreen(
                 connected, prefs, LocaleText.Language.System,
-                SettingsCallbacks({}, {}, {}, {}, {}, {}, {}, {})
+                SettingsCallbacks({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
             )
         }
     }
