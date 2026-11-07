@@ -31,6 +31,8 @@ The host does not accept feature messages before authentication. A session chall
 
 - Clipboard: `clipboard.item`, `clipboard.ack`, `content.transfer.start`, `content.transfer.chunk`, `content.transfer.complete`. Existing payloads are preserved. The source receives its accepted `clipboard.item` as publication confirmation; retries retain item/transfer IDs and expiry and confirm the original sequence without fan-out. `POST /v1/clipboard` accepts optional `itemId` and `expiresAt` for desktop retries.
 - Device permission reporting may include `clipboardBackground` (`granted`, `disabled`, or `needs_user_action`); older peers can ignore this optional key.
+- It may also include `calls`, `files`, `control` and `background` (`granted` or `needs_user_action`) and `powerMode` (`ready`, `notRunning`, `notAllowed`, `notInstalled`; see docs/power-mode.md). All optional; older peers ignore them.
+- `session.authenticate` can be answered with error `authentication_retry` when the challenge is stale, repeated or expired: the phone reconnects and tries again. `authentication_rejected` stays reserved for a proof that does not match the pairing.
 - Media: `media.index.request`, `media.index.page`, `media.content.request`, `media.content.response`.
 - Notifications: `notification.snapshot.begin`, `notification.upsert`, `notification.remove`, `notification.snapshot.end`, `notification.action`.
 - SMS: `sms.thread.page`, `sms.message.page`, `sms.send`.

@@ -48,9 +48,24 @@ No account, no cloud, no ads, no tracking. Everything travels only between your 
 Both apps keep themselves up to date. After an update they show what's new.
 
 <details>
-<summary><b>Optional: background clipboard sync on Android</b></summary>
+<summary><b>Optional, recommended: Power mode on Android</b></summary>
 
-Android only lets the app that's on screen read the clipboard. To sync copies made in any app, Pairly uses [Shizuku](https://shizuku.rikka.app/). The Android app has an illustrated step-by-step guide under **Features → Clipboard**. Without Shizuku, the clipboard still syncs while Pairly is open, and you can send it any time from the share sheet, the notification, or the Quick Settings tile.
+Power mode uses the free [Shizuku](https://shizuku.rikka.app/) app, which lets Pairly act with the rights of a USB debugging session, on the phone itself. Set it up once (about five minutes) during setup or under **Settings → Power mode**, and you get:
+
+- **Clipboard sync in the background**, from any app (Android normally lets only the app on screen read the clipboard).
+- **Mirroring without Android's prompt** every time, and it keeps working after a restart.
+- **Real touch and keys** from your PC: exact gestures, multi-touch and every key.
+- **Every permission in one tap** instead of a trip through Settings for each.
+
+Shizuku needs Wireless debugging only to start. Pairly turns Wireless debugging off again right after, so it doesn't stay on (switch under **Settings → Power mode**). After a restart, open Shizuku and tap Start, unless your phone starts it by itself (Shizuku 13.6+ on Android 13+). Both apps show whether Power mode is on.
+
+Without Power mode everything else works: the clipboard syncs while Pairly is open (and you can send it from the share sheet, the notification or the Quick Settings tile), and Android asks before each mirroring session.
+</details>
+
+<details>
+<summary><b>Two looks</b></summary>
+
+Both apps come in two styles you can switch between under **Settings → Appearance → Style**: **Aurora** (calm indigo) and **Daybreak** (warm coral, rounder). Both follow your system's light and dark mode.
 </details>
 
 ## Help
@@ -63,7 +78,7 @@ Android only lets the app that's on screen read the clipboard. To sync copies ma
 
 ## For developers
 
-Windows: WPF (.NET 9) with a hand-built Fluent 2 design system (Mica, light/dark/high contrast) and an embedded ASP.NET Core host. Android: Kotlin and Jetpack Compose (Material 3). Screen mirroring uses WebRTC, MediaProjection and WebView2.
+Windows: WPF (.NET 9) with a hand-built Fluent 2 design system (Mica, light/dark/high contrast) and an embedded ASP.NET Core host. Android: Kotlin and Jetpack Compose (Material 3). Screen mirroring streams H.264/HEVC from MediaProjection (or, in the optional ADB mode, a shell-run server) over a pinned TLS socket and decodes it with Media Foundation on Direct3D 11 (see [docs/mirror-pipeline.md](docs/mirror-pipeline.md)). Power mode runs a small helper as the shell user through Shizuku (see [docs/power-mode.md](docs/power-mode.md)).
 
 ### Repository layout
 

@@ -47,9 +47,24 @@ Kein Konto, keine Cloud, keine Werbung, kein Tracking. Deine Daten fließen nur 
 Beide Apps halten sich selbst aktuell und zeigen nach einem Update, was neu ist.
 
 <details>
-<summary><b>Optional: Zwischenablage im Hintergrund auf Android</b></summary>
+<summary><b>Optional, empfohlen: Power-Modus auf Android</b></summary>
 
-Android lässt nur die App auf die Zwischenablage zugreifen, die gerade im Vordergrund ist. Damit auch Kopien aus anderen Apps synchronisiert werden, nutzt Pairly [Shizuku](https://shizuku.rikka.app/). Die Android-App hat dafür unter **Funktionen → Zwischenablage** eine bebilderte Schritt-für-Schritt-Anleitung. Ohne Shizuku wird die Zwischenablage synchronisiert, solange Pairly geöffnet ist, und du kannst sie jederzeit über das Teilen-Menü, die Benachrichtigung oder die Schnelleinstellungen senden.
+Der Power-Modus nutzt die kostenlose App [Shizuku](https://shizuku.rikka.app/), mit der Pairly auf dem Handy selbst die Rechte einer USB-Debugging-Sitzung bekommt. Einmal eingerichtet (etwa fünf Minuten, bei der Einrichtung oder unter **Einstellungen → Power-Modus**), bekommst du:
+
+- **Zwischenablage im Hintergrund**, aus jeder App (normalerweise darf nur die App im Vordergrund sie lesen).
+- **Spiegeln ohne die Nachfrage** von Android, auch nach einem Neustart.
+- **Echte Touch- und Tasteneingaben** vom PC: genaue Gesten, Multitouch und jede Taste.
+- **Alle Berechtigungen mit einem Tipp** statt einzeln über die Einstellungen.
+
+Shizuku braucht Debugging über WLAN nur zum Starten. Pairly schaltet es danach gleich wieder aus, damit es nicht an bleibt (Schalter unter **Einstellungen → Power-Modus**). Öffne nach einem Neustart Shizuku und tippe auf Start, außer dein Handy startet es selbst (Shizuku 13.6+ ab Android 13). Beide Apps zeigen, ob der Power-Modus an ist.
+
+Ohne Power-Modus funktioniert alles andere trotzdem: Die Zwischenablage synchronisiert, solange Pairly geöffnet ist (und du kannst sie über Teilen-Menü, Benachrichtigung oder Schnelleinstellungen senden), und Android fragt vor jedem Spiegeln nach.
+</details>
+
+<details>
+<summary><b>Zwei Looks</b></summary>
+
+Beide Apps gibt es in zwei Stilen, umschaltbar unter **Einstellungen → Darstellung → Stil**: **Aurora** (ruhiges Indigo) und **Daybreak** (warmes Koralle, runder). Beide folgen dem hellen oder dunklen Modus des Systems.
 </details>
 
 ## Hilfe
