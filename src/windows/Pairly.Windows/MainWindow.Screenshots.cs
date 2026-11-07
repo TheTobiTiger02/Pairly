@@ -208,10 +208,19 @@ public partial class MainWindow
             Expect(MainTabs.SelectedIndex == 0 && NavMessages.IsChecked == true, "Messages to open from the navigation pane");
 
             // Dark-mode candidate, theme and language through the real controls in Settings.
+            StyleCombo.SelectedIndex = 0; // Aurora, whatever was saved
             ThemeCombo.SelectedIndex = 2; // Dark
             await settle(150);
             Expect(ThemeManager.IsDark || ThemeManager.IsHighContrast, "Dark to switch the theme");
-            Expect(ThemeManager.IsHighContrast || (TryFindResource("WindowBrush") as SolidColorBrush)?.Color == Color.FromRgb(0x0D, 0x12, 0x20), "dark mode to use the navy background");
+            Expect(ThemeManager.IsHighContrast || (TryFindResource("WindowBrush") as SolidColorBrush)?.Color == Color.FromRgb(0x13, 0x12, 0x1F), "dark mode to use Aurora's dark background");
+
+            // The style switch applies live, and back.
+            StyleCombo.SelectedIndex = 1; // Daybreak
+            await settle(150);
+            Expect(ThemeManager.IsHighContrast || (TryFindResource("WindowBrush") as SolidColorBrush)?.Color == Color.FromRgb(0x1C, 0x14, 0x11), "Daybreak to switch the palette");
+            Expect(ThemeManager.IsHighContrast || TryFindResource("CardRadius") is CornerRadius { TopLeft: 18 }, "Daybreak to round the cards more");
+            StyleCombo.SelectedIndex = 0; // Aurora
+            await settle(150);
             ThemeCombo.SelectedIndex = 1; // Light
             await settle(150);
             Expect(!ThemeManager.IsDark || ThemeManager.IsHighContrast, "Light to switch the theme");
