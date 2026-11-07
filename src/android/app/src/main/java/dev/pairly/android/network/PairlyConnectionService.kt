@@ -442,7 +442,7 @@ class PairlyConnectionService : Service() {
             ProtocolJson.pairHello(
                 pairingCode = pairingCode,
                 deviceId = settings.deviceId,
-                displayName = Build.MODEL ?: "Android device",
+                displayName = dev.pairly.android.features.sync.DeviceName.of(this),
                 capabilities = DeviceCapabilities(true, true, true, true, true),
                 trustKey = null,
                 hostId = settings.hostId.takeIf { it.isNotBlank() },
