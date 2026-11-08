@@ -208,19 +208,27 @@ public partial class MainWindow
             Expect(MainTabs.SelectedIndex == 0 && NavMessages.IsChecked == true, "Messages to open from the navigation pane");
 
             // Dark-mode candidate, theme and language through the real controls in Settings.
-            StyleCombo.SelectedIndex = 0; // Aurora, whatever was saved
+            // The user's own look, put back once the checks are done.
+            var savedStyle = _preferences.Style;
+            var savedAccent = _preferences.Accent ?? "Violet";
+            var contrastFailures = ThemeManager.ContrastFailures();
+            Expect(contrastFailures.Count == 0, "every style and accent to meet 4.5:1 text contrast " + string.Join("; ", contrastFailures));
+            ApplyAppearance("Glass", "Violet");
             ThemeCombo.SelectedIndex = 2; // Dark
             await settle(150);
             Expect(ThemeManager.IsDark || ThemeManager.IsHighContrast, "Dark to switch the theme");
-            Expect(ThemeManager.IsHighContrast || (TryFindResource("WindowBrush") as SolidColorBrush)?.Color == Color.FromRgb(0x13, 0x12, 0x1F), "dark mode to use Aurora's dark background");
+            Expect(ThemeManager.IsHighContrast || (TryFindResource("WindowBrush") as SolidColorBrush)?.Color == Color.FromRgb(0x12, 0x11, 0x18), "dark mode to use Glass's dark background");
 
-            // The style switch applies live, and back.
-            StyleCombo.SelectedIndex = 1; // Daybreak
-            await settle(150);
-            Expect(ThemeManager.IsHighContrast || (TryFindResource("WindowBrush") as SolidColorBrush)?.Color == Color.FromRgb(0x1C, 0x14, 0x11), "Daybreak to switch the palette");
-            Expect(ThemeManager.IsHighContrast || TryFindResource("CardRadius") is CornerRadius { TopLeft: 18 }, "Daybreak to round the cards more");
-            StyleCombo.SelectedIndex = 0; // Aurora
-            await settle(150);
+            // The style and accent pickers apply live, and back.
+            ((System.Windows.Controls.RadioButton)StylePickerPanel.Children[1]).IsChecked = true; // Clay
+            await settle(200);
+            Expect(ThemeManager.IsHighContrast || (TryFindResource("WindowBrush") as SolidColorBrush)?.Color == Color.FromRgb(0x1D, 0x19, 0x24), "Clay to switch the palette");
+            Expect(ThemeManager.IsHighContrast || TryFindResource("CardRadius") is CornerRadius { TopLeft: 24 }, "Clay to round the cards more");
+            ((System.Windows.Controls.RadioButton)AccentPickerPanel.Children[8]).IsChecked = true; // Pink
+            await settle(200);
+            Expect(_preferences.Accent == "Pink" && AccentNameText.Text == L.T("accent_pink"), "an accent swatch to switch the accent");
+            ApplyAppearance(savedStyle, savedAccent);
+            await settle(200);
             ThemeCombo.SelectedIndex = 1; // Light
             await settle(150);
             Expect(!ThemeManager.IsDark || ThemeManager.IsHighContrast, "Light to switch the theme");

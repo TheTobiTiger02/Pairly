@@ -538,9 +538,6 @@
   <data name="files_phone_storage" xml:space="preserve"><value>Handyspeicher</value></data>
   <data name="files_need_access" xml:space="preserve"><value>Dein Handy hat den Dateizugriff noch nicht erlaubt. Schalte in Pairly auf dem Handy Dateien ein oder aktiviere den Power-Modus, um alles auf einmal zu erlauben.</value></data>
   <data name="style" xml:space="preserve"><value>Stil</value></data>
-  <data name="style_aurora" xml:space="preserve"><value>Aurora</value></data>
-  <data name="style_daybreak" xml:space="preserve"><value>Daybreak</value></data>
-  <data name="style_description" xml:space="preserve"><value>Aurora ist ruhiges Indigo, Daybreak warm und runder. Wie in der Handy-App.</value></data>
   <data name="permission_allowed" xml:space="preserve"><value>erlaubt</value></data>
   <data name="permission_denied" xml:space="preserve"><value>nicht erlaubt</value></data>
   <data name="permission_off" xml:space="preserve"><value>aus</value></data>
@@ -562,4 +559,23 @@
   <data name="deleted_item" xml:space="preserve"><value>{0} gelöscht.</value></data>
   <data name="opening_app" xml:space="preserve"><value>{0} wird geöffnet …</value></data>
   <data name="file_sent_to_downloads" xml:space="preserve"><value>{0} liegt jetzt im Download-Ordner von {1}.</value></data>
+  <data name="style_glass" xml:space="preserve"><value>Glass</value></data>
+  <data name="style_clay" xml:space="preserve"><value>Clay</value></data>
+  <data name="style_glass_detail" xml:space="preserve"><value>Klare Flächen, klare Schrift</value></data>
+  <data name="style_clay_detail" xml:space="preserve"><value>Weiche Formen, freundlich</value></data>
+  <data name="style_description" xml:space="preserve"><value>Formen, Schrift und Bewegung. Wie in der Handy-App.</value></data>
+  <data name="accent_color" xml:space="preserve"><value>Akzentfarbe</value></data>
+  <data name="accent_system" xml:space="preserve"><value>Windows-Akzentfarbe</value></data>
+  <data name="accent_indigo" xml:space="preserve"><value>Indigo</value></data>
+  <data name="accent_violet" xml:space="preserve"><value>Violett</value></data>
+  <data name="accent_blue" xml:space="preserve"><value>Blau</value></data>
+  <data name="accent_teal" xml:space="preserve"><value>Petrol</value></data>
+  <data name="accent_green" xml:space="preserve"><value>Grün</value></data>
+  <data name="accent_amber" xml:space="preserve"><value>Bernstein</value></data>
+  <data name="accent_coral" xml:space="preserve"><value>Koralle</value></data>
+  <data name="accent_pink" xml:space="preserve"><value>Pink</value></data>
+  <data name="home_linked_phone" xml:space="preserve"><value>Dein Handy</value></data>
+  <data name="home_latest" xml:space="preserve"><value>Neu von deinem Handy</value></data>
+  <data name="home_see_all" xml:space="preserve"><value>Alle ansehen</value></data>
+  <data name="home_latest_empty" xml:space="preserve"><value>Noch nichts Neues. Benachrichtigungen von deinem Handy erscheinen hier.</value></data>
 </root>

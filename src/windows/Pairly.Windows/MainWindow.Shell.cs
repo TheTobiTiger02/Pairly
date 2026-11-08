@@ -30,17 +30,17 @@ public partial class MainWindow
     {
         AboutVersionButton.Content = CurrentVersion() ?? "dev";
         SyncChoiceCombos();
+        // Swatches and previews follow light and dark mode.
+        ThemeManager.ThemeChanged += (_, _) => Dispatcher.BeginInvoke(BuildAppearancePickers);
         // Start on Home with its navigation item checked (the tab control's first page is Messages).
         SelectPage(HomeTabIndex);
         MainTabs.SelectedIndex = HomeTabIndex;
-        UpdateGreeting();
         LocalizationSource.Instance.LanguageChanged += (_, _) => RefreshLocalizedCodeText();
     }
 
     /// <summary>Texts set from code rather than bound in XAML, refreshed after a language switch.</summary>
     private void RefreshLocalizedCodeText()
     {
-        UpdateGreeting();
         if (PairingOverlay.Visibility == Visibility.Visible)
         {
             PairingTitleText.Text = L.T(_onboardingMode ? "onboarding_title" : "pairing_title");
@@ -64,12 +64,6 @@ public partial class MainWindow
     private void ShowUpdateStatus(Func<string> text) => UpdateStatusText.Text = (_updateStatus = text)();
 
     private void ShowStartupStatus(Func<string> text) => StartupRegistrationStatusText.Text = (_startupStatus = text)();
-
-    private void UpdateGreeting()
-    {
-        var hour = DateTime.Now.Hour;
-        HomeGreetingText.Text = L.T(hour < 5 ? "greeting_evening" : hour < 12 ? "greeting_morning" : hour < 18 ? "greeting_afternoon" : "greeting_evening");
-    }
 
     // --- Navigation -----------------------------------------------------------------------------
 
@@ -138,12 +132,188 @@ public partial class MainWindow
     {
         _syncingChoices = true;
         SelectByTag(ThemeCombo, _preferences.Theme);
-        SelectByTag(StyleCombo, _preferences.Style);
         SelectByTag(OnboardingStyleCombo, _preferences.Style);
         SelectByTag(OnboardingThemeCombo, _preferences.Theme);
         SelectByTag(LanguageCombo, _preferences.Language);
         SelectByTag(OnboardingLanguageCombo, _preferences.Language);
         _syncingChoices = false;
+        BuildAppearancePickers();
+    }
+
+    /// <summary>
+    /// Settings > Appearance: one small preview per style, drawn in that style's own colors with the
+    /// chosen accent, and a row of accent swatches in the current style's tones.
+    /// </summary>
+    private void BuildAppearancePickers()
+    {
+        if (StylePickerPanel is null)
+        {
+            return;
+        }
+        var dark = ThemeManager.IsDark;
+        _syncingChoices = true;
+        StylePickerPanel.Children.Clear();
+        foreach (var style in ThemeManager.Styles)
+        {
+            StylePickerPanel.Children.Add(StyleOption(style, dark));
+        }
+
+        AccentPickerPanel.Children.Clear();
+        var current = _preferences.Accent ?? "Violet";
+        foreach (var accent in ThemeManager.Accents)
+        {
+            var selected = string.Equals(accent, current, StringComparison.OrdinalIgnoreCase);
+            var name = L.T("accent_" + accent.ToLowerInvariant());
+            var face = new Grid { Width = 36, Height = 36 };
+            face.Children.Add(new Border
+            {
+                CornerRadius = new CornerRadius(18),
+                BorderThickness = new Thickness(2),
+                BorderBrush = selected ? (System.Windows.Media.Brush)FindResource("TextPrimaryBrush") : System.Windows.Media.Brushes.Transparent
+            });
+            face.Children.Add(new System.Windows.Shapes.Ellipse
+            {
+                Width = 26,
+                Height = 26,
+                Fill = new System.Windows.Media.SolidColorBrush(ThemeManager.Swatch(_preferences.Style, accent, dark))
+            });
+            if (accent == "System")
+            {
+                face.Children.Add(new TextBlock
+                {
+                    Text = "\uE790",
+                    FontFamily = (System.Windows.Media.FontFamily)FindResource("IconFontFamily"),
+                    FontSize = 12,
+                    Foreground = dark ? System.Windows.Media.Brushes.Black : System.Windows.Media.Brushes.White,
+                    HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                    VerticalAlignment = System.Windows.VerticalAlignment.Center
+                });
+            }
+            var option = new RadioButton
+            {
+                GroupName = "Accent",
+                IsChecked = selected,
+                Tag = accent,
+                Content = face,
+                Margin = new Thickness(0, 0, 4, 4),
+                Cursor = System.Windows.Input.Cursors.Hand,
+                ToolTip = name,
+                Template = PlainRadioTemplate()
+            };
+            System.Windows.Automation.AutomationProperties.SetName(option, name);
+            option.Checked += AccentOption_Checked;
+            AccentPickerPanel.Children.Add(option);
+        }
+        AccentNameText.Text = L.T("accent_" + current.ToLowerInvariant());
+        _syncingChoices = false;
+    }
+
+    private RadioButton StyleOption(string style, bool dark)
+    {
+        var p = ThemeManager.For(style, _preferences.Accent ?? "Violet", dark);
+        var clay = style == "Clay";
+        static System.Windows.Media.SolidColorBrush Brush(System.Windows.Media.Color color) => new(color);
+        // A tiny Home: the side pane with the phone card and selected page, and a card with an accent button.
+        var grid = new Grid();
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(64) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition());
+        var side = new StackPanel();
+        side.Children.Add(new Border { Height = 34, CornerRadius = new CornerRadius(clay ? 12 : 7), Background = Brush(p.Hero) });
+        side.Children.Add(new Border { Height = 12, Margin = new Thickness(0, 8, 8, 0), CornerRadius = new CornerRadius(6), Background = Brush(p.NavSelected) });
+        side.Children.Add(new Border { Height = 6, Width = 30, Margin = new Thickness(4, 8, 0, 0), HorizontalAlignment = System.Windows.HorizontalAlignment.Left, CornerRadius = new CornerRadius(3), Background = Brush(p.TextTertiary) });
+        grid.Children.Add(side);
+        var lines = new StackPanel();
+        lines.Children.Add(new Border { Height = 7, Width = 60, HorizontalAlignment = System.Windows.HorizontalAlignment.Left, CornerRadius = new CornerRadius(3.5), Background = Brush(p.Text) });
+        lines.Children.Add(new Border { Height = 5, Width = 80, Margin = new Thickness(0, 6, 0, 0), HorizontalAlignment = System.Windows.HorizontalAlignment.Left, CornerRadius = new CornerRadius(2.5), Background = Brush(p.TextSecondary) });
+        lines.Children.Add(new Border { Height = 14, Width = 46, Margin = new Thickness(0, 10, 0, 0), HorizontalAlignment = System.Windows.HorizontalAlignment.Left, CornerRadius = new CornerRadius(clay ? 7 : 4), Background = Brush(p.Accent) });
+        var card = new Border
+        {
+            Margin = new Thickness(8, 0, 0, 0),
+            CornerRadius = new CornerRadius(clay ? 14 : 8),
+            Background = Brush(p.Card),
+            BorderBrush = Brush(p.CardStroke),
+            BorderThickness = new Thickness(1),
+            Padding = new Thickness(8),
+            Child = lines
+        };
+        Grid.SetColumn(card, 1);
+        grid.Children.Add(card);
+        var preview = new Border
+        {
+            Height = 96,
+            CornerRadius = new CornerRadius(clay ? 16 : 10),
+            Background = Brush(p.Window),
+            Padding = new Thickness(10),
+            Child = grid
+        };
+
+        var label = new StackPanel { Margin = new Thickness(2, 8, 0, 0) };
+        label.Children.Add(new TextBlock
+        {
+            Text = L.T(clay ? "style_clay" : "style_glass"),
+            FontWeight = FontWeights.Bold,
+            FontFamily = new System.Windows.Media.FontFamily(new Uri("pack://application:,,,/"), clay ? "./Fonts/#Nunito" : "./Fonts/#Manrope")
+        });
+        label.Children.Add(new TextBlock { Text = L.T(clay ? "style_clay_detail" : "style_glass_detail"), Style = (Style)FindResource("CaptionText") });
+        var body = new StackPanel();
+        body.Children.Add(preview);
+        body.Children.Add(label);
+
+        var selected = string.Equals(style, _preferences.Style, StringComparison.OrdinalIgnoreCase);
+        var frame = new Border
+        {
+            Padding = new Thickness(8),
+            CornerRadius = new CornerRadius(clay ? 22 : 14),
+            BorderThickness = new Thickness(selected ? 2 : 1),
+            BorderBrush = (System.Windows.Media.Brush)FindResource(selected ? "TextPrimaryBrush" : "CardStrokeBrush"),
+            Background = System.Windows.Media.Brushes.Transparent,
+            Child = body
+        };
+        var option = new RadioButton
+        {
+            GroupName = "Style",
+            IsChecked = selected,
+            Tag = style,
+            Content = frame,
+            Margin = new Thickness(0, 0, 12, 0),
+            Cursor = System.Windows.Input.Cursors.Hand,
+            Template = PlainRadioTemplate()
+        };
+        System.Windows.Automation.AutomationProperties.SetName(option, L.T(clay ? "style_clay" : "style_glass"));
+        option.Checked += StyleOption_Checked;
+        return option;
+    }
+
+    /// <summary>A radio button that shows only its content.</summary>
+    private static ControlTemplate PlainRadioTemplate() =>
+        new(typeof(RadioButton)) { VisualTree = new FrameworkElementFactory(typeof(ContentPresenter)) };
+
+    private void StyleOption_Checked(object sender, RoutedEventArgs e)
+    {
+        if (!_syncingChoices && sender is RadioButton { Tag: string style } && style != _preferences.Style)
+        {
+            ApplyAppearance(style, _preferences.Accent ?? "Violet");
+        }
+    }
+
+    private void AccentOption_Checked(object sender, RoutedEventArgs e)
+    {
+        if (!_syncingChoices && sender is RadioButton { Tag: string accent } && accent != _preferences.Accent)
+        {
+            ApplyAppearance(_preferences.Style, accent);
+        }
+    }
+
+    private void ApplyAppearance(string style, string accent)
+    {
+        _preferences.Style = style;
+        _preferences.Accent = accent;
+        _preferences.Save();
+        ThemeManager.Style = style;
+        ThemeManager.Accent = accent;
+        ThemeManager.ApplySystemTheme(System.Windows.Application.Current.Resources);
+        // Rebuilt after the click has finished, so the clicked option isn't removed mid-event.
+        Dispatcher.BeginInvoke(SyncChoiceCombos, System.Windows.Threading.DispatcherPriority.Background);
     }
 
     private static void SelectByTag(ComboBox combo, string tag) =>
@@ -172,11 +342,7 @@ public partial class MainWindow
         {
             return;
         }
-        _preferences.Style = SelectedTag(sender) is { Length: > 0 } style ? style : "Aurora";
-        _preferences.Save();
-        ThemeManager.Style = _preferences.Style;
-        ThemeManager.ApplySystemTheme(System.Windows.Application.Current.Resources);
-        SyncChoiceCombos();
+        ApplyAppearance(SelectedTag(sender) is { Length: > 0 } style ? style : "Glass", _preferences.Accent ?? "Violet");
     }
 
     private void LanguageCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)

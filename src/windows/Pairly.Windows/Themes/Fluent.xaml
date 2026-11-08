@@ -25,7 +25,7 @@
     <!-- Typography ramp. Implicit styles do not reach Window subclasses, so each window opts in with
          Style="{StaticResource {x:Type Window}}". -->
     <Style TargetType="Window">
-        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="Background" Value="{DynamicResource SolidBackgroundBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
@@ -40,14 +40,14 @@
     </Style>
 
     <Style x:Key="PageTitle" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="{StaticResource DisplayFontFamily}" />
+        <Setter Property="FontFamily" Value="{DynamicResource DisplayFontFamily}" />
         <Setter Property="FontSize" Value="28" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
     </Style>
 
     <Style x:Key="SubtitleText" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="{StaticResource DisplayFontFamily}" />
+        <Setter Property="FontFamily" Value="{DynamicResource DisplayFontFamily}" />
         <Setter Property="FontSize" Value="20" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
@@ -262,6 +262,7 @@
 
     <!-- Settings side navigation, like NavigationView items: left accent pill when selected. -->
     <Style x:Key="SettingsNavButton" TargetType="RadioButton">
+        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
         <Setter Property="Height" Value="36" />
         <Setter Property="Margin" Value="0,1" />
         <Setter Property="Padding" Value="12,0" />
@@ -271,7 +272,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
-                    <Border x:Name="Chrome" CornerRadius="{DynamicResource ControlRadius}" Background="{TemplateBinding Background}">
+                    <Border x:Name="Chrome" CornerRadius="{DynamicResource PillRadius}" Background="{TemplateBinding Background}">
                         <Grid>
                             <Border x:Name="Indicator" Width="3" Height="16" CornerRadius="1.5" HorizontalAlignment="Left"
                                     Background="{DynamicResource AccentBrush}" Visibility="Hidden" />
@@ -282,9 +283,11 @@
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
                         </Trigger>
+                        <!-- Selected: a filled pill in the style's ink (Glass) or soft tint (Clay). -->
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
-                            <Setter TargetName="Indicator" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource NavSelectedBrush}" />
+                            <Setter Property="Foreground" Value="{DynamicResource NavSelectedTextBrush}" />
+                            <Setter Property="FontWeight" Value="SemiBold" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -881,7 +884,7 @@
     <!-- Menus and tooltips -->
     <Style TargetType="ContextMenu">
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
         <Setter Property="FontSize" Value="14" />
         <Setter Property="HasDropShadow" Value="False" />
         <Setter Property="Template">
@@ -941,7 +944,7 @@
 
     <Style TargetType="ToolTip">
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
         <Setter Property="FontSize" Value="12" />
         <Setter Property="HasDropShadow" Value="False" />
         <Setter Property="Template">
