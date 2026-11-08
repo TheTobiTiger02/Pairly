@@ -61,8 +61,10 @@ class AppSmokeTest {
 
     private fun text(@StringRes id: Int) = context.getString(id)
 
+    // While another app is in front (or Pairly is still coming back), there is no Compose
+    // hierarchy at all; that counts as "not there yet", not as a failure.
     private fun exists(@StringRes id: Int): Boolean =
-        compose.onAllNodesWithText(text(id)).fetchSemanticsNodes().isNotEmpty()
+        runCatching { compose.onAllNodesWithText(text(id)).fetchSemanticsNodes().isNotEmpty() }.getOrDefault(false)
 
     private fun waitFor(@StringRes id: Int, timeoutMs: Long = 30_000) =
         compose.waitUntil(timeoutMs) { exists(id) }
@@ -75,7 +77,7 @@ class AppSmokeTest {
 
     /** Tabs show their label only when selected; the content description is always there. */
     private fun tab(@StringRes id: Int) {
-        compose.waitUntil(30_000) { compose.onAllNodesWithContentDescription(text(id)).fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil(30_000) { runCatching { compose.onAllNodesWithContentDescription(text(id)).fetchSemanticsNodes().isNotEmpty() }.getOrDefault(false) }
         compose.onAllNodesWithContentDescription(text(id)).onFirst().performClick()
         compose.waitForIdle()
     }
@@ -175,6 +177,8 @@ class AppSmokeTest {
         }
         device.takeScreenshot(File(context.filesDir, "screenshots/%02d-accessibility-settings.png".format(++shot)))
         device.pressBack()
+        // Wait for Pairly to be in front again before asking Compose about it.
+        check(device.wait(Until.hasObject(By.pkg(context.packageName).depth(0)), 30_000)) { "Pairly did not come back from Settings." }
         waitFor(R.string.feature_why_title)
         compose.onNodeWithContentDescription(text(R.string.action_back)).performClick()
         waitFor(R.string.features_title)
