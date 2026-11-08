@@ -207,7 +207,7 @@ class StreamMirrorSession(
      */
     private fun startAudioChannel() {
         val ticket = audioTicketBase64 ?: return
-        if (!PlaybackAudioStreamer.canCapture(context)) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || !PlaybackAudioStreamer.canCapture(context)) {
             Log.i(TAG, "Phone audio needs Android 10+ and the microphone permission; mirroring without sound.")
             return
         }
@@ -313,7 +313,7 @@ class StreamMirrorSession(
         stopped = true
         ShizukuHelper.stop(ShizukuHelper.HOLDER_INPUT)
 
-        runCatching { audio?.stop() }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) runCatching { audio?.stop() }
         audio = null
 
         runCatching { encoder?.stop() }

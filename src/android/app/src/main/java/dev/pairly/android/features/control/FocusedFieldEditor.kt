@@ -78,7 +78,7 @@ internal class FocusedFieldEditor(private val service: AccessibilityService) {
         }
 
         // Submit (search, send) where the field asks for it; a newline in multi-line fields.
-        return if (submit) {
+        return if (submit && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             perform(AccessibilityNodeInfo.AccessibilityAction.ACTION_IME_ENTER.id)
         } else {
             insert("\n")

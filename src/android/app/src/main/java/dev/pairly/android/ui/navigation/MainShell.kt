@@ -26,11 +26,9 @@ import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,7 +40,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -140,17 +137,11 @@ fun MainShell(
                     enter = slideInVertically { it } + fadeIn(),
                     exit = slideOutVertically { it } + fadeOut()
                 ) {
-                    NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
-                        tabs.forEach { tab ->
-                            NavigationBarItem(
-                                selected = route == tab.route,
-                                onClick = { selectTab(tab.route) },
-                                icon = { Icon(tab.icon, contentDescription = null) },
-                                label = { Text(stringResource(tab.label), maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                                colors = NavigationBarItemDefaults.colors(indicatorColor = MaterialTheme.colorScheme.primaryContainer)
-                            )
+                    PairlyNavBar(
+                        tabs.map { tab ->
+                            NavItem(stringResource(tab.label), tab.icon, route == tab.route) { selectTab(tab.route) }
                         }
-                    }
+                    )
                 }
             }
         ) { padding ->
@@ -165,7 +156,12 @@ fun MainShell(
                                 selected = route == tab.route,
                                 onClick = { selectTab(tab.route) },
                                 icon = { Icon(tab.icon, contentDescription = null) },
-                                label = { Text(stringResource(tab.label)) }
+                                label = { Text(stringResource(tab.label)) },
+                                colors = NavigationRailItemDefaults.colors(
+                                    indicatorColor = style.navActive,
+                                    selectedIconColor = style.onNavActive,
+                                    selectedTextColor = MaterialTheme.colorScheme.onSurface
+                                )
                             )
                         }
                     }

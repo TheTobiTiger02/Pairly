@@ -241,8 +241,6 @@
     <string name="theme_system">System</string>
     <string name="theme_light">Hell</string>
     <string name="theme_dark">Dunkel</string>
-    <string name="settings_dynamic_color">Hintergrundfarben verwenden</string>
-    <string name="settings_dynamic_color_detail">Pairlys Farben an dein Hintergrundbild anpassen</string>
     <string name="settings_language">Sprache</string>
     <string name="language_system">System</string>
     <string name="settings_updates">Updates</string>
@@ -324,6 +322,12 @@
         <item quantity="one">%d Datei konnte nicht gesendet werden</item>
         <item quantity="other">%d Dateien konnten nicht gesendet werden</item>
     </plurals>
+    <string name="home_link_from">%1$s, verbunden mit</string>
+    <string name="home_clay_connected">Dein Handy und dein PC verstehen sich.</string>
+    <string name="home_clay_offline">Dein PC ist gerade nicht erreichbar.</string>
+    <string name="home_clay_connecting">Suche deinen PC …</string>
+    <string name="home_clay_unpaired">Verbinde deinen PC.</string>
+    <string name="home_on_this_phone">Auf diesem Handy</string>
     <string name="home_send_title">An deinen PC senden</string>
     <string name="home_send_clipboard">Zwischen­ablage</string>
     <string name="home_send_photos">Fotos</string>
@@ -383,11 +387,21 @@
     <string name="power_benefit_mirror">Spiegeln startet ohne Nachfrage</string>
     <string name="power_benefit_input">Echte Touch- und Tasteneingaben vom PC</string>
     <string name="power_benefit_grants">Alle Berechtigungen mit einem Tipp</string>
+    <string name="style_glass">Glass</string>
+    <string name="style_glass_detail">Klare Flächen, klare Schrift</string>
+    <string name="style_clay">Clay</string>
+    <string name="style_clay_detail">Weiche Formen, freundlich</string>
+    <string name="settings_accent">Akzentfarbe</string>
+    <string name="accent_system">Hintergrundbild</string>
+    <string name="accent_indigo">Indigo</string>
+    <string name="accent_violet">Violett</string>
+    <string name="accent_blue">Blau</string>
+    <string name="accent_teal">Petrol</string>
+    <string name="accent_green">Grün</string>
+    <string name="accent_amber">Bernstein</string>
+    <string name="accent_coral">Koralle</string>
+    <string name="accent_pink">Pink</string>
     <string name="settings_style">Stil</string>
-    <string name="style_aurora">Aurora</string>
-    <string name="style_aurora_detail">Indigo, ruhig</string>
-    <string name="style_daybreak">Daybreak</string>
-    <string name="style_daybreak_detail">Warm, verspielt</string>
     <plurals name="power_grant_all">
         <item quantity="one">%1$d Funktion mit einem Tipp einschalten</item>
         <item quantity="other">%1$d Funktionen mit einem Tipp einschalten</item>

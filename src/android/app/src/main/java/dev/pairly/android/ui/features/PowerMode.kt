@@ -50,7 +50,6 @@ import dev.pairly.android.ui.components.PairlyCard
 import dev.pairly.android.ui.components.PrimaryButton
 import dev.pairly.android.ui.components.SecondaryButton
 import dev.pairly.android.ui.components.SwitchRow
-import dev.pairly.android.ui.theme.AppStyle
 import dev.pairly.android.ui.theme.Pairly
 import dev.pairly.android.ui.theme.Space
 
@@ -174,62 +173,10 @@ fun PowerBenefits(modifier: Modifier = Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(Space.s)) {
         items.forEach { (icon, text) ->
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(icon, contentDescription = null, tint = Pairly.style.onIconContainer, modifier = Modifier.size(20.dp))
+                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(Space.m))
                 Text(stringResource(text), style = MaterialTheme.typography.bodyMedium)
             }
         }
-    }
-}
-
-/** Two tappable previews, one per style, each drawn in its own colors. */
-@Composable
-fun StylePicker(selected: AppStyle, onSelect: (AppStyle) -> Unit, modifier: Modifier = Modifier) {
-    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.m)) {
-        StyleOption(
-            AppStyle.Aurora, selected == AppStyle.Aurora, onSelect,
-            stringResource(R.string.style_aurora), stringResource(R.string.style_aurora_detail),
-            Brush.linearGradient(listOf(Color(0xFF4B3FD8), Color(0xFF7C4DEB))), Color(0xFFF4F3FF), RoundedCornerShape(16.dp),
-            Modifier.weight(1f)
-        )
-        StyleOption(
-            AppStyle.Daybreak, selected == AppStyle.Daybreak, onSelect,
-            stringResource(R.string.style_daybreak), stringResource(R.string.style_daybreak_detail),
-            Brush.linearGradient(listOf(Color(0xFFC2462A), Color(0xFFE8603F))), Color(0xFFFFF7F1), RoundedCornerShape(24.dp),
-            Modifier.weight(1f)
-        )
-    }
-}
-
-@Composable
-private fun StyleOption(
-    value: AppStyle,
-    isSelected: Boolean,
-    onSelect: (AppStyle) -> Unit,
-    title: String,
-    detail: String,
-    hero: Brush,
-    ground: Color,
-    heroShape: RoundedCornerShape,
-    modifier: Modifier
-) {
-    val outline = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
-    Column(
-        modifier
-            .clip(RoundedCornerShape(20.dp))
-            .border(if (isSelected) 2.dp else 1.dp, outline, RoundedCornerShape(20.dp))
-            .clickable(role = Role.RadioButton) { onSelect(value) }
-            .semantics { this.selected = isSelected }
-            .padding(Space.m)
-    ) {
-        Box(Modifier.fillMaxWidth().height(72.dp).clip(RoundedCornerShape(14.dp)).background(ground).padding(Space.s)) {
-            Box(Modifier.fillMaxWidth().height(34.dp).clip(heroShape).background(hero))
-            Row(Modifier.align(Alignment.BottomStart), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                repeat(3) { Box(Modifier.size(width = 24.dp, height = 14.dp).clip(CircleShape).background(Color.White)) }
-            }
-        }
-        Spacer(Modifier.height(Space.s))
-        Text(title, style = MaterialTheme.typography.titleSmall)
-        Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

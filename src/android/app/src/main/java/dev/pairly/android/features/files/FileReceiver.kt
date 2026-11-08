@@ -117,6 +117,7 @@ class FileReceiver(
     private fun createTarget(fileName: String, mimeType: String): Target =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) mediaStoreTarget(fileName, mimeType) else appFolderTarget(fileName)
 
+    @androidx.annotation.RequiresApi(Build.VERSION_CODES.Q)
     private fun mediaStoreTarget(fileName: String, mimeType: String): Target {
         val resolver = context.contentResolver
         val values = ContentValues().apply {

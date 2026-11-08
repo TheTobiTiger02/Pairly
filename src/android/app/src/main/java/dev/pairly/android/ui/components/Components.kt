@@ -68,6 +68,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -87,21 +88,16 @@ import dev.pairly.android.network.ConnectionPhase
 import dev.pairly.android.ui.theme.Pairly
 import dev.pairly.android.ui.theme.Space
 
-/** Paints the backdrop (background color plus the theme's soft tint) behind a screen. */
+/** Paints the style's ground behind a screen. */
 @Composable
 fun PairlyBackground(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
-    val style = Pairly.style
-    val base = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
     // Text outside a Material Surface would otherwise default to black, unreadable in dark themes.
     CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
-        Box(
-            modifier.then(style.backgroundBrush?.let { base.background(it) } ?: base),
-            content = content
-        )
+        Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), content = content)
     }
 }
 
-/** A frosted glass card. */
+/** The style's card: Glass is a pale pane with a hairline edge, Clay a soft white pillow. */
 @Composable
 fun PairlyCard(
     modifier: Modifier = Modifier,
@@ -112,7 +108,10 @@ fun PairlyCard(
 ) {
     val style = Pairly.style
     val shape = RoundedCornerShape(style.cardRadius)
-    var box = modifier.clip(shape)
+    var box = if (style.cardShadow > 0.dp && brush == null) {
+        modifier.shadow(style.cardShadow, shape, clip = false, ambientColor = style.shadowColor, spotColor = style.shadowColor)
+    } else modifier
+    box = box.clip(shape)
     box = if (brush != null) box.background(brush) else box.background(style.cardColor)
     style.cardBorder?.let { box = box.border(it, shape) }
     if (onClick != null) box = box.clickable(role = Role.Button, onClick = onClick)
@@ -152,9 +151,9 @@ fun ScreenTitle(title: String, subtitle: String? = null, modifier: Modifier = Mo
 @Composable
 fun SectionLabel(text: String, modifier: Modifier = Modifier) {
     Text(
-        text.uppercase(),
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.primary,
+        text,
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier.padding(top = Space.l, bottom = Space.xs, start = Space.xs).semantics { heading() }
     )
 }
@@ -277,10 +276,10 @@ fun <T> ChoiceRow(options: List<Pair<T, String>>, selected: T, onSelect: (T) -> 
         options.forEach { (value, label) ->
             val active = value == selected
             val background by animateColorAsState(
-                if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh, label = "choice"
+                if (active) Pairly.style.navActive else MaterialTheme.colorScheme.surfaceContainerHigh, label = "choice"
             )
             val foreground by animateColorAsState(
-                if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface, label = "choice-text"
+                if (active) Pairly.style.onNavActive else MaterialTheme.colorScheme.onSurface, label = "choice-text"
             )
             Box(
                 Modifier.weight(1f).heightIn(min = 44.dp).clip(MaterialTheme.shapes.medium).background(background)
@@ -300,7 +299,11 @@ fun <T> ChoiceRow(options: List<Pair<T, String>>, selected: T, onSelect: (T) -> 
 /** Full-width primary action used at the bottom of steps. */
 @Composable
 fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, icon: ImageVector? = null) {
-    Button(onClick = onClick, enabled = enabled, modifier = modifier.fillMaxWidth().height(Space.button)) {
+    val style = Pairly.style
+    Button(
+        onClick = onClick, enabled = enabled, modifier = modifier.fillMaxWidth().height(Space.button),
+        colors = ButtonDefaults.buttonColors(containerColor = style.buttonColor, contentColor = style.onButton)
+    ) {
         if (icon != null) { Icon(icon, null); Spacer(Modifier.width(Space.s)) }
         Text(text)
     }

@@ -30,6 +30,8 @@ import dev.pairly.android.ui.settings.SettingsCallbacks
 import dev.pairly.android.ui.settings.SettingsScreen
 import dev.pairly.android.ui.features.RestrictedSettings
 import dev.pairly.android.ui.features.RestrictedState
+import dev.pairly.android.ui.theme.Accent
+import dev.pairly.android.ui.theme.AppStyle
 import dev.pairly.android.ui.theme.PairlyTheme
 import dev.pairly.android.ui.theme.ThemeMode
 import dev.pairly.android.ui.whatsnew.WhatsNewContent
@@ -52,8 +54,14 @@ import org.robolectric.annotation.GraphicsMode
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [34], qualifiers = "w411dp-h891dp-xxhdpi")
 class ScreenshotTest(private val case: Case) {
-    data class Case(val mode: ThemeMode, val language: String, val fontScale: Float = 1f) {
-        val folder = "${mode.name.lowercase()}-$language" + if (fontScale > 1f) "-large" else ""
+    data class Case(
+        val mode: ThemeMode,
+        val language: String,
+        val fontScale: Float = 1f,
+        val style: AppStyle = AppStyle.Glass,
+        val accent: Accent = Accent.Violet
+    ) {
+        val folder = "${style.name.lowercase()}-${mode.name.lowercase()}-$language" + if (fontScale > 1f) "-large" else ""
         override fun toString() = folder
     }
 
@@ -63,8 +71,10 @@ class ScreenshotTest(private val case: Case) {
         fun cases(): List<Case> = listOf(
             Case(ThemeMode.Light, "en"),
             Case(ThemeMode.Dark, "en"),
+            Case(ThemeMode.Light, "en", style = AppStyle.Clay, accent = Accent.Pink),
+            Case(ThemeMode.Dark, "en", style = AppStyle.Clay, accent = Accent.Pink),
             Case(ThemeMode.Light, "de"),
-            Case(ThemeMode.Light, "de", fontScale = 2f)
+            Case(ThemeMode.Light, "de", fontScale = 2f, style = AppStyle.Clay, accent = Accent.Teal)
         )
     }
 
@@ -94,7 +104,7 @@ class ScreenshotTest(private val case: Case) {
         if (case.fontScale != 1f) RuntimeEnvironment.setFontScale(case.fontScale)
         compose.setContent {
             CompositionLocalProvider(LocalFeatureActions provides NoFeatureActions) {
-                PairlyTheme(case.mode) {
+                PairlyTheme(case.mode, case.style, case.accent) {
                     PairlyBackground { content() }
                 }
             }

@@ -121,12 +121,12 @@ private fun Phone(modifier: Modifier = Modifier) {
         modifier.size(64.dp, 112.dp).clip(RoundedCornerShape(16.dp)).background(style.cardColor)
             .border(2.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp)),
         contentAlignment = Alignment.Center
-    ) { Icon(Icons.Rounded.Smartphone, contentDescription = null, tint = style.onIconContainer, modifier = Modifier.size(28.dp)) }
+    ) { Icon(Icons.Rounded.Smartphone, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp)) }
 }
 
 @Composable
 private fun Pc(modifier: Modifier = Modifier, width: Dp = 120.dp, content: @Composable () -> Unit = {
-    Icon(Icons.Rounded.Laptop, contentDescription = null, tint = Pairly.style.onIconContainer, modifier = Modifier.size(28.dp))
+    Icon(Icons.Rounded.Laptop, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
 }) {
     val style = Pairly.style
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
@@ -154,8 +154,9 @@ private fun Rings(t: Float, size: Dp, content: @Composable () -> Unit) {
         repeat(2) { index ->
             val phase = (t + index * 0.5f) % 1f
             Box(
-                Modifier.size(size * 1.6f).graphicsLayer { scaleX = 0.6f + phase; scaleY = 0.6f + phase; alpha = (1f - phase) * 0.35f }
-                    .clip(CircleShape).background(accent)
+                // Hairline rings, like a signal going out; no soft glow.
+                Modifier.size(size * 1.6f).graphicsLayer { scaleX = 0.6f + phase; scaleY = 0.6f + phase; alpha = (1f - phase) * 0.8f }
+                    .border(1.5.dp, accent, CircleShape)
             )
         }
         content()
@@ -166,16 +167,15 @@ private fun Rings(t: Float, size: Dp, content: @Composable () -> Unit) {
 private fun Pulses(icon: ImageVector, t: Float) {
     val style = Pairly.style
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        repeat(3) { index ->
-            val phase = (t + index / 3f) % 1f
-            Box(
-                Modifier.size(120.dp).graphicsLayer { scaleX = 0.8f + phase * 1.1f; scaleY = 0.8f + phase * 1.1f; alpha = (1f - phase) * 0.28f }
-                    .clip(CircleShape).background(style.accents[index % style.accents.size])
-            )
-        }
+        // A hairline frame that slowly turns around the mark; calmer than glowing pulses.
+        val frame = if (style.clay) RoundedCornerShape(44.dp) else RoundedCornerShape(36.dp)
+        Box(
+            Modifier.size(140.dp).graphicsLayer { rotationZ = t * 90f }
+                .border(1.5.dp, MaterialTheme.colorScheme.outlineVariant, frame)
+        )
         Box(
             Modifier.size(104.dp).graphicsLayer { val breathe = 1f + sin(t * 2 * PI).toFloat() * 0.03f; scaleX = breathe; scaleY = breathe }
-                .clip(if (style.daybreak) RoundedCornerShape(36.dp) else CircleShape).background(style.heroBrush),
+                .clip(RoundedCornerShape(if (style.clay) 36.dp else 30.dp)).background(style.heroBrush),
             contentAlignment = Alignment.Center
         ) { Icon(icon, contentDescription = null, tint = style.onHero, modifier = Modifier.size(52.dp)) }
     }

@@ -241,8 +241,6 @@
     <string name="theme_system">System</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
-    <string name="settings_dynamic_color">Use wallpaper colors</string>
-    <string name="settings_dynamic_color_detail">Match Pairly’s colors to your wallpaper</string>
     <string name="settings_language">Language</string>
     <string name="language_system">System</string>
     <string name="settings_updates">Updates</string>
@@ -324,6 +322,12 @@
         <item quantity="one">%d file couldn’t be sent</item>
         <item quantity="other">%d files couldn’t be sent</item>
     </plurals>
+    <string name="home_link_from">%1$s, linked to</string>
+    <string name="home_clay_connected">Your phone and PC are talking.</string>
+    <string name="home_clay_offline">Your PC is out of reach right now.</string>
+    <string name="home_clay_connecting">Looking for your PC…</string>
+    <string name="home_clay_unpaired">Let’s link your PC.</string>
+    <string name="home_on_this_phone">On this phone</string>
     <string name="home_send_title">Send to your PC</string>
     <string name="home_send_clipboard">Clipboard</string>
     <string name="home_send_photos">Photos</string>
@@ -383,11 +387,21 @@
     <string name="power_benefit_mirror">Mirroring starts without a prompt</string>
     <string name="power_benefit_input">Real touch and keys from your PC</string>
     <string name="power_benefit_grants">All permissions in one tap</string>
+    <string name="style_glass">Glass</string>
+    <string name="style_glass_detail">Clear panes, crisp type</string>
+    <string name="style_clay">Clay</string>
+    <string name="style_clay_detail">Soft shapes, friendly</string>
+    <string name="settings_accent">Accent color</string>
+    <string name="accent_system">Wallpaper</string>
+    <string name="accent_indigo">Indigo</string>
+    <string name="accent_violet">Violet</string>
+    <string name="accent_blue">Blue</string>
+    <string name="accent_teal">Teal</string>
+    <string name="accent_green">Green</string>
+    <string name="accent_amber">Amber</string>
+    <string name="accent_coral">Coral</string>
+    <string name="accent_pink">Pink</string>
     <string name="settings_style">Style</string>
-    <string name="style_aurora">Aurora</string>
-    <string name="style_aurora_detail">Indigo, calm</string>
-    <string name="style_daybreak">Daybreak</string>
-    <string name="style_daybreak_detail">Warm, playful</string>
     <plurals name="power_grant_all">
         <item quantity="one">Turn on %1$d feature in one tap</item>
         <item quantity="other">Turn on %1$d features in one tap</item>
