@@ -301,7 +301,10 @@ fun <T> ChoiceRow(options: List<Pair<T, String>>, selected: T, onSelect: (T) -> 
 fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, icon: ImageVector? = null) {
     val style = Pairly.style
     Button(
-        onClick = onClick, enabled = enabled, modifier = modifier.fillMaxWidth().height(Space.button),
+        onClick = onClick, enabled = enabled,
+        // Glass: a compact, slightly rounded button. Clay: a tall, chunky pill.
+        modifier = modifier.fillMaxWidth().height(if (style.clay) 56.dp else Space.button),
+        shape = if (style.clay) CircleShape else RoundedCornerShape(10.dp),
         colors = ButtonDefaults.buttonColors(containerColor = style.buttonColor, contentColor = style.onButton)
     ) {
         if (icon != null) { Icon(icon, null); Spacer(Modifier.width(Space.s)) }

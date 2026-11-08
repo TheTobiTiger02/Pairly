@@ -291,7 +291,8 @@ private fun ClayHero(state: AppState, callbacks: HomeCallbacks, send: SendAction
         }
         Spacer(Modifier.height(Space.l))
         val pillColor = if (style.dark) MaterialTheme.colorScheme.surfaceContainer else Color.White
-        val pillText = if (style.dark) MaterialTheme.colorScheme.onSurface else style.onHero
+        // White pills with deep accent text on the deep-toned light hero; charcoal pills on the pastel dark one.
+        val pillText = if (style.dark) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary
         if (needsReconnect(state)) {
             SendPill(null, reconnectLabel(state), true, pillColor, pillText, Modifier.fillMaxWidth(), reconnectAction(state, callbacks))
         } else {

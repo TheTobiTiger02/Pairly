@@ -217,13 +217,13 @@ public partial class MainWindow
             ThemeCombo.SelectedIndex = 2; // Dark
             await settle(150);
             Expect(ThemeManager.IsDark || ThemeManager.IsHighContrast, "Dark to switch the theme");
-            Expect(ThemeManager.IsHighContrast || (TryFindResource("WindowBrush") as SolidColorBrush)?.Color == Color.FromRgb(0x12, 0x11, 0x18), "dark mode to use Glass's dark background");
+            Expect(ThemeManager.IsHighContrast || (TryFindResource("WindowBrush") as SolidColorBrush)?.Color == Color.FromRgb(0x0E, 0x0E, 0x10), "dark mode to use Glass's graphite background");
 
             // The style and accent pickers apply live, and back.
             ((System.Windows.Controls.RadioButton)StylePickerPanel.Children[1]).IsChecked = true; // Clay
             await settle(200);
-            Expect(ThemeManager.IsHighContrast || (TryFindResource("WindowBrush") as SolidColorBrush)?.Color == Color.FromRgb(0x1D, 0x19, 0x24), "Clay to switch the palette");
-            Expect(ThemeManager.IsHighContrast || TryFindResource("CardRadius") is CornerRadius { TopLeft: 24 }, "Clay to round the cards more");
+            Expect(ThemeManager.IsHighContrast || (TryFindResource("WindowBrush") as SolidColorBrush)?.Color == Color.FromRgb(0x1A, 0x17, 0x14), "Clay to switch the palette");
+            Expect(ThemeManager.IsHighContrast || TryFindResource("CardRadius") is CornerRadius { TopLeft: 28 }, "Clay to round the cards more");
             ((System.Windows.Controls.RadioButton)AccentPickerPanel.Children[8]).IsChecked = true; // Pink
             await settle(200);
             Expect(_preferences.Accent == "Pink" && AccentNameText.Text == L.T("accent_pink"), "an accent swatch to switch the accent");

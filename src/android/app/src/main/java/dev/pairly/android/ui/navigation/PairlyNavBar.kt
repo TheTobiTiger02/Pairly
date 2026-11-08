@@ -45,7 +45,7 @@ class NavItem(val label: String, val icon: ImageVector, val selected: Boolean, v
 
 /**
  * Floating tab pill. The selected tab grows into a filled pill with its label: dark ink in Glass,
- * the soft accent tint in Clay. Other tabs show only their icon (the label is still announced).
+ * the accent in Clay. Other tabs show only their icon (the label is still announced).
  */
 @Composable
 fun PairlyNavBar(items: List<NavItem>, modifier: Modifier = Modifier) {
@@ -53,7 +53,7 @@ fun PairlyNavBar(items: List<NavItem>, modifier: Modifier = Modifier) {
     val height = if (style.clay) 68.dp else 60.dp
     val inset = if (style.clay) 20.dp else 32.dp
     var bar = modifier.navigationBarsPadding().padding(start = inset, end = inset, bottom = 12.dp).fillMaxWidth().height(height)
-    bar = bar.shadow(if (style.dark) 0.dp else 16.dp, CircleShape, ambientColor = style.shadowColor, spotColor = style.shadowColor)
+    bar = bar.shadow(if (style.cardShadow > 0.dp) 14.dp else 0.dp, CircleShape, ambientColor = style.shadowColor, spotColor = style.shadowColor)
         .clip(CircleShape).background(style.navContainer)
     style.navBorder?.let { bar = bar.border(it, CircleShape) }
     Row(

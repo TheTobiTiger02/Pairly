@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -44,9 +45,10 @@ import dev.pairly.android.R
 /**
  * Pairly's look is a style plus an accent color (Settings > Appearance), both following the
  * system's light and dark mode:
- * - Glass: cool tinted ground, translucent white cards with a hairline edge, Manrope, a dark
- *   floating tab pill and calm motion.
- * - Clay: soft pastel fills, big round shapes, Nunito, friendly copy and bouncier motion.
+ * - Glass: neutral and flat. White or graphite panes with hairline edges, no shadows, Manrope,
+ *   small radii; the accent only marks actions and state. Calm motion.
+ * - Clay: warm and colorful. Cream or warm charcoal ground, cards filled with the accent's soft
+ *   tone, colored shadows, heavy Nunito, big round shapes and bouncier motion.
  * The Windows app uses the same names and colors (ThemeManager.cs).
  */
 enum class AppStyle { Glass, Clay }
@@ -129,32 +131,32 @@ object Pairly {
 
 // --- Accent tables (keep in sync with ThemeManager.cs) --------------------------------------------
 
-/** Glass light: the accent and the tinted ground behind everything. Dark: a light tone of the accent. */
-private class GlassTones(val accent: Color, val ground: Color, val darkTone: Color)
+/** Glass: the accent on neutral light grounds, and a light tone of it for graphite dark. */
+private class GlassTones(val accent: Color, val darkTone: Color)
 
-/** Clay light: soft fill, deep text on it, page background. Dark: a light tone of the accent. */
-private class ClayTones(val soft: Color, val deep: Color, val background: Color, val darkTone: Color)
+/** Clay light: soft fill for cards, deep tone for buttons and text on it. Dark: a pastel tone. */
+private class ClayTones(val soft: Color, val deep: Color, val darkTone: Color)
 
 private val glassTones = mapOf(
-    Accent.Indigo to GlassTones(Color(0xFF4F46E5), Color(0xFFECEDF6), Color(0xFFA5B4FC)),
-    Accent.Violet to GlassTones(Color(0xFF6D3FD9), Color(0xFFEFEDF6), Color(0xFFC4B5FD)),
-    Accent.Blue to GlassTones(Color(0xFF1F5BD8), Color(0xFFECEFF6), Color(0xFF93C5FD)),
-    Accent.Teal to GlassTones(Color(0xFF0F766E), Color(0xFFEBF2F1), Color(0xFF5EEAD4)),
-    Accent.Green to GlassTones(Color(0xFF127536), Color(0xFFEDF2EE), Color(0xFF86EFAC)),
-    Accent.Amber to GlassTones(Color(0xFFA14A06), Color(0xFFF4F0EA), Color(0xFFFCD34D)),
-    Accent.Coral to GlassTones(Color(0xFFC2410C), Color(0xFFF5EFEC), Color(0xFFFDBA9F)),
-    Accent.Pink to GlassTones(Color(0xFFBE185D), Color(0xFFF5EDF1), Color(0xFFF9A8D4))
+    Accent.Indigo to GlassTones(Color(0xFF4F46E5), Color(0xFFA5B4FC)),
+    Accent.Violet to GlassTones(Color(0xFF6D3FD9), Color(0xFFC4B5FD)),
+    Accent.Blue to GlassTones(Color(0xFF1F5BD8), Color(0xFF93C5FD)),
+    Accent.Teal to GlassTones(Color(0xFF0F766E), Color(0xFF5EEAD4)),
+    Accent.Green to GlassTones(Color(0xFF127536), Color(0xFF86EFAC)),
+    Accent.Amber to GlassTones(Color(0xFFA14A06), Color(0xFFFCD34D)),
+    Accent.Coral to GlassTones(Color(0xFFC2410C), Color(0xFFFDBA9F)),
+    Accent.Pink to GlassTones(Color(0xFFBE185D), Color(0xFFF9A8D4))
 )
 
 private val clayTones = mapOf(
-    Accent.Indigo to ClayTones(Color(0xFFE4E3FF), Color(0xFF2F2C8F), Color(0xFFF7F6FD), Color(0xFFB4B4FF)),
-    Accent.Violet to ClayTones(Color(0xFFEDE4FF), Color(0xFF5B21B6), Color(0xFFFAF7FE), Color(0xFFCDB4FF)),
-    Accent.Blue to ClayTones(Color(0xFFDCEBFF), Color(0xFF1D4ED8), Color(0xFFF5F9FE), Color(0xFFA7CCFF)),
-    Accent.Teal to ClayTones(Color(0xFFD3F5F0), Color(0xFF115E59), Color(0xFFF3FBF9), Color(0xFF8EE8DA)),
-    Accent.Green to ClayTones(Color(0xFFDAF5DF), Color(0xFF166534), Color(0xFFF4FAF5), Color(0xFF9EE6A9)),
-    Accent.Amber to ClayTones(Color(0xFFFFEFCF), Color(0xFF92400E), Color(0xFFFFFAF1), Color(0xFFFFD27A)),
-    Accent.Coral to ClayTones(Color(0xFFFFE3D9), Color(0xFF9A3412), Color(0xFFFFF8F5), Color(0xFFFFB49E)),
-    Accent.Pink to ClayTones(Color(0xFFFFE0F0), Color(0xFF9D174D), Color(0xFFFFF7FB), Color(0xFFFFB0D6))
+    Accent.Indigo to ClayTones(Color(0xFFE2E1FF), Color(0xFF3730A3), Color(0xFFB4B4FF)),
+    Accent.Violet to ClayTones(Color(0xFFEDE3FF), Color(0xFF5B21B6), Color(0xFFCDB4FF)),
+    Accent.Blue to ClayTones(Color(0xFFD9E9FF), Color(0xFF1D4ED8), Color(0xFFA7CCFF)),
+    Accent.Teal to ClayTones(Color(0xFFCFF3EC), Color(0xFF115E59), Color(0xFF8EE8DA)),
+    Accent.Green to ClayTones(Color(0xFFD6F3DA), Color(0xFF166534), Color(0xFF9EE6A9)),
+    Accent.Amber to ClayTones(Color(0xFFFFEBC4), Color(0xFF92400E), Color(0xFFFFD27A)),
+    Accent.Coral to ClayTones(Color(0xFFFFE0D3), Color(0xFF9A3412), Color(0xFFFFB49E)),
+    Accent.Pink to ClayTones(Color(0xFFFFDDEE), Color(0xFF9D174D), Color(0xFFFFB0D6))
 )
 
 /** The accents a user can pick, with the color shown on their swatch. */
@@ -165,27 +167,40 @@ fun swatchColor(style: AppStyle, accent: Accent, dark: Boolean): Color = when (s
     AppStyle.Clay -> clayTones.getValue(accent).let { if (dark) it.darkTone else it.deep }
 }
 
-private val GlassInk = Color(0xFF17161F)
-private val GlassInkSoft = Color(0xFF5A5869)
-private val GlassNight = Color(0xFF121118)
-private val ClayInk = Color(0xFF2A2433)
-private val ClayInkSoft = Color(0xFF6A6275)
-private val ClayNight = Color(0xFF1D1924)
-private val ClayNightCard = Color(0xFF2A2433)
+// Glass: neutral, no tint. Light is near-white with white cards; dark is graphite.
+private val GlassPaper = Color(0xFFF6F6F7)
+private val GlassHairline = Color(0xFFE6E6E9)
+private val GlassInk = Color(0xFF18181B)
+private val GlassInkSoft = Color(0xFF52525B)
+private val GraphiteNight = Color(0xFF0E0E10)
+private val GraphiteCard = Color(0xFF17171A)
+private val GraphiteElevated = Color(0xFF1F1F23)
+private val GraphiteText = Color(0xFFEDEDEF)
+private val GraphiteTextSoft = Color(0xFFA1A1AA)
 
-private fun glassTonesFor(accent: Accent, dynamic: ColorScheme?, dark: Boolean): GlassTones =
-    if (accent == Accent.System && dynamic != null) {
-        GlassTones(dynamic.primary, lerp(Color(0xFFF1F0F5), dynamic.primary, 0.05f), dynamic.primary)
-    } else glassTones.getValue(if (accent == Accent.System) Accent.Violet else accent)
+// Clay: warm. Cream and warm ink in light, warm charcoal in dark.
+private val ClayCream = Color(0xFFFBF7F1)
+private val ClayInk = Color(0xFF2B2520)
+private val ClayInkSoft = Color(0xFF675C52)
+private val ClayCharcoal = Color(0xFF1A1714)
+private val ClayCharcoalCard = Color(0xFF26221E)
+private val ClayCharcoalText = Color(0xFFF5EFE8)
+private val ClayCharcoalTextSoft = Color(0xFFC2B8AC)
 
-private fun clayTonesFor(accent: Accent, dynamic: ColorScheme?, dark: Boolean): ClayTones =
+private fun glassTonesFor(accent: Accent, dynamic: ColorScheme?): GlassTones =
+    if (accent == Accent.System && dynamic != null) GlassTones(dynamic.primary, dynamic.primary)
+    else glassTones.getValue(if (accent == Accent.System) Accent.Violet else accent)
+
+private fun clayTonesFor(accent: Accent, dynamic: ColorScheme?): ClayTones =
     if (accent == Accent.System && dynamic != null) {
-        if (dark) ClayTones(dynamic.primaryContainer, dynamic.onPrimaryContainer, ClayNight, dynamic.primary)
-        else ClayTones(dynamic.primaryContainer, dynamic.onPrimaryContainer, lerp(Color.White, dynamic.primaryContainer, 0.25f), dynamic.primary)
+        ClayTones(dynamic.primaryContainer, if (dynamic.primary.luminance() < 0.3f) dynamic.primary else dynamic.onPrimaryContainer, dynamic.primary)
     } else clayTones.getValue(if (accent == Accent.System) Accent.Violet else accent)
 
 private val errorLight = Color(0xFFB3261E)
 private val errorDark = Color(0xFFFFB4AB)
+
+/** Clay's card in dark mode: warm charcoal with a touch of the accent. */
+private fun clayNightCard(tone: Color) = lerp(ClayCharcoalCard, tone, 0.10f)
 
 /**
  * Material color scheme for a style and accent. [dynamic] is the wallpaper scheme in the same
@@ -193,82 +208,89 @@ private val errorDark = Color(0xFFFFB4AB)
  */
 internal fun palette(appStyle: AppStyle, accent: Accent, dark: Boolean, dynamic: ColorScheme? = null): ColorScheme = when (appStyle) {
     AppStyle.Glass -> {
-        val t = glassTonesFor(accent, dynamic, dark)
+        val t = glassTonesFor(accent, dynamic)
         if (!dark) lightColorScheme(
             primary = t.accent, onPrimary = Color.White,
-            primaryContainer = lerp(t.accent, Color.White, 0.86f), onPrimaryContainer = lerp(t.accent, Color.Black, 0.45f),
+            primaryContainer = lerp(t.accent, Color.White, 0.88f), onPrimaryContainer = lerp(t.accent, Color.Black, 0.45f),
             secondary = GlassInkSoft, onSecondary = Color.White,
-            secondaryContainer = lerp(t.ground, GlassInk, 0.07f), onSecondaryContainer = GlassInk,
+            secondaryContainer = Color(0xFFEDEDEF), onSecondaryContainer = GlassInk,
             tertiary = Color(0xFF157F4C), onTertiary = Color.White,
             tertiaryContainer = Color(0xFFE3F5EA), onTertiaryContainer = Color(0xFF0B3B23),
-            background = t.ground, onBackground = GlassInk,
-            surface = t.ground, onSurface = GlassInk,
-            surfaceVariant = lerp(t.ground, GlassInk, 0.06f), onSurfaceVariant = GlassInkSoft,
-            surfaceContainerLowest = Color.White, surfaceContainerLow = lerp(t.ground, Color.White, 0.6f),
-            surfaceContainer = lerp(t.ground, Color.White, 0.35f), surfaceContainerHigh = lerp(t.ground, GlassInk, 0.04f),
-            surfaceContainerHighest = lerp(t.ground, GlassInk, 0.08f),
+            background = GlassPaper, onBackground = GlassInk,
+            surface = GlassPaper, onSurface = GlassInk,
+            surfaceVariant = Color(0xFFEDEDEF), onSurfaceVariant = GlassInkSoft,
+            surfaceContainerLowest = Color.White, surfaceContainerLow = Color(0xFFFBFBFC),
+            surfaceContainer = Color.White, surfaceContainerHigh = Color(0xFFEFEFF1),
+            surfaceContainerHighest = Color(0xFFE8E8EB),
             inverseSurface = GlassInk, inverseOnSurface = Color.White,
-            outline = Color(0xFF787688), outlineVariant = lerp(t.ground, GlassInk, 0.12f),
+            outline = Color(0xFF71717A), outlineVariant = GlassHairline,
             error = errorLight, errorContainer = Color(0xFFFFDAD6), onErrorContainer = Color(0xFF410002)
         ) else darkColorScheme(
             primary = t.darkTone, onPrimary = GlassInk,
-            primaryContainer = lerp(GlassNight, t.darkTone, 0.22f), onPrimaryContainer = lerp(t.darkTone, Color.White, 0.3f),
-            secondary = Color(0xFFC9C7D6), onSecondary = GlassInk,
-            secondaryContainer = lerp(GlassNight, Color.White, 0.09f), onSecondaryContainer = Color(0xFFF2F1F7),
+            primaryContainer = lerp(GraphiteCard, t.darkTone, 0.16f), onPrimaryContainer = lerp(t.darkTone, Color.White, 0.4f),
+            secondary = Color(0xFFD4D4D8), onSecondary = GlassInk,
+            secondaryContainer = GraphiteElevated, onSecondaryContainer = GraphiteText,
             tertiary = Color(0xFF86E0AE), onTertiary = Color(0xFF0B3B23),
-            tertiaryContainer = Color(0xFF173C2A), onTertiaryContainer = Color(0xFFC8F2D9),
-            background = GlassNight, onBackground = Color(0xFFF2F1F7),
-            surface = GlassNight, onSurface = Color(0xFFF2F1F7),
-            surfaceVariant = lerp(GlassNight, Color.White, 0.08f), onSurfaceVariant = Color(0xFFADABBC),
-            surfaceContainerLowest = Color(0xFF0C0B11), surfaceContainerLow = lerp(GlassNight, Color.White, 0.03f),
-            surfaceContainer = lerp(GlassNight, Color.White, 0.05f), surfaceContainerHigh = lerp(GlassNight, Color.White, 0.08f),
-            surfaceContainerHighest = lerp(GlassNight, Color.White, 0.11f),
-            inverseSurface = Color(0xFFF2F1F7), inverseOnSurface = GlassInk,
-            outline = Color(0xFF8E8C9E), outlineVariant = lerp(GlassNight, Color.White, 0.12f),
+            tertiaryContainer = Color(0xFF153325), onTertiaryContainer = Color(0xFFC8F2D9),
+            background = GraphiteNight, onBackground = GraphiteText,
+            surface = GraphiteNight, onSurface = GraphiteText,
+            surfaceVariant = GraphiteElevated, onSurfaceVariant = GraphiteTextSoft,
+            surfaceContainerLowest = Color(0xFF09090B), surfaceContainerLow = Color(0xFF131316),
+            surfaceContainer = GraphiteCard, surfaceContainerHigh = GraphiteElevated,
+            surfaceContainerHighest = Color(0xFF27272A),
+            inverseSurface = GraphiteText, inverseOnSurface = GlassInk,
+            outline = Color(0xFF71717A), outlineVariant = Color(0xFF27272A),
             error = errorDark, errorContainer = Color(0xFF93000A), onErrorContainer = Color(0xFFFFDAD6)
         )
     }
     AppStyle.Clay -> {
-        val t = clayTonesFor(accent, dynamic, dark)
-        if (!dark) lightColorScheme(
-            primary = t.deep, onPrimary = Color.White,
-            primaryContainer = t.soft, onPrimaryContainer = t.deep,
-            secondary = ClayInkSoft, onSecondary = Color.White,
-            secondaryContainer = lerp(t.background, t.soft, 0.6f), onSecondaryContainer = ClayInk,
-            tertiary = Color(0xFF166534), onTertiary = Color.White,
-            tertiaryContainer = Color(0xFFDAF5DF), onTertiaryContainer = Color(0xFF0E3A1C),
-            background = t.background, onBackground = ClayInk,
-            surface = t.background, onSurface = ClayInk,
-            surfaceVariant = lerp(t.background, ClayInk, 0.06f), onSurfaceVariant = ClayInkSoft,
-            surfaceContainerLowest = Color.White, surfaceContainerLow = lerp(t.background, Color.White, 0.6f),
-            surfaceContainer = lerp(t.background, t.soft, 0.35f), surfaceContainerHigh = lerp(t.background, t.soft, 0.6f),
-            surfaceContainerHighest = t.soft,
-            inverseSurface = ClayInk, inverseOnSurface = Color.White,
-            outline = Color(0xFF857D90), outlineVariant = lerp(t.background, ClayInk, 0.12f),
-            error = errorLight, errorContainer = Color(0xFFFFDAD6), onErrorContainer = Color(0xFF410002)
-        ) else darkColorScheme(
-            primary = t.darkTone, onPrimary = ClayNight,
-            primaryContainer = lerp(ClayNightCard, t.darkTone, 0.85f), onPrimaryContainer = ClayNight,
-            secondary = Color(0xFFD3CCDC), onSecondary = ClayNight,
-            secondaryContainer = lerp(ClayNightCard, Color.White, 0.06f), onSecondaryContainer = Color(0xFFF4F0F8),
-            tertiary = Color(0xFF9EE6A9), onTertiary = Color(0xFF0E3A1C),
-            tertiaryContainer = Color(0xFF1E4A2A), onTertiaryContainer = Color(0xFFD5F3D3),
-            background = ClayNight, onBackground = Color(0xFFF4F0F8),
-            surface = ClayNight, onSurface = Color(0xFFF4F0F8),
-            surfaceVariant = ClayNightCard, onSurfaceVariant = Color(0xFFBDB5C8),
-            surfaceContainerLowest = Color(0xFF16131C), surfaceContainerLow = lerp(ClayNight, ClayNightCard, 0.5f),
-            surfaceContainer = ClayNightCard, surfaceContainerHigh = lerp(ClayNightCard, Color.White, 0.05f),
-            surfaceContainerHighest = lerp(ClayNightCard, Color.White, 0.09f),
-            inverseSurface = Color(0xFFF4F0F8), inverseOnSurface = ClayInk,
-            outline = Color(0xFF9A92A6), outlineVariant = lerp(ClayNightCard, Color.White, 0.1f),
-            error = errorDark, errorContainer = Color(0xFF93000A), onErrorContainer = Color(0xFFFFDAD6)
-        )
+        val t = clayTonesFor(accent, dynamic)
+        if (!dark) {
+            val ground = lerp(ClayCream, t.soft, 0.18f)
+            lightColorScheme(
+                primary = t.deep, onPrimary = Color.White,
+                // A step deeper than the card fill so chips and tiles still show on a soft card.
+                primaryContainer = lerp(t.soft, t.deep, 0.12f), onPrimaryContainer = t.deep,
+                secondary = ClayInkSoft, onSecondary = Color.White,
+                secondaryContainer = lerp(ground, t.soft, 0.6f), onSecondaryContainer = ClayInk,
+                tertiary = Color(0xFF166534), onTertiary = Color.White,
+                tertiaryContainer = Color(0xFFDAF5DF), onTertiaryContainer = Color(0xFF0E3A1C),
+                background = ground, onBackground = ClayInk,
+                surface = ground, onSurface = ClayInk,
+                surfaceVariant = lerp(ground, t.soft, 0.7f), onSurfaceVariant = ClayInkSoft,
+                surfaceContainerLowest = Color.White, surfaceContainerLow = lerp(ground, t.soft, 0.3f),
+                surfaceContainer = lerp(ground, t.soft, 0.55f), surfaceContainerHigh = t.soft,
+                surfaceContainerHighest = lerp(t.soft, t.deep, 0.08f),
+                inverseSurface = ClayInk, inverseOnSurface = Color.White,
+                outline = Color(0xFF8A7E73), outlineVariant = lerp(t.soft, ClayInk, 0.12f),
+                error = errorLight, errorContainer = Color(0xFFFFDAD6), onErrorContainer = Color(0xFF410002)
+            )
+        } else {
+            val card = clayNightCard(t.darkTone)
+            darkColorScheme(
+                primary = t.darkTone, onPrimary = ClayCharcoal,
+                primaryContainer = lerp(card, t.darkTone, 0.85f), onPrimaryContainer = ClayCharcoal,
+                secondary = Color(0xFFDDD3C7), onSecondary = ClayCharcoal,
+                secondaryContainer = lerp(card, Color.White, 0.06f), onSecondaryContainer = ClayCharcoalText,
+                tertiary = Color(0xFF9EE6A9), onTertiary = Color(0xFF0E3A1C),
+                tertiaryContainer = Color(0xFF1E4A2A), onTertiaryContainer = Color(0xFFD5F3D3),
+                background = ClayCharcoal, onBackground = ClayCharcoalText,
+                surface = ClayCharcoal, onSurface = ClayCharcoalText,
+                surfaceVariant = card, onSurfaceVariant = ClayCharcoalTextSoft,
+                surfaceContainerLowest = Color(0xFF141210), surfaceContainerLow = lerp(ClayCharcoal, card, 0.5f),
+                surfaceContainer = card, surfaceContainerHigh = lerp(card, t.darkTone, 0.08f),
+                surfaceContainerHighest = lerp(card, t.darkTone, 0.14f),
+                inverseSurface = ClayCharcoalText, inverseOnSurface = ClayInk,
+                outline = Color(0xFF9C9083), outlineVariant = lerp(card, Color.White, 0.1f),
+                error = errorDark, errorContainer = Color(0xFF93000A), onErrorContainer = Color(0xFFFFDAD6)
+            )
+        }
     }
 }
 
 private fun shapes(appStyle: AppStyle) = when (appStyle) {
-    AppStyle.Glass -> Shapes(RoundedCornerShape(10.dp), RoundedCornerShape(14.dp), RoundedCornerShape(18.dp), RoundedCornerShape(22.dp), RoundedCornerShape(28.dp))
-    AppStyle.Clay -> Shapes(RoundedCornerShape(16.dp), RoundedCornerShape(22.dp), RoundedCornerShape(30.dp), RoundedCornerShape(34.dp), RoundedCornerShape(44.dp))
+    AppStyle.Glass -> Shapes(RoundedCornerShape(6.dp), RoundedCornerShape(10.dp), RoundedCornerShape(14.dp), RoundedCornerShape(16.dp), RoundedCornerShape(20.dp))
+    AppStyle.Clay -> Shapes(RoundedCornerShape(18.dp), RoundedCornerShape(22.dp), RoundedCornerShape(28.dp), RoundedCornerShape(32.dp), RoundedCornerShape(40.dp))
 }
 
 @OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)
@@ -288,32 +310,35 @@ private val Nunito = FontFamily(
     variable(R.font.nunito, 600, FontWeight.Medium),
     variable(R.font.nunito, 700, FontWeight.SemiBold),
     variable(R.font.nunito, 800, FontWeight.Bold),
-    variable(R.font.nunito, 900, FontWeight.ExtraBold)
+    variable(R.font.nunito, 900, FontWeight.ExtraBold),
+    variable(R.font.nunito, 1000, FontWeight.Black)
 )
 
 private fun typography(appStyle: AppStyle): Typography {
     val glass = appStyle == AppStyle.Glass
     val family = if (glass) Manrope else Nunito
-    val heading = FontWeight.ExtraBold
-    val strong = if (glass) FontWeight.Bold else FontWeight.ExtraBold
-    val medium = if (glass) FontWeight.SemiBold else FontWeight.Bold
-    val tracking = if (glass) (-0.6).sp else (-0.3).sp
+    // Glass: crisp and quiet, bold headings with tight tracking. Clay: heavy, round and a size bigger.
+    val heading = if (glass) FontWeight.Bold else FontWeight.Black
+    val strong = if (glass) FontWeight.SemiBold else FontWeight.ExtraBold
+    val medium = if (glass) FontWeight.Medium else FontWeight.Bold
+    val tracking = if (glass) (-0.4).sp else (-0.2).sp
+    val up = if (glass) 0 else 2
     fun style(size: Int, line: Int, weight: FontWeight, letter: TextUnit = 0.sp) =
         // Hyphenation keeps long German words ("Zwischenablage") from breaking mid-syllable in tight spots.
         TextStyle(fontFamily = family, fontWeight = weight, fontSize = size.sp, lineHeight = line.sp, letterSpacing = letter, hyphens = Hyphens.Auto, lineBreak = LineBreak.Paragraph)
     return Typography(
-        displayLarge = style(48, 54, heading, tracking),
-        displayMedium = style(40, 46, heading, tracking),
-        displaySmall = style(34, 40, heading, tracking),
-        headlineLarge = style(30, 36, heading, tracking),
-        headlineMedium = style(26, 32, heading, tracking),
-        headlineSmall = style(22, 28, heading, (-0.2).sp),
+        displayLarge = style(48 + up, 54 + up, heading, tracking),
+        displayMedium = style(40 + up, 46 + up, heading, tracking),
+        displaySmall = style(34 + up, 40 + up, heading, tracking),
+        headlineLarge = style(30 + up, 36 + up, heading, tracking),
+        headlineMedium = style(26 + up, 32 + up, heading, tracking),
+        headlineSmall = style(22 + up, 28 + up, heading, (-0.2).sp),
         titleLarge = style(20, 26, strong, (-0.1).sp),
         titleMedium = style(16, 22, strong),
         titleSmall = style(14, 20, strong),
         bodyLarge = style(16, 24, FontWeight.Normal),
         bodyMedium = style(14, 20, FontWeight.Normal),
-        bodySmall = style(12, 16, if (glass) FontWeight.Medium else FontWeight.Normal),
+        bodySmall = style(12, 16, if (glass) FontWeight.Normal else FontWeight.Medium),
         labelLarge = style(14, 20, strong),
         labelMedium = style(12, 16, medium, 0.2.sp),
         labelSmall = style(11, 16, medium, 0.3.sp)
@@ -322,23 +347,23 @@ private fun typography(appStyle: AppStyle): Typography {
 
 internal fun style(appStyle: AppStyle, scheme: ColorScheme, dark: Boolean, reduceMotion: Boolean): PairlyStyle {
     val success = if (dark) Color(0xFF86E0AE) else Color(0xFF157F4C)
-    val successContainer = if (dark) Color(0xFF173C2A) else Color(0xFFE3F5EA)
+    val successContainer = if (dark) Color(0xFF153325) else Color(0xFFE3F5EA)
     val warning = if (dark) Color(0xFFF2C46B) else Color(0xFF8A5300)
-    val warningContainer = if (dark) Color(0xFF4A3510) else Color(0xFFFFF0D6)
+    val warningContainer = if (dark) Color(0xFF3D2C0E) else Color(0xFFFFF0D6)
     return when (appStyle) {
+        // Flat panes with hairline edges and no shadows; the accent only marks actions and state.
         AppStyle.Glass -> PairlyStyle(
-            appStyle = appStyle, dark = dark, cardRadius = 22.dp,
-            // Opaque in light mode so the drop shadow doesn't show through the card.
-            cardColor = if (dark) Color.White.copy(alpha = 0.05f) else lerp(scheme.background, Color.White, 0.72f),
-            cardBorder = BorderStroke(1.dp, if (dark) Color.White.copy(alpha = 0.09f) else Color.White),
-            cardShadow = if (dark) 0.dp else 10.dp,
-            shadowColor = GlassInk.copy(alpha = 0.10f),
+            appStyle = appStyle, dark = dark, cardRadius = 14.dp,
+            cardColor = if (dark) GraphiteCard else Color.White,
+            cardBorder = BorderStroke(1.dp, if (dark) Color.White.copy(alpha = 0.07f) else GlassHairline),
+            cardShadow = 0.dp,
+            shadowColor = Color.Transparent,
             heroBrush = SolidColor(scheme.primary), onHero = scheme.onPrimary,
             buttonColor = scheme.primary, onButton = scheme.onPrimary,
-            iconContainer = if (dark) Color.White.copy(alpha = 0.07f) else scheme.primaryContainer,
+            iconContainer = if (dark) Color.White.copy(alpha = 0.06f) else scheme.primaryContainer,
             onIconContainer = if (dark) scheme.primary else scheme.onPrimaryContainer,
-            navContainer = if (dark) Color(0xFF1D1C25) else lerp(scheme.background, Color.White, 0.88f),
-            navBorder = BorderStroke(1.dp, if (dark) Color.White.copy(alpha = 0.08f) else Color.White),
+            navContainer = if (dark) GraphiteCard else Color.White,
+            navBorder = BorderStroke(1.dp, if (dark) Color.White.copy(alpha = 0.08f) else GlassHairline),
             navActive = if (dark) scheme.primary else GlassInk,
             onNavActive = if (dark) scheme.onPrimary else Color.White,
             navInactive = scheme.onSurfaceVariant,
@@ -346,18 +371,23 @@ internal fun style(appStyle: AppStyle, scheme: ColorScheme, dark: Boolean, reduc
             accents = listOf(scheme.primary, scheme.onSurfaceVariant, success, scheme.primaryContainer),
             reduceMotion = reduceMotion
         )
+        // Cards filled with the accent's soft tone, colored shadows, big deep-toned buttons.
         AppStyle.Clay -> PairlyStyle(
-            appStyle = appStyle, dark = dark, cardRadius = 30.dp,
-            cardColor = if (dark) ClayNightCard else Color.White,
+            appStyle = appStyle, dark = dark, cardRadius = 28.dp,
+            cardColor = if (dark) scheme.surfaceContainer else scheme.surfaceContainerHigh,
             cardBorder = null,
-            cardShadow = if (dark) 0.dp else 8.dp,
-            shadowColor = ClayInk.copy(alpha = 0.08f),
-            heroBrush = SolidColor(scheme.primaryContainer), onHero = scheme.onPrimaryContainer,
-            buttonColor = scheme.primaryContainer, onButton = scheme.onPrimaryContainer,
-            iconContainer = scheme.primaryContainer, onIconContainer = scheme.onPrimaryContainer,
-            navContainer = if (dark) ClayNightCard else Color.White,
+            cardShadow = if (dark) 0.dp else 12.dp,
+            shadowColor = scheme.primary.copy(alpha = 0.22f),
+            heroBrush = SolidColor(if (dark) scheme.primaryContainer else scheme.primary),
+            onHero = if (dark) scheme.onPrimaryContainer else scheme.onPrimary,
+            buttonColor = if (dark) scheme.primaryContainer else scheme.primary,
+            onButton = if (dark) scheme.onPrimaryContainer else scheme.onPrimary,
+            iconContainer = if (dark) scheme.primary.copy(alpha = 0.16f) else Color.White.copy(alpha = 0.75f),
+            onIconContainer = scheme.primary,
+            navContainer = scheme.surfaceContainerHigh,
             navBorder = null,
-            navActive = scheme.primaryContainer, onNavActive = scheme.onPrimaryContainer,
+            navActive = if (dark) scheme.primaryContainer else scheme.primary,
+            onNavActive = if (dark) scheme.onPrimaryContainer else scheme.onPrimary,
             navInactive = scheme.onSurfaceVariant,
             success = success, successContainer = successContainer, warning = warning, warningContainer = warningContainer,
             accents = listOf(scheme.primary, scheme.primaryContainer, success, warning),
