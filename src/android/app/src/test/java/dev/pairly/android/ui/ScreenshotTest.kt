@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -166,6 +168,15 @@ class ScreenshotTest(private val case: Case) {
                 connected, prefs, LocaleText.Language.System,
                 SettingsCallbacks({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
             )
+        }
+    }
+    @Test fun appearance() = capture("appearance") {
+        Screen {
+            androidx.compose.foundation.layout.Column(Modifier.padding(20.dp)) {
+                dev.pairly.android.ui.settings.StylePicker(case.style, case.accent, onSelect = {})
+                androidx.compose.foundation.layout.Spacer(Modifier.padding(8.dp))
+                dev.pairly.android.ui.settings.AccentPicker(case.style, case.accent, onSelect = {})
+            }
         }
     }
     @Test fun whatsNew() = capture("whats-new") {

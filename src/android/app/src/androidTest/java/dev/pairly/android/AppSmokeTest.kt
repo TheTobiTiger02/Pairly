@@ -9,6 +9,7 @@ import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -72,6 +73,13 @@ class AppSmokeTest {
         compose.waitForIdle()
     }
 
+    /** Tabs show their label only when selected; the content description is always there. */
+    private fun tab(@StringRes id: Int) {
+        compose.waitUntil(30_000) { compose.onAllNodesWithContentDescription(text(id)).fetchSemanticsNodes().isNotEmpty() }
+        compose.onAllNodesWithContentDescription(text(id)).onFirst().performClick()
+        compose.waitForIdle()
+    }
+
     private fun screenshot(name: String) {
         compose.waitForIdle()
         Thread.sleep(400) // let enter animations settle
@@ -110,7 +118,7 @@ class AppSmokeTest {
         // Home, Features, a feature page, Help and Settings.
         waitFor(R.string.home_not_paired)
         screenshot("home")
-        click(R.string.nav_features)
+        tab(R.string.nav_features)
         waitFor(R.string.features_title)
         screenshot("features")
         click(R.string.feature_calls)
@@ -118,10 +126,10 @@ class AppSmokeTest {
         screenshot("feature-calls")
         compose.onNodeWithContentDescription(text(R.string.action_back)).performClick()
         waitFor(R.string.features_title)
-        click(R.string.nav_help)
+        tab(R.string.nav_help)
         waitFor(R.string.help_title)
         screenshot("help")
-        click(R.string.nav_settings)
+        tab(R.string.nav_settings)
         waitFor(R.string.settings_title)
         screenshot("settings")
 
@@ -132,10 +140,10 @@ class AppSmokeTest {
         screenshot("settings-dark")
 
         // Tabs in both directions, including back to Home.
-        click(R.string.nav_home)
+        tab(R.string.nav_home)
         waitFor(R.string.home_not_paired)
         screenshot("home-dark")
-        click(R.string.nav_features)
+        tab(R.string.nav_features)
         waitFor(R.string.features_title)
 
         // "Control your phone" opens Android's settings as close to Pairly's switch as the phone allows.
@@ -172,7 +180,7 @@ class AppSmokeTest {
         waitFor(R.string.features_title)
 
         // Switch the app to German (recreates the activity on older Android versions).
-        click(R.string.nav_settings)
+        tab(R.string.nav_settings)
         compose.waitForIdle() // Settings keeps its scroll position, so scroll to the language row
         val settings = compose.onNode(hasScrollToNodeAction())
         settings.performScrollToNode(hasText("Deutsch"))

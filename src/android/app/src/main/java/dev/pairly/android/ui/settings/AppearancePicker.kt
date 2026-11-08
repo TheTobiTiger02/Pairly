@@ -107,7 +107,7 @@ private fun StyleOption(
                 verticalArrangement = Arrangement.spacedBy(5.dp)
             ) {
                 Box(Modifier.fillMaxWidth(0.7f).height(5.dp).clip(CircleShape).background(if (clay) scheme.onPrimaryContainer else scheme.onSurfaceVariant))
-                Box(Modifier.width(38.dp).height(12.dp).clip(CircleShape).background(look.buttonColor))
+                Box(Modifier.width(38.dp).height(12.dp).clip(CircleShape).background(if (clay) scheme.onPrimaryContainer else look.buttonColor))
             }
             Spacer(Modifier.weight(1f))
             Row(
