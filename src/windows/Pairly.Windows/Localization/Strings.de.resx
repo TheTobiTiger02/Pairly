@@ -545,6 +545,7 @@
   <data name="charging" xml:space="preserve"><value>lädt</value></data>
   <data name="power_mode_on" xml:space="preserve"><value>Power-Modus</value></data>
   <data name="power_mode_paused" xml:space="preserve"><value>Power-Modus pausiert</value></data>
+  <data name="power_mode_problem" xml:space="preserve"><value>Power-Modus funktioniert nicht</value></data>
   <data name="power_mode_tooltip" xml:space="preserve"><value>Shizuku läuft auf dem Handy: Das Spiegeln startet ohne Nachfrage und das Handy bekommt echte Touch- und Tasteneingaben. Pausiert: Öffne auf dem Handy Shizuku und tippe auf Start.</value></data>
   <data name="pairing_done_all_set" xml:space="preserve"><value>Ab jetzt verbindet es sich von selbst, und alles ist eingeschaltet.</value></data>
   <data name="checklist_control" xml:space="preserve"><value>Steuern vom PC</value></data>

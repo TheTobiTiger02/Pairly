@@ -58,6 +58,12 @@ object ShizukuHelper {
         }
     }
 
+    /** Whether Pairly's helper has really started and answered, which Shizuku running can't tell. */
+    enum class HelperCheck { Unknown, Working, Failed }
+
+    private val mutableHelperCheck = MutableStateFlow(HelperCheck.Unknown)
+    val helperCheck: StateFlow<HelperCheck> = mutableHelperCheck.asStateFlow()
+
     private val lifecycle = ShizukuHelperLifecycle()
     private val mutableHelperState = MutableStateFlow(ShizukuHelperLifecycle.State.NotRunning)
     /** The helper process: Ready while a feature holds it and it is connected. */
@@ -120,8 +126,14 @@ object ShizukuHelper {
             mutableStatus.value = next
             FeatureSyncController.sendDeviceState(app)
         }
-        // Shizuku is up and Wireless debugging is still on: connect once to switch it off.
-        if (next.ready && next.wirelessDebuggingOn && ConnectionSettings(app).wirelessDebuggingOffWithShizuku && HOLDER_SETTLE !in holders) {
+        if (!next.ready) {
+            setHelperCheck(HelperCheck.Unknown)
+            if (HOLDER_SETTLE in holders) stop(HOLDER_SETTLE)
+        }
+        // Connect once as soon as Shizuku is up, however late that happens: it proves the helper
+        // works, applies the capture setting, and switches Wireless debugging off if it's still on.
+        val turnOffDebugging = next.wirelessDebuggingOn && ConnectionSettings(app).wirelessDebuggingOffWithShizuku
+        if (next.ready && (helperCheck.value == HelperCheck.Unknown || turnOffDebugging) && HOLDER_SETTLE !in holders) {
             holders += HOLDER_SETTLE; lifecycle.start(); main.removeCallbacks(refreshLoop); main.post(refreshLoop)
         }
         val available = lifecycle.availability(next.installed, next.running, next.allowed)
@@ -161,6 +173,7 @@ object ShizukuHelper {
 
     /** Worker thread: brings the phone in line with the user's settings once the helper is up. */
     private fun settle(app: Context, helper: IShizukuShell) {
+        if (runCatching { helper.wirelessDebugging() }.isFailure) { failed(helper); return }
         ScreenCaptureAccess.syncInBackground(app)
         if (ConnectionSettings(app).wirelessDebuggingOffWithShizuku) {
             val ok = runCatching { if (helper.wirelessDebugging() == 1) helper.turnOffWirelessDebugging() }.isSuccess
@@ -172,6 +185,7 @@ object ShizukuHelper {
         }
         main.post {
             if (shell === helper && lifecycle.healthy(lifecycle.generation)) publishState()
+            setHelperCheck(HelperCheck.Working)
             refresh()
             runGrants(helper)
             stop(HOLDER_SETTLE)
@@ -206,7 +220,14 @@ object ShizukuHelper {
         if (helper != null && shell !== helper) return@post
         if (!lifecycle.failed(lifecycle.generation)) return@post
         unbind(); retryAfter = SystemClock.elapsedRealtime() + 5_000L; publishState()
+        setHelperCheck(HelperCheck.Failed)
     } }
+
+    private fun setHelperCheck(next: HelperCheck) {
+        if (mutableHelperCheck.value == next) return
+        mutableHelperCheck.value = next
+        context?.let { FeatureSyncController.sendDeviceState(it) }
+    }
 
     fun healthy(helper: IShizukuShell) { main.post {
         if (shell === helper && lifecycle.healthy(lifecycle.generation)) publishState()

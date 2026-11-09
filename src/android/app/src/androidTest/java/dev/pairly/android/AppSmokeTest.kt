@@ -176,9 +176,10 @@ class AppSmokeTest {
             error("Accessibility settings did not show Pairly (showing ${device.currentPackageName}).")
         }
         device.takeScreenshot(File(context.filesDir, "screenshots/%02d-accessibility-settings.png".format(++shot)))
-        device.pressBack()
-        // Wait for Pairly to be in front again before asking Compose about it.
-        check(device.wait(Until.hasObject(By.pkg(context.packageName).depth(0)), 30_000)) { "Pairly did not come back from Settings." }
+        // Wait for Pairly to be in front again before asking Compose about it. Settings can ignore
+        // Back while it is still opening or sits one page deeper, so press again if nothing happens.
+        val pairly = By.pkg(context.packageName).depth(0)
+        check((1..3).any { device.pressBack(); device.wait(Until.hasObject(pairly), 15_000) }) { "Pairly did not come back from Settings." }
         waitFor(R.string.feature_why_title)
         compose.onNodeWithContentDescription(text(R.string.action_back)).performClick()
         waitFor(R.string.features_title)

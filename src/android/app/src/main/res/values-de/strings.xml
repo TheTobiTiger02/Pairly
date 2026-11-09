@@ -367,13 +367,21 @@
     <!-- Power mode and style -->
     <string name="power_title">Power-Modus</string>
     <string name="power_on">Power-Modus ist an</string>
-    <string name="power_on_detail">Shizuku läuft. Die Zwischenablage synchronisiert im Hintergrund, das Spiegeln startet ohne Nachfrage und dein PC tippt und schreibt wirklich.</string>
+    <string name="power_on_detail">Shizuku läuft. Das bringt es dir gerade:</string>
     <string name="power_wd_off">Debugging über WLAN ist aus. Shizuku läuft auch ohne weiter.</string>
     <string name="power_wd_on">Debugging über WLAN ist noch an.</string>
     <string name="power_wd_switch">Debugging über WLAN ausschalten</string>
     <string name="power_wd_switch_detail">Shizuku braucht es nur zum Starten. Pairly schaltet es gleich danach wieder aus.</string>
     <string name="power_boot_auto">Startet nach einem Neustart von selbst.</string>
     <string name="power_boot_manual">Öffne nach einem Neustart Shizuku und tippe auf Start.</string>
+    <string name="power_problem">Power-Modus funktioniert nicht</string>
+    <string name="power_problem_detail">Shizuku läuft, aber der Helfer von Pairly konnte nicht starten. Starte Shizuku neu und komm hierher zurück. Bleibt das so, aktualisiere Pairly.</string>
+    <string name="power_feature_working">Funktioniert</string>
+    <string name="power_feature_ready">Bereit</string>
+    <string name="power_feature_off">Ausgeschaltet</string>
+    <string name="power_feature_problem">Funktioniert nicht</string>
+    <string name="power_feature_starting">Startet…</string>
+    <string name="power_feature_waiting_pc">Wartet auf PC</string>
     <string name="power_paused">Power-Modus pausiert</string>
     <string name="power_paused_detail">Shizuku wurde beendet, meist durch einen Neustart. Öffne Shizuku und tippe auf Start; alles andere bleibt eingerichtet.</string>
     <string name="power_allow">Pairly in Shizuku erlauben</string>

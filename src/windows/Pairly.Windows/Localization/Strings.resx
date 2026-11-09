@@ -545,6 +545,7 @@
   <data name="charging" xml:space="preserve"><value>charging</value></data>
   <data name="power_mode_on" xml:space="preserve"><value>Power mode</value></data>
   <data name="power_mode_paused" xml:space="preserve"><value>Power mode paused</value></data>
+  <data name="power_mode_problem" xml:space="preserve"><value>Power mode not working</value></data>
   <data name="power_mode_tooltip" xml:space="preserve"><value>Shizuku runs on the phone: mirroring starts without asking and the phone gets real touch and keys. Paused: open Shizuku on the phone and tap Start.</value></data>
   <data name="pairing_done_all_set" xml:space="preserve"><value>From now on it connects by itself, and everything is switched on.</value></data>
   <data name="checklist_control" xml:space="preserve"><value>Control from PC</value></data>

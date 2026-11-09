@@ -159,7 +159,12 @@ public sealed class HostWebSocketHandler(
             switch (envelope.Type)
             {
                 case ProtocolMessageTypes.DeviceState:
-                    HandleDeviceState(envelope, connection);
+                    // Only setup changes: battery updates arrive far too often for a refresh each.
+                    if (HandleDeviceState(envelope, connection))
+                    {
+                        await RelayToPcAppsAsync(envelope, cancellationToken);
+                    }
+
                     break;
                 case ProtocolMessageTypes.DeviceForget:
                     await HandleDeviceForgetAsync(socket, envelope, connection, cancellationToken);
@@ -533,16 +538,16 @@ public sealed class HostWebSocketHandler(
         await WebSocketSessionHub.SendAsync(socket, endpoints.CreateEnvelope(), cancellationToken);
     }
 
-    private void HandleDeviceState(ProtocolEnvelope envelope, ConnectionSession connection)
+    private bool HandleDeviceState(ProtocolEnvelope envelope, ConnectionSession connection)
     {
         if (!connection.IsPhysicalDevice)
         {
-            return;
+            return false;
         }
 
         var state = envelope.ReadPayload<DeviceStatePayload>()
             ?? throw new InvalidOperationException("Missing device state payload.");
-        devices.UpdateDeviceState(envelope.DeviceId, state);
+        return devices.UpdateDeviceState(envelope.DeviceId, state);
     }
 
     private async Task HandleDeviceForgetAsync(

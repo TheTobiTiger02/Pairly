@@ -160,13 +160,13 @@ private fun StartWithoutAskingCard(shizuku: dev.pairly.android.ui.ShizukuStatus,
                 when {
                     !wanted -> R.string.mirror_skip_prompt_off
                     active -> R.string.mirror_skip_prompt_on
-                    shizuku.ready -> R.string.mirror_skip_prompt_applying
+                    shizuku.working -> R.string.mirror_skip_prompt_applying
                     else -> R.string.mirror_skip_prompt_off
                 }
             ),
             when {
                 active -> PillTone.Positive
-                wanted && shizuku.ready -> PillTone.Busy
+                wanted && shizuku.working -> PillTone.Busy
                 else -> PillTone.Neutral
             }
         )
