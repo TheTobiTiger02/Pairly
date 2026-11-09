@@ -598,20 +598,21 @@ static void DeviceRegistryStoresPermissionState()
         "android",
         new DeviceCapabilitiesPayload(true, true, true, true, true)));
 
-    registry.UpdateDeviceState(
-        "phone-1",
-        new DeviceStatePayload(
-            "Phone",
-            true,
-            new Dictionary<string, string>
-            {
-                ["photos"] = "granted",
-                ["sms"] = "needs_user_action"
-            }));
+    var permissions = new Dictionary<string, string>
+    {
+        ["photos"] = "granted",
+        ["sms"] = "needs_user_action"
+    };
+    AssertEqual(true, registry.UpdateDeviceState("phone-1", new DeviceStatePayload("Phone", true, permissions)));
 
     var device = registry.GetDevice("phone-1");
     AssertEqual("granted", device?.Permissions?["photos"]);
     AssertEqual("needs_user_action", device?.Permissions?["sms"]);
+
+    // Only a real change is reported, so the PC isn't refreshed for every battery update.
+    AssertEqual(false, registry.UpdateDeviceState("phone-1", new DeviceStatePayload("Phone", true, permissions)));
+    permissions["sms"] = "granted";
+    AssertEqual(true, registry.UpdateDeviceState("phone-1", new DeviceStatePayload("Phone", true, permissions)));
 }
 
 static void DeviceRegistrySerializesChecksummedConcurrentTrust()

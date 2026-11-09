@@ -31,10 +31,11 @@ object FeaturePermissionState {
             // For the PC's setup checklist and status.
             "calls" to state(dev.pairly.android.ui.features.Feature.Calls),
             "files" to state(dev.pairly.android.ui.features.Feature.Files),
-            "control" to if (ShizukuHelper.status.value.ready) "granted" else state(dev.pairly.android.ui.features.Feature.RemoteControl),
+            "control" to if (ShizukuHelper.helperCheck.value == ShizukuHelper.HelperCheck.Working) "granted" else state(dev.pairly.android.ui.features.Feature.RemoteControl),
             "background" to state(dev.pairly.android.ui.features.Feature.Background),
-            // Power mode (Shizuku): ready | notRunning | notAllowed | notInstalled
-            "powerMode" to ShizukuHelper.status.value.wireName
+            // Power mode (Shizuku): ready | helperFailed | notRunning | notAllowed | notInstalled
+            "powerMode" to if (ShizukuHelper.status.value.ready && ShizukuHelper.helperCheck.value == ShizukuHelper.HelperCheck.Failed) "helperFailed"
+                else ShizukuHelper.status.value.wireName
         )
     }
 

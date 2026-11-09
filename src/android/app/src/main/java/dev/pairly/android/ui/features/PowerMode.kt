@@ -45,18 +45,22 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.pairly.android.R
+import dev.pairly.android.ui.PowerFeature
 import dev.pairly.android.ui.ShizukuStatus
 import dev.pairly.android.ui.components.PairlyCard
+import dev.pairly.android.ui.components.PillTone
 import dev.pairly.android.ui.components.PrimaryButton
 import dev.pairly.android.ui.components.SecondaryButton
+import dev.pairly.android.ui.components.StatusPill
 import dev.pairly.android.ui.components.SwitchRow
 import dev.pairly.android.ui.theme.Pairly
 import dev.pairly.android.ui.theme.Space
 
 /** Which of Power mode's states the phone is in, in the order the user meets them. */
-enum class PowerState { Off, NotAllowed, Paused, On }
+enum class PowerState { Off, NotAllowed, Paused, Problem, On }
 
 fun ShizukuStatus.powerState(): PowerState = when {
+    ready && helperFailed -> PowerState.Problem
     ready -> PowerState.On
     running -> PowerState.NotAllowed
     installed && hasRunBefore -> PowerState.Paused
@@ -89,6 +93,7 @@ fun PowerModeCard(
                 Text(
                     stringResource(when (state) {
                         PowerState.On -> R.string.power_on
+                        PowerState.Problem -> R.string.power_problem
                         PowerState.NotAllowed -> R.string.power_allow
                         PowerState.Paused -> R.string.power_paused
                         PowerState.Off -> R.string.power_off
@@ -103,6 +108,7 @@ fun PowerModeCard(
                 when (shown) {
                     PowerState.On -> {
                         Text(stringResource(R.string.power_on_detail), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        PowerFeatureRows(status)
                         Text(
                             stringResource(if (status.wirelessDebuggingOn) R.string.power_wd_on else R.string.power_wd_off) + " " +
                                 stringResource(if (status.startsOnBoot) R.string.power_boot_auto else R.string.power_boot_manual),
@@ -124,6 +130,11 @@ fun PowerModeCard(
                                 onCheckedChange = onTurnOffWirelessDebugging
                             )
                         }
+                    }
+                    PowerState.Problem -> {
+                        Text(stringResource(R.string.power_problem_detail), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        PowerFeatureRows(status)
+                        PrimaryButton(stringResource(R.string.power_open_shizuku), onClick = onOpenShizuku)
                     }
                     PowerState.NotAllowed -> {
                         Text(stringResource(R.string.power_allow_detail), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -150,14 +161,43 @@ private fun PowerBadge(state: PowerState) {
     val on = state == PowerState.On
     Box(
         Modifier.size(44.dp).clip(RoundedCornerShape(14.dp))
-            .background(if (on) style.successContainer else style.iconContainer),
+            .background(if (on) style.successContainer else if (state == PowerState.Problem) style.warningContainer else style.iconContainer),
         contentAlignment = Alignment.Center
     ) {
         Icon(
             if (state == PowerState.Paused) Icons.Rounded.PauseCircle else Icons.Rounded.Bolt,
             contentDescription = null,
-            tint = if (on) style.success else style.onIconContainer
+            tint = if (on) style.success else if (state == PowerState.Problem) style.warning else style.onIconContainer
         )
+    }
+}
+
+/** What Power mode is doing right now, feature by feature. */
+@Composable
+private fun PowerFeatureRows(status: ShizukuStatus) {
+    Column(verticalArrangement = Arrangement.spacedBy(Space.s)) {
+        PowerFeatureRow(Icons.Rounded.ContentPaste, R.string.power_benefit_clipboard, status.clipboard)
+        PowerFeatureRow(Icons.Rounded.ScreenShare, R.string.power_benefit_mirror, status.mirrorPrompt)
+        PowerFeatureRow(Icons.Rounded.TouchApp, R.string.power_benefit_input, status.input)
+    }
+}
+
+@Composable
+private fun PowerFeatureRow(icon: ImageVector, label: Int, feature: PowerFeature) {
+    val (text, tone) = when (feature) {
+        PowerFeature.Working -> R.string.power_feature_working to PillTone.Positive
+        PowerFeature.Ready -> R.string.power_feature_ready to PillTone.Positive
+        PowerFeature.Off -> R.string.power_feature_off to PillTone.Neutral
+        PowerFeature.Problem -> R.string.power_feature_problem to PillTone.Negative
+        PowerFeature.Starting -> R.string.power_feature_starting to PillTone.Busy
+        PowerFeature.WaitingForPc -> R.string.power_feature_waiting_pc to PillTone.Neutral
+    }
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.width(Space.m))
+        Text(stringResource(label), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+        Spacer(Modifier.width(Space.s))
+        StatusPill(stringResource(text), tone)
     }
 }
 

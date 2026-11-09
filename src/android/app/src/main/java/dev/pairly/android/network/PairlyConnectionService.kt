@@ -146,6 +146,8 @@ class PairlyConnectionService : Service() {
     private val heartbeatRunnable = object : Runnable {
         override fun run() {
             sendHeartbeat()
+            // Catches changes made outside the app, such as a switch in Android's settings.
+            FeatureSyncController.sendDeviceStateIfChanged(this@PairlyConnectionService)
             if (PairlyConnection.isTransportConnected) {
                 mainHandler.postDelayed(this, HEARTBEAT_INTERVAL_MS)
             }

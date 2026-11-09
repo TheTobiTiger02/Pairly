@@ -122,10 +122,23 @@ object FeatureSyncController {
         }
     }
 
-    fun sendDeviceState(context: Context, mirroringActive: Boolean = false) {
+    /** Sends the phone's state if a permission or feature changed since the PC last heard. */
+    fun sendDeviceStateIfChanged(context: Context) {
+        if (PairlyConnection.isReady && FeaturePermissionState.permissions(context, mirroringNow) != lastPermissions) {
+            sendDeviceState(context, mirroringNow)
+        }
+    }
+
+    @Volatile private var mirroringNow = false
+    @Volatile private var lastPermissions: Map<String, String>? = null
+
+    fun sendDeviceState(context: Context, mirroringActive: Boolean = mirroringNow) {
         if (!PairlyConnection.isReady) {
             return
         }
+        mirroringNow = mirroringActive
+        val permissions = FeaturePermissionState.permissions(context, mirroringActive)
+        lastPermissions = permissions
 
         val batteryStatus: Intent? = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         val level = batteryStatus?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
@@ -142,7 +155,7 @@ object FeatureSyncController {
                 deviceId = deviceId(context),
                 displayName = DeviceName.of(context),
                 connected = true,
-                permissions = FeaturePermissionState.permissions(context, mirroringActive),
+                permissions = permissions,
                 batteryLevel = batteryPct,
                 isCharging = isCharging
             )

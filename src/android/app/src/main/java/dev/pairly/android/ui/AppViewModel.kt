@@ -28,6 +28,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/** How one Power mode feature stands right now. */
+enum class PowerFeature { Working, Ready, Off, Problem, Starting, WaitingForPc }
+
 /** Power mode (Shizuku), as the guide and the status cards show it. */
 data class ShizukuStatus(
     val developerOptions: Boolean = false,
@@ -41,9 +44,39 @@ data class ShizukuStatus(
     /** Wireless debugging is switched on right now. */
     val wirelessDebuggingOn: Boolean = false,
     /** The user's setting: switch Wireless debugging off whenever Shizuku runs. */
-    val turnOffWirelessDebugging: Boolean = true
+    val turnOffWirelessDebugging: Boolean = true,
+    /** Pairly's helper has started and answered since Shizuku came up. */
+    val helperWorking: Boolean = false,
+    val helperFailed: Boolean = false,
+    /** A feature is using the helper right now. */
+    val helperInUse: Boolean = false,
+    val clipboardSyncEnabled: Boolean = true,
+    val skipPromptWanted: Boolean = true,
+    val skipPromptActive: Boolean = false
 ) {
     val ready: Boolean get() = installed && running && allowed
+    val working: Boolean get() = ready && !helperFailed
+
+    val clipboard: PowerFeature get() = when {
+        !clipboardSyncEnabled -> PowerFeature.Off
+        helperFailed -> PowerFeature.Problem
+        helperInUse -> PowerFeature.Working
+        helperWorking -> PowerFeature.WaitingForPc
+        else -> PowerFeature.Starting
+    }
+
+    val mirrorPrompt: PowerFeature get() = when {
+        !skipPromptWanted -> PowerFeature.Off
+        skipPromptActive -> PowerFeature.Working
+        helperFailed -> PowerFeature.Problem
+        else -> PowerFeature.Starting
+    }
+
+    val input: PowerFeature get() = when {
+        helperFailed -> PowerFeature.Problem
+        helperWorking -> PowerFeature.Ready
+        else -> PowerFeature.Starting
+    }
 }
 
 data class ConnectionDetails(
@@ -102,6 +135,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
         viewModelScope.launch { ShizukuHelper.helperState.collect { refresh() } }
         viewModelScope.launch { ShizukuHelper.status.collect { refresh() } }
+        viewModelScope.launch { ShizukuHelper.helperCheck.collect { refresh() } }
+        viewModelScope.launch { dev.pairly.android.features.mirror.ScreenCaptureAccess.allowedState.collect { refresh() } }
         checkWhatsNew()
     }
 
@@ -142,13 +177,20 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             hasRunBefore = shizuku.hasRunBefore,
             startsOnBoot = shizuku.startsOnBoot,
             wirelessDebuggingOn = shizuku.wirelessDebuggingOn,
-            turnOffWirelessDebugging = settings.wirelessDebuggingOffWithShizuku
+            turnOffWirelessDebugging = settings.wirelessDebuggingOffWithShizuku,
+            helperWorking = ShizukuHelper.helperCheck.value == ShizukuHelper.HelperCheck.Working,
+            helperFailed = ShizukuHelper.helperCheck.value == ShizukuHelper.HelperCheck.Failed,
+            helperInUse = ShizukuHelper.helperState.value == dev.pairly.android.features.shizuku.ShizukuHelperLifecycle.State.Ready,
+            clipboardSyncEnabled = settings.clipboardSyncEnabled,
+            skipPromptWanted = dev.pairly.android.features.mirror.ScreenCaptureAccess.wanted(app),
+            skipPromptActive = dev.pairly.android.features.mirror.ScreenCaptureAccess.isAllowed(app)
         )
     }
 
     /** Re-reads permissions and settings; called whenever the app comes back to the foreground. */
     fun refresh() {
         ShizukuHelper.refresh()
+        FeatureSyncController.sendDeviceStateIfChanged(app)
         mutableState.update {
             it.copy(
                 hasPairing = settings.trustKey.isNotBlank(),

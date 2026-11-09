@@ -62,6 +62,7 @@ public partial class MainWindow : Window
     private readonly Dictionary<(string DeviceId, ulong StreamId), MirrorWindow> _streamWindows = new();
     private readonly Dictionary<MirrorWindow, AdbStreamSession> _adbSessions = new();
     private bool _refreshInProgress;
+    private bool _refreshAgain;
     private string? _storageDeviceId;
     /// <summary>Whether a listing of the phone's storage has succeeded for the selected phone.</summary>
     private bool _storageLoaded;
@@ -1980,6 +1981,7 @@ public partial class MainWindow : Window
 
         if (_refreshInProgress)
         {
+            _refreshAgain = true;
             return;
         }
 
@@ -2131,6 +2133,11 @@ public partial class MainWindow : Window
         finally
         {
             _refreshInProgress = false;
+            if (_refreshAgain)
+            {
+                _refreshAgain = false;
+                _ = Dispatcher.InvokeAsync(async () => await RefreshFromHostAsync(showErrors: false), DispatcherPriority.Background);
+            }
         }
     }
 
@@ -3269,6 +3276,7 @@ public sealed class DeviceViewModel : INotifyPropertyChanged
             {
                 "ready" => L.T("power_mode_on"),
                 "notRunning" => L.T("power_mode_paused"),
+                "helperFailed" => L.T("power_mode_problem"),
                 _ => string.Empty
             }
             : string.Empty;

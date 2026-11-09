@@ -294,12 +294,16 @@ public sealed class DeviceRegistry
         };
     }
 
-    public void UpdateDeviceState(string deviceId, DeviceStatePayload state)
+    /// <summary>Stores the phone's state; returns whether its permissions changed.</summary>
+    public bool UpdateDeviceState(string deviceId, DeviceStatePayload state)
     {
         if (string.IsNullOrWhiteSpace(deviceId) || !_devices.TryGetValue(deviceId, out var existing))
         {
-            return;
+            return false;
         }
+
+        var permissions = NormalizePermissions(state.Permissions);
+        var changed = existing.Permissions is null || !permissions.SequenceEqual(existing.Permissions);
 
         lock (_persistenceGate)
         {
@@ -308,13 +312,15 @@ public sealed class DeviceRegistry
                 DisplayName = string.IsNullOrWhiteSpace(state.DisplayName) ? existing.DisplayName : state.DisplayName,
                 Connected = state.Connected,
                 LastSeenAt = DateTimeOffset.UtcNow,
-                Permissions = NormalizePermissions(state.Permissions),
+                Permissions = permissions,
                 BatteryLevel = state.BatteryLevel,
                 IsCharging = state.IsCharging
             };
             _deviceRevisions[deviceId] = _revision + 1;
             SavePersistedDevicesLocked();
         }
+
+        return changed;
     }
 
     public bool Revoke(string deviceId)

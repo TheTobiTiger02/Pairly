@@ -108,8 +108,8 @@ fun ClipboardBackgroundCard(
         )
         Spacer(Modifier.height(Space.s))
         StatusPill(
-            stringResource(if (status.ready) R.string.clipboard_background_on else R.string.clipboard_background_off),
-            if (status.ready) PillTone.Positive else PillTone.Neutral
+            stringResource(if (status.working) R.string.clipboard_background_on else R.string.clipboard_background_off),
+            if (status.working) PillTone.Positive else PillTone.Neutral
         )
         Spacer(Modifier.height(Space.m))
         if (status.ready) {
