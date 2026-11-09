@@ -339,7 +339,7 @@
     <string name="home_features_count">%1$d von %2$d an</string>
     <string name="restricted_guide_title">Android hat das vorerst blockiert</string>
     <string name="restricted_guide_body">Android schützt diese Berechtigung bei Apps, die nicht aus einem App Store installiert wurden. Erlaube sie einmalig in der App-Info:</string>
-    <string name="restricted_step_app_info">Tippe unten auf App-Info öffnen.</string>
+    <string name="restricted_step_app_info">Tippe auf App-Info öffnen.</string>
     <string name="restricted_step_menu">Tippe oben rechts auf ⋮.</string>
     <string name="restricted_step_allow">Wähle „Eingeschränkte Einstellungen zulassen“ und bestätige.</string>
     <string name="restricted_step_return">Komm hierher zurück. Pairly fragt dann von selbst erneut nach %1$s.</string>

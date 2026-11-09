@@ -1,6 +1,7 @@
 package dev.pairly.android.features.sms
 
 import android.content.Context
+import android.os.Build
 import android.telephony.SmsManager
 import android.provider.Telephony
 import org.json.JSONObject
@@ -75,7 +76,15 @@ class SmsRepository(private val context: Context) {
         }
 
         return try {
-            SmsManager.getDefault().sendTextMessage(address, null, body, null, null)
+            val sms = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                context.getSystemService(SmsManager::class.java)
+            } else {
+                @Suppress("DEPRECATION") SmsManager.getDefault()
+            }
+            // Longer than one SMS: send it as parts the receiving phone joins again.
+            val parts = sms.divideMessage(body)
+            if (parts.size > 1) sms.sendMultipartTextMessage(address, null, parts, null, null)
+            else sms.sendTextMessage(address, null, body, null, null)
             true
         } catch (_: RuntimeException) {
             false

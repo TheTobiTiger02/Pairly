@@ -4,6 +4,7 @@ import android.app.AppOpsManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageInstaller
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -23,21 +24,56 @@ enum class RestrictedState { Allowed, Blocked, Unknown }
 object RestrictedSettings {
     private const val OP = "android:access_restricted_settings"
 
-    /** Features the user already tried to turn on while blocked; the guide then leads to App info. */
+    private const val PREFS = "pairly_restricted_attempts"
+
+    /**
+     * Features the user already tried to turn on while blocked; the guide then leads to App info.
+     * Change it through [markAttempted] and [clearAttempted] so it survives Android stopping the
+     * app while the user is in App info.
+     */
     val attempted = mutableStateMapOf<Feature, Boolean>()
 
+    fun load(context: Context) {
+        val saved = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).all.keys
+        Feature.entries.filter { it.key in saved }.forEach { attempted[it] = true }
+    }
+
+    fun markAttempted(context: Context, feature: Feature) {
+        attempted[feature] = true
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(feature.key, true).apply()
+    }
+
+    fun clearAttempted(context: Context) {
+        attempted.clear()
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().clear().apply()
+    }
+
+    /**
+     * Android 15+ no longer lets an app read this app-op (it throws), so the answer is often
+     * [RestrictedState.Unknown]. Setup then goes by what happens: a denial Android makes on its own
+     * counts as blocked, and coming back from App info tries again.
+     */
     fun state(context: Context): RestrictedState {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return RestrictedState.Allowed
-        return try {
-            val ops = context.getSystemService(AppOpsManager::class.java) ?: return RestrictedState.Unknown
-            when (ops.unsafeCheckOpNoThrow(OP, Process.myUid(), context.packageName)) {
+        val readable = try {
+            val ops = context.getSystemService(AppOpsManager::class.java)
+            when (ops?.unsafeCheckOpNoThrow(OP, Process.myUid(), context.packageName)) {
                 AppOpsManager.MODE_ALLOWED -> RestrictedState.Allowed
                 AppOpsManager.MODE_ERRORED, AppOpsManager.MODE_IGNORED -> RestrictedState.Blocked
-                else -> RestrictedState.Unknown
+                else -> null
             }
         } catch (_: RuntimeException) {
-            RestrictedState.Unknown
+            null
         }
+        return readable ?: if (installedFromFile(context)) RestrictedState.Unknown else RestrictedState.Allowed
+    }
+
+    /** Android only restricts apps installed from an APK file, not ones from a store or over adb. */
+    private fun installedFromFile(context: Context): Boolean = try {
+        val source = context.packageManager.getInstallSourceInfo(context.packageName).packageSource
+        source == PackageInstaller.PACKAGE_SOURCE_LOCAL_FILE || source == PackageInstaller.PACKAGE_SOURCE_DOWNLOADED_FILE
+    } catch (_: Exception) {
+        true
     }
 }
 

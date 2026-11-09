@@ -63,7 +63,7 @@ enum class Feature(
         "messages", { Icons.Rounded.Sms },
         R.string.feature_sms, R.string.feature_sms_summary, R.string.feature_sms_description, R.string.feature_sms_why,
         listOf(R.string.step_allow_access, R.string.feature_sms_step2), R.string.action_allow_access,
-        restrictedFrom = Build.VERSION_CODES.TIRAMISU
+        restrictedFrom = Build.VERSION_CODES.VANILLA_ICE_CREAM
     ),
     Calls(
         "calls", { Icons.Rounded.Call },

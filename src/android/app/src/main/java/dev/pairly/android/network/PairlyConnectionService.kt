@@ -1267,6 +1267,12 @@ class PairlyConnectionService : Service() {
                 transferredBytes += chunk.size
                 if (transferredBytes > byteCount || chunkIndex >= chunkCount) return
                 secondPassDigest.update(chunk)
+                // Let the socket drain: a whole photo queued at once would stall everything else
+                // on the connection, and OkHttp closes a socket with more than 16 MiB waiting.
+                while (PairlyConnection.client.queuedBytes() > MEDIA_MAX_QUEUED_BYTES) {
+                    if (!PairlyConnection.isReady) return
+                    Thread.sleep(15)
+                }
                 if (!PairlyConnection.send(
                         ProtocolJson.contentTransferChunk(
                             deviceId = settings.deviceId,
@@ -2442,6 +2448,7 @@ class PairlyConnectionService : Service() {
         private const val MEDIA_TRANSFER_CHUNK_BYTES = 256 * 1024
         private const val MIN_MEDIA_TRANSFER_CHUNK_BYTES = 4 * 1024
         private const val MAX_MEDIA_TRANSFER_BYTES = 32L * 1024L * 1024L
+        private const val MEDIA_MAX_QUEUED_BYTES = 2L * 1024 * 1024
         private const val MAX_CONTENT_TRANSFER_CHUNKS = 32
         private const val CLIPBOARD_EXPIRY_MS = 10L * 60L * 1000L
         private const val FORGET_CONFIRM_TIMEOUT_MS = 1_500L

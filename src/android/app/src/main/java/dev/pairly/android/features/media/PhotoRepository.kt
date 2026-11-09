@@ -4,6 +4,7 @@ import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -198,7 +199,7 @@ class PhotoRepository(private val context: Context) {
         val metadata = queryMetadata(mediaId)
         val bytes = try {
             if (kind == "thumb") {
-                readThumbnailBytes(uri) ?: readOriginalBytesBounded(uri, metadata?.byteCount)
+                readThumbnailBytes(uri)
             } else {
                 readOriginalBytesBounded(uri, metadata?.byteCount)
             }
@@ -411,9 +412,17 @@ class PhotoRepository(private val context: Context) {
         }
     }
 
+    /** A small JPEG, never the original: a thumbnail has to stay cheap to make and to send. */
     private fun readThumbnailBytes(uri: Uri): ByteArray? {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return null
-        val bitmap = context.contentResolver.loadThumbnail(uri, Size(360, 360), null)
+        val bitmap = try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                context.contentResolver.loadThumbnail(uri, Size(THUMBNAIL_PX, THUMBNAIL_PX), null)
+            } else {
+                decodeDownsampled(uri)
+            }
+        } catch (_: java.io.IOException) {
+            null
+        } ?: return null
         return try {
             ByteArrayOutputStream().use { stream ->
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 84, stream)
@@ -422,6 +431,17 @@ class PhotoRepository(private val context: Context) {
         } finally {
             bitmap.recycle()
         }
+    }
+
+    /** Before Android 10 there is no thumbnail API: decode the photo at a fraction of its size. */
+    private fun decodeDownsampled(uri: Uri): Bitmap? {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+        var sample = 1
+        while (minOf(bounds.outWidth, bounds.outHeight) / (sample * 2) >= THUMBNAIL_PX) sample *= 2
+        val options = BitmapFactory.Options().apply { inSampleSize = sample }
+        return context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, options) }
     }
 
     private data class MediaMetadata(
@@ -473,6 +493,7 @@ class PhotoRepository(private val context: Context) {
 
     private companion object {
         const val MAX_V1_MEDIA_BYTES = 32L * 1024L * 1024L
+    private const val THUMBNAIL_PX = 360
         const val DEFAULT_BUFFER_BYTES = 64 * 1024
     }
 }

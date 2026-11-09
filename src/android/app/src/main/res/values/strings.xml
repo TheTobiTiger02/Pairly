@@ -339,7 +339,7 @@
     <string name="home_features_count">%1$d of %2$d on</string>
     <string name="restricted_guide_title">Android blocked this for now</string>
     <string name="restricted_guide_body">Android protects this permission for apps installed outside an app store. Allow it once in App info:</string>
-    <string name="restricted_step_app_info">Tap Open App info below.</string>
+    <string name="restricted_step_app_info">Tap Open App info.</string>
     <string name="restricted_step_menu">Tap ⋮ in the top-right corner.</string>
     <string name="restricted_step_allow">Choose Allow restricted settings and confirm.</string>
     <string name="restricted_step_return">Come back here. Pairly asks for %1$s again on its own.</string>

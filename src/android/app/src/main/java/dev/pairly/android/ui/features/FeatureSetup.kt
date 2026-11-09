@@ -23,11 +23,7 @@ import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.LockOpen
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Replay
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,17 +67,6 @@ fun FeatureSetupContent(feature: Feature, permissions: PermissionSnapshot, modif
     val actions = LocalFeatureActions.current
     val granted = permissions.isOn(feature)
     val blocked = isBlockedByAndroid(feature, permissions)
-
-    // Back from App info with restricted settings now allowed: ask again right away, once.
-    var lastRestricted by remember { mutableStateOf(permissions.restricted) }
-    LaunchedEffect(permissions.restricted) {
-        val nowAllowed = lastRestricted == RestrictedState.Blocked && permissions.restricted == RestrictedState.Allowed
-        lastRestricted = permissions.restricted
-        if (nowAllowed && !granted && RestrictedSettings.attempted[feature] == true) {
-            RestrictedSettings.attempted.remove(feature)
-            actions.enable(feature)
-        }
-    }
 
     Column(modifier, verticalArrangement = Arrangement.spacedBy(Space.l)) {
         Text(stringResource(feature.description), style = MaterialTheme.typography.bodyLarge)
@@ -137,7 +122,7 @@ private enum class SetupView { On, Blocked, Steps }
 /** Android stopped the last attempt to turn this on: only App info can unblock it now. */
 fun isBlockedByAndroid(feature: Feature, permissions: PermissionSnapshot): Boolean =
     !permissions.isOn(feature) && feature.restrictedNow &&
-        permissions.restricted == RestrictedState.Blocked && RestrictedSettings.attempted[feature] == true
+        permissions.restricted != RestrictedState.Allowed && RestrictedSettings.attempted[feature] == true
 
 /** The buttons under a feature's setup: its action, or App info and Try again while Android blocks it. */
 @Composable

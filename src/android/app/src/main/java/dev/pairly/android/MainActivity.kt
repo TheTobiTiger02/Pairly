@@ -48,28 +48,40 @@ class MainActivity : ComponentActivity(), FeatureActions {
     private var incomingPairingLink by mutableStateOf<String?>(null)
     private var language by mutableStateOf(LocaleText.Language.System)
     private val viewModel: AppViewModel by viewModels()
+    // The user left for App info to allow restricted settings; see retryAfterAppInfo.
+    private var retryOnReturn = false
 
     private val photosPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { grants ->
+        rememberAsked(grants.keys)
         FeaturePermissionState.rememberPhotoResult(this, grants.values.all { it })
         afterPermissionResult()
     }
     private val smsPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { grants ->
         val granted = grants.values.all { it }
-        FeaturePermissionState.rememberSmsResult(this, granted)
-        // Denied without a dialog while restricted settings are blocked: Android stopped it, not the user.
-        if (!granted && grants.keys.none(::shouldShowRequestPermissionRationale) && RestrictedSettings.state(this) != RestrictedState.Allowed) {
-            RestrictedSettings.attempted[Feature.Messages] = true
+        // Denied without the user having answered a dialog: Android refused it itself (it shows its
+        // own "App was denied access" notice). That is not the user saying no. Setup shows the
+        // App info steps, and Pairly asks again when the user comes back from there.
+        val blockedByAndroid = !granted && Feature.Messages.restrictedNow &&
+            RestrictedSettings.state(this) != RestrictedState.Allowed &&
+            grants.keys.none { shouldShowRequestPermissionRationale(it) || askedBefore(it) }
+        if (blockedByAndroid) {
+            RestrictedSettings.markAttempted(this, Feature.Messages)
+        } else {
+            rememberAsked(grants.keys)
+            FeaturePermissionState.rememberSmsResult(this, granted)
         }
         afterPermissionResult()
     }
     private val postNotificationPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        FeaturePermissionState.postNotificationPermission()?.let { rememberAsked(setOf(it)) }
         FeaturePermissionState.rememberPostNotificationsResult(this, granted)
         afterPermissionResult()
     }
     private val legacyStoragePermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
         afterPermissionResult()
     }
-    private val callPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+    private val callPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { grants ->
+        rememberAsked(grants.keys)
         afterPermissionResult()
     }
 
@@ -81,6 +93,7 @@ class MainActivity : ComponentActivity(), FeatureActions {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         language = LocaleText.language(this)
+        RestrictedSettings.load(this)
         if (savedInstanceState == null) {
             incomingPairingLink = intent.pairingLink()
             handleShortcut(intent)
@@ -115,7 +128,7 @@ class MainActivity : ComponentActivity(), FeatureActions {
 
     override fun enable(feature: Feature) {
         if (feature != Feature.Messages && feature.restrictedNow && RestrictedSettings.state(this) == RestrictedState.Blocked) {
-            RestrictedSettings.attempted[feature] = true
+            RestrictedSettings.markAttempted(this, feature)
         }
         when (feature) {
             Feature.AppAlerts -> {
@@ -155,10 +168,32 @@ class MainActivity : ComponentActivity(), FeatureActions {
     /** A permission Android will no longer show a dialog for: only App info can grant it now. */
     private fun deniedForGood(permission: String): Boolean {
         if (checkSelfPermission(permission) == android.content.pm.PackageManager.PERMISSION_GRANTED) return false
-        val asked = getSharedPreferences("pairly_permissions_asked", MODE_PRIVATE)
-        val askedBefore = asked.getBoolean(permission, false)
-        asked.edit().putBoolean(permission, true).apply()
-        return askedBefore && !shouldShowRequestPermissionRationale(permission)
+        return askedBefore(permission) && !shouldShowRequestPermissionRationale(permission)
+    }
+
+    private fun askedBefore(permission: String): Boolean =
+        getSharedPreferences(PREFS_ASKED, MODE_PRIVATE).getBoolean(permission, false)
+
+    /** The user answered Android's dialog for these, so a later silent denial means "don't ask again". */
+    private fun rememberAsked(permissions: Collection<String>) {
+        val asked = getSharedPreferences(PREFS_ASKED, MODE_PRIVATE).edit()
+        permissions.forEach { asked.putBoolean(it, true) }
+        asked.apply()
+    }
+
+    /**
+     * Back from App info after Android had blocked something: carry on with it, so the user doesn't
+     * have to find the button again. If restricted settings still aren't allowed, Android says so
+     * again and the steps stay up.
+     */
+    private fun retryAfterAppInfo() {
+        if (!retryOnReturn) return
+        retryOnReturn = false
+        if (RestrictedSettings.state(this) == RestrictedState.Blocked) return
+        val permissions = dev.pairly.android.ui.features.PermissionSnapshot.read(this)
+        val next = Feature.setupOrder.firstOrNull { RestrictedSettings.attempted[it] == true && !permissions.isOn(it) }
+        RestrictedSettings.clearAttempted(this)
+        if (next != null) enable(next)
     }
 
     override fun shizuku(action: ShizukuAction) {
@@ -176,6 +211,7 @@ class MainActivity : ComponentActivity(), FeatureActions {
     }
 
     override fun openAppInfo() {
+        retryOnReturn = RestrictedSettings.attempted.isNotEmpty()
         start(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
     }
 
@@ -286,6 +322,7 @@ class MainActivity : ComponentActivity(), FeatureActions {
         const val ACTION_SCAN = "dev.pairly.android.action.SCAN_PAIRING_CODE"
         const val ACTION_SEND_CLIPBOARD = "dev.pairly.android.action.SEND_CLIPBOARD"
         const val ACTION_SYNC = "dev.pairly.android.action.SYNC"
+        const val PREFS_ASKED = "pairly_permissions_asked"
     }
 
     private fun Intent.pairingLink(): String? =
@@ -305,6 +342,7 @@ class MainActivity : ComponentActivity(), FeatureActions {
     override fun onResume() {
         super.onResume()
         MirrorConsentGate.onAppVisible(this)
+        retryAfterAppInfo()
     }
 
     override fun onPause() {
