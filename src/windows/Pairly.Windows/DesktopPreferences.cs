@@ -19,8 +19,11 @@ internal sealed class DesktopPreferences
     /// <summary>"System", "Light" or "Dark".</summary>
     public string Theme { get; set; } = "System";
 
-    /// <summary>"Aurora" or "Daybreak", the same looks as the phone app.</summary>
-    public string Style { get; set; } = "Aurora";
+    /// <summary>"Glass" or "Clay", the same looks as the phone app.</summary>
+    public string Style { get; set; } = "Glass";
+
+    /// <summary>"System" (the Windows accent) or one of the named accents in ThemeManager.Accents.</summary>
+    public string? Accent { get; set; }
 
     /// <summary>"" follows Windows; "en" or "de".</summary>
     public string Language { get; set; } = string.Empty;
@@ -46,6 +49,23 @@ internal sealed class DesktopPreferences
             if (preferences is null)
             {
                 return new DesktopPreferences();
+            }
+
+            // Aurora and Daybreak (until 1.x) became Glass and Clay, with the accent each one had.
+            preferences.Accent ??= preferences.Style switch
+            {
+                "Aurora" => "Indigo",
+                "Daybreak" => "Coral",
+                _ => "Violet"
+            };
+            preferences.Style = preferences.Style switch
+            {
+                "Daybreak" or "Clay" => "Clay",
+                _ => "Glass"
+            };
+            if (!ThemeManager.Accents.Contains(preferences.Accent, StringComparer.OrdinalIgnoreCase))
+            {
+                preferences.Accent = "Violet";
             }
 
             preferences.MutedNotificationPackages = new HashSet<string>(

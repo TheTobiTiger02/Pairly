@@ -122,6 +122,7 @@ public partial class MainWindow : Window
         _photosView = new ListCollectionView(_photos);
         PhotosList.ItemsSource = _photosView;
         _notificationsView = new ListCollectionView(_notifications);
+        _notifications.CollectionChanged += (_, _) => UpdateHomeLatest();
         _notificationsView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(NotificationViewModel.DateGroup)));
         NotificationsList.ItemsSource = _notificationsView;
         DiagnosticsEventsList.ItemsSource = _diagnosticsEvents;
@@ -382,7 +383,6 @@ public partial class MainWindow : Window
         // Narrow windows keep every feature: the pane slims down.
         NavPane.Width = ActualWidth < 1000 ? 272 : 292;
         BrandTitleText.Visibility = ActualWidth < 1040 ? Visibility.Collapsed : Visibility.Visible;
-        HomeQuickActions.Columns = ActualWidth < 1180 ? 2 : 4;
     }
 
     private static IEnumerable<T> FindVisualChildren<T>(System.Windows.DependencyObject root) where T : System.Windows.DependencyObject
@@ -2350,6 +2350,14 @@ public partial class MainWindow : Window
         }
 
         _allNotifications = _notifications.ToArray();
+        UpdateHomeLatest();
+    }
+
+    /// <summary>Home's "Latest from your phone": the five newest notifications.</summary>
+    private void UpdateHomeLatest()
+    {
+        HomeLatestList.ItemsSource = _notifications.OrderByDescending(notification => notification.PostedAt).Take(5).ToArray();
+        HomeLatestEmpty.Visibility = _notifications.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private static void ReconcileOrderedCollection<T>(

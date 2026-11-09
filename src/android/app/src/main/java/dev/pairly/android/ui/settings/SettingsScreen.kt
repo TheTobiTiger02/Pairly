@@ -1,6 +1,5 @@
 package dev.pairly.android.ui.settings
 
-import android.os.Build
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -14,18 +13,18 @@ import androidx.compose.material.icons.automirrored.rounded.HelpOutline
 import androidx.compose.material.icons.rounded.AddLink
 import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.Palette
 import dev.pairly.android.ui.features.PowerModeCard
-import dev.pairly.android.ui.features.StylePicker
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.LinkOff
+import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.PrivacyTip
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Replay
 import androidx.compose.material.icons.rounded.SystemUpdate
 import androidx.compose.material.icons.rounded.Translate
-import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
@@ -145,7 +144,10 @@ fun SettingsScreen(state: AppState, prefs: UiPrefs, language: LocaleText.Languag
         item {
             PairlyCard(Modifier.fillMaxWidth()) {
                 ListRow(stringResource(R.string.settings_style), icon = Icons.Rounded.Palette)
-                StylePicker(prefs.appStyle, onSelect = { chosen -> callbacks.updatePrefs { it.copy(appStyle = chosen) } })
+                StylePicker(prefs.appStyle, prefs.accent, onSelect = { chosen -> callbacks.updatePrefs { it.copy(appStyle = chosen) } })
+                Spacer(Modifier.height(Space.m))
+                ListRow(stringResource(R.string.settings_accent), icon = Icons.Rounded.ColorLens)
+                AccentPicker(prefs.appStyle, prefs.accent, onSelect = { chosen -> callbacks.updatePrefs { it.copy(accent = chosen) } })
                 Spacer(Modifier.height(Space.m))
                 ListRow(stringResource(R.string.settings_theme), icon = Icons.Rounded.DarkMode)
                 ChoiceRow(
@@ -158,15 +160,6 @@ fun SettingsScreen(state: AppState, prefs: UiPrefs, language: LocaleText.Languag
                     onSelect = { mode -> callbacks.updatePrefs { it.copy(themeMode = mode) } }
                 )
                 Spacer(Modifier.height(Space.m))
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    SwitchRow(
-                        stringResource(R.string.settings_dynamic_color),
-                        stringResource(R.string.settings_dynamic_color_detail),
-                        checked = prefs.dynamicColor,
-                        onCheckedChange = { on -> callbacks.updatePrefs { it.copy(dynamicColor = on) } },
-                        icon = Icons.Rounded.Wallpaper
-                    )
-                }
                 ListRow(stringResource(R.string.settings_language), icon = Icons.Rounded.Translate)
                 ChoiceRow(
                     options = listOf(

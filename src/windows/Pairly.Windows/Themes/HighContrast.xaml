@@ -48,4 +48,6 @@
     <SolidColorBrush x:Key="ControlElevationBorderBrush" Color="{DynamicResource {x:Static SystemColors.WindowTextColorKey}}" />
     <SolidColorBrush x:Key="AccentElevationBorderBrush" Color="{DynamicResource {x:Static SystemColors.HighlightTextColorKey}}" />
     <SolidColorBrush x:Key="HeroBrush" Color="{x:Static SystemColors.WindowColor}" />
+    <SolidColorBrush x:Key="NavSelectedBrush" Color="{x:Static SystemColors.HighlightColor}" />
+    <SolidColorBrush x:Key="NavSelectedTextBrush" Color="{x:Static SystemColors.HighlightTextColor}" />
 </ResourceDictionary>

@@ -92,7 +92,7 @@ fun PairlyApp(
         }
     }
 
-    PairlyTheme(prefs.themeMode, prefs.dynamicColor, prefs.appStyle) {
+    PairlyTheme(prefs.themeMode, prefs.appStyle, prefs.accent) {
         val style = Pairly.style
         PairlyBackground {
             AnimatedContent(

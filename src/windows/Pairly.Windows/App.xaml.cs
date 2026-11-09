@@ -54,6 +54,7 @@ public partial class App : System.Windows.Application
         Localization.LocalizationSource.Instance.SetLanguage(Preferences.Language);
         ThemeManager.Preference = Preferences.Theme;
         ThemeManager.Style = Preferences.Style;
+        ThemeManager.Accent = Preferences.Accent ?? "Violet";
 
         StartHidden = ScreenshotDirectory is null && e.Args.Any(argument => string.Equals(argument, "--background", StringComparison.OrdinalIgnoreCase))
             || StartupRegistration.LaunchedByStartupTask();
