@@ -119,6 +119,8 @@ class NotificationRelayService : NotificationListenerService() {
         requestedDeviceId: String = currentDeviceId(),
         publish: Boolean = PairlyConnection.isReady
     ) {
+        // Pairly's own "Connected to your PC" notice is not news on that PC.
+        if (sbn.packageName == packageName) return
         val payload = buildPayload(sbn, snapshotId)
         LastNotificationRelay.latestPayload = payload.toString()
         LastNotificationRelay.remember(sbn, payload)

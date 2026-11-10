@@ -236,6 +236,8 @@ class MainActivity : ComponentActivity(), FeatureActions {
                 val link = PairingLink.parse(barcode.rawValue)
                 if (link != null) onLink(link) else onInvalid()
             }
+            // The scanner module can still be downloading or the camera busy; code entry stays available.
+            .addOnFailureListener { }
     }
 
     private fun openNotificationAccess() {

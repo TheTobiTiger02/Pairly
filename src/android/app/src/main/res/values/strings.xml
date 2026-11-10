@@ -154,10 +154,10 @@
     <string name="feature_calls_description">When your phone rings, your PC shows who’s calling, and you can answer or decline right there.</string>
     <string name="feature_calls_why">Pairly needs phone access to notice calls, contacts to show the caller’s name, and permission to answer calls.</string>
     <string name="feature_calls_step2">Choose Allow in each dialog.</string>
-    <string name="feature_photos">Photos and videos</string>
+    <string name="feature_photos">Photos</string>
     <string name="feature_photos_summary">Browse your phone’s photos on your PC</string>
-    <string name="feature_photos_description">Browse the photos and videos on your phone from your PC and save the ones you want.</string>
-    <string name="feature_photos_why">Pairly needs access to your photos and videos to show them on your PC.</string>
+    <string name="feature_photos_description">Browse the photos on your phone from your PC and save the ones you want.</string>
+    <string name="feature_photos_why">Pairly needs access to your photos to show them on your PC.</string>
     <string name="feature_photos_step2">Choose Allow all.</string>
     <string name="feature_files">Files</string>
     <string name="feature_files_summary">Send files between phone and PC</string>
@@ -426,4 +426,7 @@
     <string name="action_turn_on">Turn on</string>
     <string name="action_not_now">Not now</string>
     <string name="action_set_up_power">Set up Power mode</string>
+    <string name="ime_typing_from_pc">Typing from your PC</string>
+    <string name="ime_switch_keyboard">Keyboard</string>
+    <string name="clipboard_needs_focus">Open Pairly to send the clipboard.</string>
 </resources>

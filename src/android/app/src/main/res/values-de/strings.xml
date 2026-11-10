@@ -154,10 +154,10 @@
     <string name="feature_calls_description">Wenn dein Handy klingelt, zeigt dein PC, wer anruft, und du kannst direkt dort annehmen oder ablehnen.</string>
     <string name="feature_calls_why">Pairly braucht Telefonzugriff, um Anrufe zu erkennen, Kontakte, um den Namen anzuzeigen, und die Berechtigung, Anrufe anzunehmen.</string>
     <string name="feature_calls_step2">Wähle in jedem Dialog Zulassen.</string>
-    <string name="feature_photos">Fotos und Videos</string>
+    <string name="feature_photos">Fotos</string>
     <string name="feature_photos_summary">Fotos vom Handy am PC durchsuchen</string>
-    <string name="feature_photos_description">Durchsuche die Fotos und Videos auf deinem Handy am PC und speichere die, die du willst.</string>
-    <string name="feature_photos_why">Pairly braucht Zugriff auf deine Fotos und Videos, um sie auf deinem PC anzuzeigen.</string>
+    <string name="feature_photos_description">Durchsuche die Fotos auf deinem Handy am PC und speichere die, die du willst.</string>
+    <string name="feature_photos_why">Pairly braucht Zugriff auf deine Fotos, um sie auf deinem PC anzuzeigen.</string>
     <string name="feature_photos_step2">Wähle Alle zulassen.</string>
     <string name="feature_files">Dateien</string>
     <string name="feature_files_summary">Dateien zwischen Handy und PC senden</string>
@@ -426,4 +426,7 @@
     <string name="action_turn_on">Einschalten</string>
     <string name="action_not_now">Nicht jetzt</string>
     <string name="action_set_up_power">Power-Modus einrichten</string>
+    <string name="ime_typing_from_pc">Eingabe von deinem PC</string>
+    <string name="ime_switch_keyboard">Tastatur</string>
+    <string name="clipboard_needs_focus">Öffne Pairly, um die Zwischenablage zu senden.</string>
 </resources>
