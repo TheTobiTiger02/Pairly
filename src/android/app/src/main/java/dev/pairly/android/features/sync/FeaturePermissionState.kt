@@ -24,7 +24,7 @@ object FeaturePermissionState {
             "clipboard" to "granted",
             "clipboardBackground" to if (!dev.pairly.android.network.ConnectionSettings(context).clipboardSyncEnabled) "disabled"
                 else if (ShizukuHelper.helperState.value == ShizukuHelperLifecycle.State.Ready) "granted" else "needs_user_action",
-            "photos" to runtimePermissionState(context, photoPermissions(context), KEY_PHOTOS_DENIED),
+            "photos" to if (hasPhotoAccess(context)) "granted" else runtimePermissionState(context, photoPermissions(context), KEY_PHOTOS_DENIED),
             "notifications" to notificationState(context),
             "sms" to runtimePermissionState(context, smsPermissions(), KEY_SMS_DENIED),
             "mirroring" to if (mirroringActive) "granted" else "needs_user_action",
@@ -40,7 +40,10 @@ object FeaturePermissionState {
     }
 
     fun photoPermissions(context: Context): Array<String> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            // Asking for both lets Android 14+ offer "Select photos" without re-asking on every start.
+            arrayOf(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED)
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             arrayOf(Manifest.permission.READ_MEDIA_IMAGES)
         } else {
             arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
@@ -67,7 +70,16 @@ object FeaturePermissionState {
         setDenied(context, KEY_POST_NOTIFICATIONS_DENIED, !granted)
     }
 
-    fun hasPhotoAccess(context: Context): Boolean = hasAll(context, photoPermissions(context))
+    /**
+     * All photos, or on Android 14+ the photos the user picked with "Select photos": the PC then
+     * shows exactly those, which is what the user asked for.
+     */
+    fun hasPhotoAccess(context: Context): Boolean = when {
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE ->
+            hasAll(context, arrayOf(Manifest.permission.READ_MEDIA_IMAGES)) ||
+                hasAll(context, arrayOf(Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED))
+        else -> hasAll(context, photoPermissions(context))
+    }
 
     fun hasSmsAccess(context: Context): Boolean = hasAll(context, smsPermissions())
 

@@ -53,7 +53,7 @@ class MainActivity : ComponentActivity(), FeatureActions {
 
     private val photosPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { grants ->
         rememberAsked(grants.keys)
-        FeaturePermissionState.rememberPhotoResult(this, grants.values.all { it })
+        FeaturePermissionState.rememberPhotoResult(this, FeaturePermissionState.hasPhotoAccess(this))
         afterPermissionResult()
     }
     private val smsPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { grants ->
