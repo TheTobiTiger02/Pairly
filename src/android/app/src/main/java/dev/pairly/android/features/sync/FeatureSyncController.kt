@@ -19,7 +19,8 @@ import dev.pairly.android.network.ConnectionSettings
 import dev.pairly.android.network.PairlyConnection
 import dev.pairly.android.protocol.ProtocolJson
 import java.util.UUID
-import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.Executors
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
@@ -37,15 +38,20 @@ object FeatureSyncController {
     private val syncMediaRunnable = Runnable { syncFeatures(lastContext ?: return@Runnable, setOf(FEATURE_PHOTOS)) }
     private val syncSmsRunnable = Runnable { syncFeatures(lastContext ?: return@Runnable, setOf(FEATURE_SMS)) }
     private var lastContext: Context? = null
+    // The PC asks for a screenful of thumbnails at once and waits for every answer, so no request
+    // may be dropped: a fixed set of workers and a queue without a limit.
     private val mediaExecutor = ThreadPoolExecutor(
-        1,
-        2,
+        4,
+        4,
         15L,
         TimeUnit.SECONDS,
-        ArrayBlockingQueue(8),
-        { runnable -> Thread(runnable, "Pairly-MediaIndex").apply { isDaemon = true } },
-        ThreadPoolExecutor.DiscardOldestPolicy()
+        LinkedBlockingQueue(),
+        { runnable -> Thread(runnable, "Pairly-MediaIndex").apply { isDaemon = true } }
     ).apply { allowCoreThreadTimeOut(true) }
+    // One worker keeps SMS pages in order and off the main thread.
+    private val smsExecutor = Executors.newSingleThreadExecutor { runnable ->
+        Thread(runnable, "Pairly-Sms").apply { isDaemon = true }
+    }
 
     fun registerObservers(context: Context) {
         if (observersRegistered) {
@@ -228,19 +234,24 @@ object FeatureSyncController {
         }
     }
 
-    /** Runs media reads/compression on the same bounded pool used by index paging. */
+    /** Runs media reads/compression on the same worker pool used by index paging. */
     fun executeMediaIo(block: () -> Unit): Boolean {
         if (mediaExecutor.isShutdown) return false
         return runCatching { mediaExecutor.execute(block) }.isSuccess
     }
 
     fun sendSmsSnapshot(context: Context) {
-        val repository = SmsRepository(context)
-        val threads = if (FeaturePermissionState.hasSmsAccess(context)) repository.recentThreads(100) else emptyList()
-        PairlyConnection.send(ProtocolJson.smsThreadPage(deviceId(context), threads))
-        if (FeaturePermissionState.hasSmsAccess(context)) {
-            repository.groupRecentMessagesByThread(200).forEach { (threadId, messages) ->
-                PairlyConnection.send(ProtocolJson.smsMessagePage(deviceId(context), threadId, messages))
+        val appContext = context.applicationContext
+        smsExecutor.execute {
+            if (!PairlyConnection.isReady) return@execute
+            val repository = SmsRepository(appContext)
+            val allowed = FeaturePermissionState.hasSmsAccess(appContext)
+            val threads = if (allowed) repository.recentThreads(100) else emptyList()
+            PairlyConnection.send(ProtocolJson.smsThreadPage(deviceId(appContext), threads))
+            if (allowed) {
+                repository.groupRecentMessagesByThread(200).forEach { (threadId, messages) ->
+                    PairlyConnection.send(ProtocolJson.smsMessagePage(deviceId(appContext), threadId, messages))
+                }
             }
         }
     }

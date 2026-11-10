@@ -97,6 +97,7 @@ import dev.pairly.android.ui.features.Feature
 import dev.pairly.android.ui.features.FeatureHeader
 import dev.pairly.android.ui.features.FeatureSetupActions
 import dev.pairly.android.ui.features.FeatureSetupContent
+import dev.pairly.android.ui.features.isBlockedByAndroid
 import dev.pairly.android.ui.features.ShizukuGuide
 import dev.pairly.android.ui.theme.Pairly
 import dev.pairly.android.ui.theme.Space
@@ -453,6 +454,9 @@ private fun PermissionsStep(state: AppState, onGrantAll: () -> Unit, onNext: () 
             PairlyCard(Modifier.fillMaxWidth(), contentPadding = PaddingValues(vertical = Space.s)) {
                 Feature.setupOrder.forEach { feature ->
                     val on = state.permissions.isOn(feature)
+                    // Android refused it: open the row so the App info steps are in view.
+                    val blocked = isBlockedByAndroid(feature, state.permissions)
+                    LaunchedEffect(blocked) { if (blocked) expanded = feature.key }
                     val open = expanded == feature.key
                     Column(Modifier.fillMaxWidth()) {
                         Row(
@@ -470,6 +474,7 @@ private fun PermissionsStep(state: AppState, onGrantAll: () -> Unit, onNext: () 
                             Spacer(Modifier.width(Space.s))
                             AnimatedContent(on, label = "on-${feature.key}") { isOn ->
                                 if (isOn) CheckBadge(28.dp)
+                                else if (blocked) FilledTonalButton(onClick = actions::openAppInfo) { Text(stringResource(R.string.action_open_app_info)) }
                                 else FilledTonalButton(onClick = { actions.enable(feature) }) { Text(stringResource(R.string.action_turn_on)) }
                             }
                         }

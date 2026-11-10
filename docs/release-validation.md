@@ -109,7 +109,7 @@ Then check by hand on real devices:
 - **Android fresh install:** welcome → tour → install PC app → QR pairing → every permission step (grant one, skip one, deny one twice to reach the App info fallback) → optional Shizuku guide → summary. Kill the app mid-setup and confirm it resumes on the same step. On Android 13+ with a sideloaded APK, notification access shows the "Restricted setting" hint.
 - **Android update over a paired install:** no onboarding, What's new appears once, Home shows "Finish setting up" for anything missing.
 - **Android transitions:** switch between all four tabs in both directions; every change slides from the side of the tab you go to (back to Home slides in from the left). Opening a feature slides in from the right; back slides out to the right, also with the back gesture.
-- **Android dark mode:** Settings → Theme → Dark shows the navy theme; every screen stays readable.
+- **Android dark mode:** Settings → Theme → Dark shows the dark theme; every screen stays readable.
 - **Share to PC:** share a PDF and two photos from another app to Pairly; the sheet shows progress, the files land in `Downloads\Pairly` with a tray notification and appear under **Received from your phone** on the PC's Home. A single shared image or text still goes to the PC clipboard.
 - **Android language:** switch System / English / Deutsch in Settings (Android 13+ also under system per-app language); the connection notification follows.
 - **Windows fresh install:** setup wizard (language, features, QR to the APK, pairing, preferences, summary) → tour. Close Pairly mid-setup; setup starts again next time until finished.

@@ -28,7 +28,7 @@ Nachrichten, Benachrichtigungen, Fotos, Dateien, eine gemeinsame Zwischenablage 
 | --- | --- |
 | 💬 **Nachrichten** | Lies deine SMS-Unterhaltungen und antworte über die Tastatur. |
 | 🔔 **Benachrichtigungen** | Sieh die Benachrichtigungen deines Handys am PC, antworte darauf und schalte unwichtige Apps stumm. |
-| 🖼️ **Fotos** | Durchsuche Fotos und Videos auf deinem Handy und speichere sie auf dem PC. |
+| 🖼️ **Fotos** | Durchsuche alle Fotos auf deinem Handy nach Monaten, sieh sie in voller Größe an und speichere sie auf dem PC. |
 | 📁 **Dateien** | Schicke Dateien in beide Richtungen zwischen Handy und PC. |
 | 📋 **Zwischenablage** | Auf einem Gerät kopieren, auf dem anderen einfügen, für Text und Bilder, mit allen verbundenen Handys. |
 | 📱 **Handybildschirm** | Spiegle dein Handy in einem Fenster und steuere es mit Maus und Tastatur. |
@@ -64,7 +64,7 @@ Ohne Power-Modus funktioniert alles andere trotzdem: Die Zwischenablage synchron
 <details>
 <summary><b>Zwei Looks</b></summary>
 
-Beide Apps gibt es in zwei Stilen, umschaltbar unter **Einstellungen → Darstellung → Stil**: **Aurora** (ruhiges Indigo) und **Daybreak** (warmes Koralle, runder). Beide folgen dem hellen oder dunklen Modus des Systems.
+Beide Apps gibt es in zwei Stilen, umschaltbar unter **Einstellungen → Darstellung → Stil**: **Glass** (klare Flächen, scharfe Schrift) und **Clay** (weiche Formen, freundlich), jeweils mit acht Akzentfarben. Beide folgen dem hellen oder dunklen Modus des Systems.
 </details>
 
 ## Hilfe

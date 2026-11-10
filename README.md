@@ -29,7 +29,7 @@ Messages, notifications, photos, files, a shared clipboard and your phone's scre
 | --- | --- |
 | 💬 **Messages** | Read your SMS conversations and reply from your keyboard. |
 | 🔔 **Notifications** | See your phone's notifications on your PC, reply, and mute the apps you don't care about. |
-| 🖼️ **Photos** | Browse your phone's photos and videos and save them to your PC. |
+| 🖼️ **Photos** | Browse all of your phone's photos by month, view them full size and save them to your PC. |
 | 📁 **Files** | Send files between phone and PC in either direction. |
 | 📋 **Clipboard** | Copy on one device, paste on another, for text and images, with every connected phone. |
 | 📱 **Phone screen** | Mirror your phone in a window and control it with mouse and keyboard. |
@@ -65,7 +65,7 @@ Without Power mode everything else works: the clipboard syncs while Pairly is op
 <details>
 <summary><b>Two looks</b></summary>
 
-Both apps come in two styles you can switch between under **Settings → Appearance → Style**: **Aurora** (calm indigo) and **Daybreak** (warm coral, rounder). Both follow your system's light and dark mode.
+Both apps come in two styles you can switch between under **Settings → Appearance → Style**: **Glass** (clear panes, crisp type) and **Clay** (soft shapes, friendly), each with eight accent colors. Both follow your system's light and dark mode.
 </details>
 
 ## Help
@@ -109,7 +109,7 @@ Launch only `Pairly.Windows.exe`; it owns the embedded host.
 
 ### Design
 
-Both apps use the Glass design with a navy dark mode: a bottom bar on Android, a navigation pane on Windows. CI renders every Android screen in light and dark, English, German and at the largest font size, and every Windows page in light and dark (`--render-screenshots`), and attaches them to each run as the `android-screenshots` and `windows-screenshots` artifacts.
+Both apps share the Glass and Clay styles with a graphite dark mode: a bottom bar on Android, a navigation pane on Windows. CI renders every Android screen in light and dark, English, German and at the largest font size, and every Windows page in light and dark (`--render-screenshots`), and attaches them to each run as the `android-screenshots` and `windows-screenshots` artifacts.
 
 <img src="docs/screenshots/android-designs.png" width="520" alt="Pairly on Android in light and dark mode">
 

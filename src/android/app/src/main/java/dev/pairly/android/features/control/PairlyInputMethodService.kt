@@ -40,12 +40,12 @@ class PairlyInputMethodService : InputMethodService() {
             setPadding(padding, padding / 2, padding, padding / 2)
 
             addView(TextView(this@PairlyInputMethodService).apply {
-                text = "Typing from your PC"
+                text = dev.pairly.android.ui.LocaleText.of(this@PairlyInputMethodService).getString(dev.pairly.android.R.string.ime_typing_from_pc)
                 layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
             })
 
             addView(Button(this@PairlyInputMethodService).apply {
-                text = "Keyboard"
+                text = dev.pairly.android.ui.LocaleText.of(this@PairlyInputMethodService).getString(dev.pairly.android.R.string.ime_switch_keyboard)
                 setOnClickListener { switchAway() }
             })
         }

@@ -38,6 +38,7 @@ public sealed class HostWebSocketHandler(
 {
     private static readonly TimeSpan ChallengeLifetime = TimeSpan.FromMinutes(2);
     private const int MaxInboundMessageBytes = 12 * 1024 * 1024;
+    private const int MediaIndexPageSize = 200;
 
     private readonly ConcurrentDictionary<string, PendingClipboardTransfer> _pendingClipboardTransfers = new(StringComparer.Ordinal);
     private long _hostSequence;
@@ -108,6 +109,7 @@ public sealed class HostWebSocketHandler(
                 {
                     devices.MarkConnected(connection.SessionId, connected: false);
                     fileShares.CancelSession(connection.SessionId);
+                    mediaContent.CancelDevice(connection.SessionId);
                 }
             }
         }
@@ -190,8 +192,7 @@ public sealed class HostWebSocketHandler(
                     await HandleContentTransferCompleteAsync(envelope, connection, cancellationToken);
                     break;
                 case ProtocolMessageTypes.MediaIndexPage:
-                    media.UpsertPage(envelope.ReadPayload<MediaIndexPagePayload>()
-                        ?? throw new InvalidOperationException("Missing media page payload."));
+                    await HandleMediaIndexPageAsync(envelope, connection, cancellationToken);
                     break;
                 case ProtocolMessageTypes.MediaContentResponse:
                     if (!connection.IsPhysicalDevice)
@@ -218,29 +219,34 @@ public sealed class HostWebSocketHandler(
                         envelope.DeviceId,
                         envelope.ReadPayload<NotificationPayload>()
                             ?? throw new InvalidOperationException("Missing notification payload."));
+                    await SignalPcAppsAsync(envelope, cancellationToken);
                     break;
                 case ProtocolMessageTypes.NotificationRemove:
                     var removed = envelope.ReadPayload<NotificationRemovePayload>()
                         ?? throw new InvalidOperationException("Missing notification removal payload.");
                     notifications.Remove(envelope.DeviceId, removed.NotificationId);
+                    await SignalPcAppsAsync(envelope, cancellationToken);
                     break;
                 case ProtocolMessageTypes.NotificationSnapshotEnd:
                     notifications.EndSnapshot(
                         envelope.DeviceId,
                         envelope.ReadPayload<NotificationSnapshotPayload>()
                             ?? throw new InvalidOperationException("Missing notification snapshot payload."));
+                    await SignalPcAppsAsync(envelope, cancellationToken);
                     break;
                 case ProtocolMessageTypes.SmsThreadPage:
                     sms.UpsertThreads(
                         envelope.DeviceId,
                         envelope.ReadPayload<SmsThreadPagePayload>()
                             ?? throw new InvalidOperationException("Missing SMS thread page payload."));
+                    await SignalPcAppsAsync(envelope, cancellationToken);
                     break;
                 case ProtocolMessageTypes.SmsMessagePage:
                     sms.UpsertMessages(
                         envelope.DeviceId,
                         envelope.ReadPayload<SmsMessagePagePayload>()
                             ?? throw new InvalidOperationException("Missing SMS message page payload."));
+                    await SignalPcAppsAsync(envelope, cancellationToken);
                     break;
                 case ProtocolMessageTypes.CommandResult:
                     commandResults.Complete(envelope.ReadPayload<CommandResultPayload>()
@@ -857,6 +863,51 @@ public sealed class HostWebSocketHandler(
 
     private Task SendFileShareResultAsync(string sessionId, FileShareResultPayload result, CancellationToken cancellationToken) =>
         sessions.SendAsync(sessionId, ProtocolEnvelope.Create(ProtocolMessageTypes.FileShareResult, "pc-host", NextSequence(), result), cancellationToken);
+
+    /// <summary>
+    /// Stores a page of the phone's photo index and asks for the next one until the phone has
+    /// listed everything, so the PC can show the whole library and not only the newest page.
+    /// </summary>
+    private async Task HandleMediaIndexPageAsync(ProtocolEnvelope envelope, ConnectionSession connection, CancellationToken cancellationToken)
+    {
+        var page = envelope.ReadPayload<MediaIndexPagePayload>()
+            ?? throw new InvalidOperationException("Missing media page payload.");
+        media.UpsertPage(page);
+
+        var more = !page.SnapshotComplete && !string.IsNullOrWhiteSpace(page.Cursor) && !string.IsNullOrWhiteSpace(page.SnapshotId);
+        if (more && connection.IsPhysicalDevice && connection.SessionId is not null)
+        {
+            await sessions.SendAsync(
+                connection.SessionId,
+                ProtocolEnvelope.Create(
+                    ProtocolMessageTypes.MediaIndexRequest,
+                    "pc-host",
+                    NextSequence(),
+                    new MediaIndexRequestPayload(page.Cursor, MediaIndexPageSize, Array.Empty<string>(), page.Cursor, SnapshotId: page.SnapshotId)),
+                cancellationToken);
+        }
+
+        // Tell the PC app when there is something new to show: at the first page and at the end.
+        if (page.SnapshotStart || !more)
+        {
+            await RelayToPcAppsAsync(
+                ProtocolEnvelope.Create(
+                    ProtocolMessageTypes.MediaIndexPage,
+                    page.DeviceId,
+                    NextSequence(),
+                    new MediaIndexPagePayload(page.DeviceId, null, Array.Empty<MediaItemPayload>(), SnapshotId: page.SnapshotId, SnapshotComplete: !more)),
+                cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Tells the PC app that this kind of phone data changed, without the data: the app reads it
+    /// from the host, so notifications and messages appear at once and not at the next poll.
+    /// </summary>
+    private Task SignalPcAppsAsync(ProtocolEnvelope source, CancellationToken cancellationToken) =>
+        RelayToPcAppsAsync(
+            ProtocolEnvelope.Create(source.Type, source.DeviceId, NextSequence(), new Dictionary<string, string>()),
+            cancellationToken);
 
     /// <summary>Forwards a phone event as-is to the PC app's realtime sockets.</summary>
     private async Task RelayToPcAppsAsync(ProtocolEnvelope envelope, CancellationToken cancellationToken)

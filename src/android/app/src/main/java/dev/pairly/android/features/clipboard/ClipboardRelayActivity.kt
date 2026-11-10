@@ -53,7 +53,7 @@ class ClipboardRelayActivity : Activity() {
         }
         val sent = ClipboardSyncController.syncCurrentClipboard(
             this,
-            unavailableStatus = "Phone clipboard sync needs app focus."
+            unavailableStatus = dev.pairly.android.ui.LocaleText.of(this).getString(dev.pairly.android.R.string.clipboard_needs_focus)
         )
         Toast.makeText(
             this,

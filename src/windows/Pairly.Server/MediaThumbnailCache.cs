@@ -6,7 +6,12 @@ namespace Pairly.Server;
 
 public sealed class MediaThumbnailCache
 {
+    // Thumbnails are about 20 KB each, so this holds roughly 25,000 of them.
+    private const long MaxCacheBytes = 512L * 1024 * 1024;
+    private const int StoresBetweenTrims = 500;
+
     private readonly string _cacheDirectory;
+    private int _storesSinceTrim = StoresBetweenTrims - 1;
 
     public MediaThumbnailCache()
         : this(Path.Combine(
@@ -50,6 +55,34 @@ public sealed class MediaThumbnailCache
             File.Delete(path);
         }
         File.Move(tempPath, path);
+
+        if (Interlocked.Increment(ref _storesSinceTrim) >= StoresBetweenTrims)
+        {
+            Interlocked.Exchange(ref _storesSinceTrim, 0);
+            _ = Task.Run(Trim);
+        }
+    }
+
+    /// <summary>Keeps the folder under its size limit by deleting the thumbnails written longest ago.</summary>
+    public void Trim()
+    {
+        try
+        {
+            var files = new DirectoryInfo(_cacheDirectory).GetFiles("*.jpg").OrderByDescending(file => file.LastWriteTimeUtc);
+            long kept = 0;
+            foreach (var file in files)
+            {
+                kept += file.Length;
+                if (kept > MaxCacheBytes)
+                {
+                    file.Delete();
+                }
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Another thumbnail was being written or read; the next trim catches up.
+        }
     }
 
     private string CachePath(string deviceId, MediaItemPayload item)

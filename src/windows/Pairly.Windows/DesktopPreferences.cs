@@ -12,6 +12,9 @@ internal sealed class DesktopPreferences
 
     public bool MinimizeToTray { get; set; } = true;
 
+    /// <summary>Show a Windows notification when a new notification arrives on the phone.</summary>
+    public bool ShowPhoneNotifications { get; set; } = true;
+
     /// <summary>Mirror through the PC's own ADB connection when the phone has Wireless debugging on. Off by default:
     /// Power mode on the phone gives the same prompt-free mirroring and real input without keeping Wireless debugging on.</summary>
     public bool MirrorUseAdb { get; set; }

@@ -246,7 +246,8 @@ object ShizukuHelper {
     fun open(app: Context) {
         val intent = app.packageManager.getLaunchIntentForPackage(PACKAGE)
             ?: Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://shizuku.rikka.app/download/"))
-        app.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        // No browser, or Shizuku was removed a moment ago: nothing to open, and no reason to crash.
+        runCatching { app.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
     }
 
     private fun publishState() {

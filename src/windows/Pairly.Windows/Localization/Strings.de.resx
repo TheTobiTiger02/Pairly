@@ -75,7 +75,7 @@
   <data name="connect_your_android_phone" xml:space="preserve"><value>Verbinde dein Android-Handy</value></data>
   <data name="connected" xml:space="preserve"><value>Verbunden</value></data>
   <data name="connected_for" xml:space="preserve"><value>{0}: verbunden seit {1}, </value></data>
-  <data name="connected_mirror_permission" xml:space="preserve"><value>Verbunden: {0}. Berechtigung zur Spiegelung: {1}.</value></data>
+  <data name="connected_mirror_permission" xml:space="preserve"><value>Verbunden: {0}.</value></data>
   <data name="connecting" xml:space="preserve"><value>Verbinde</value></data>
   <data name="connecting_to_your_phone" xml:space="preserve"><value>Verbinde mit deinem Handy</value></data>
   <data name="connection" xml:space="preserve"><value>Verbindung</value></data>
@@ -579,4 +579,31 @@
   <data name="home_latest" xml:space="preserve"><value>Neu von deinem Handy</value></data>
   <data name="home_see_all" xml:space="preserve"><value>Alle ansehen</value></data>
   <data name="home_latest_empty" xml:space="preserve"><value>Noch nichts Neues. Benachrichtigungen von deinem Handy erscheinen hier.</value></data>
+  <data name="n_photos" xml:space="preserve"><value>{0} Fotos</value></data>
+  <data name="photo_n_of" xml:space="preserve"><value>{0} von {1}</value></data>
+  <data name="open_in_default_app" xml:space="preserve"><value>In Standard-App öffnen</value></data>
+  <data name="photo_preview_failed" xml:space="preserve"><value>Dieses Foto kann hier nicht angezeigt werden. Öffne es in deiner Standard-App oder speichere es auf dem PC.</value></data>
+  <data name="photo_not_loaded" xml:space="preserve"><value>{0} konnte nicht vom Smartphone geladen werden. Prüfe, ob das Smartphone verbunden ist.</value></data>
+  <data name="saving_photo_n_of" xml:space="preserve"><value>Speichere Foto {0} von {1} …</value></data>
+  <data name="photos_not_saved" xml:space="preserve"><value>Nicht gespeichert: {0}</value></data>
+  <data name="image_files" xml:space="preserve"><value>Bilddateien</value></data>
+  <data name="all_files" xml:space="preserve"><value>Alle Dateien</value></data>
+  <data name="next" xml:space="preserve"><value>Weiter</value></data>
+  <data name="show_phone_notifications" xml:space="preserve"><value>Smartphone-Benachrichtigungen in Windows anzeigen</value></data>
+  <data name="show_phone_notifications_detail" xml:space="preserve"><value>Zeigt für neue Smartphone-Benachrichtigungen eine Windows-Benachrichtigung.</value></data>
+  <data name="n_new_phone_notifications" xml:space="preserve"><value>{0} neue Benachrichtigungen auf deinem Smartphone</value></data>
+  <data name="clear_all_notifications_question" xml:space="preserve"><value>Alle Benachrichtigungen aus dieser Liste entfernen? Auf deinem Smartphone bleiben sie erhalten.</value></data>
+  <data name="forget_phone_question" xml:space="preserve"><value>{0} vergessen? Die Verbindung wird getrennt, und du musst es neu koppeln, um es mit diesem PC zu nutzen.</value></data>
+  <data name="feature_off_on_phone" xml:space="preserve"><value>{0} ist noch nicht eingeschaltet. Öffne Pairly auf deinem Smartphone und schalte es unter Funktionen ein.</value></data>
+  <data name="n_notifications" xml:space="preserve"><value>{0} Benachrichtigungen</value></data>
+  <data name="showing_n_of_m" xml:space="preserve"><value>{0} von {1} angezeigt</value></data>
+  <data name="n_conversations" xml:space="preserve"><value>{0} Unterhaltungen</value></data>
+  <data name="no_photos_from_phone_yet" xml:space="preserve"><value>Von diesem Smartphone sind noch keine Fotos da.</value></data>
+  <data name="this_folder_is_empty" xml:space="preserve"><value>Dieser Ordner ist leer.</value></data>
+  <data name="nothing_matches_search" xml:space="preserve"><value>Hier passt nichts zu deiner Suche.</value></data>
+  <data name="reconnects" xml:space="preserve"><value>Neuverbindungen</value></data>
+  <data name="healthy" xml:space="preserve"><value>in Ordnung</value></data>
+  <data name="load_error" xml:space="preserve"><value>Ladefehler</value></data>
+  <data name="save_error" xml:space="preserve"><value>Speicherfehler</value></data>
+  <data name="files_phone_offline" xml:space="preserve"><value>Dein Smartphone ist nicht verbunden. Die Dateien erscheinen hier, sobald es wieder da ist.</value></data>
 </root>

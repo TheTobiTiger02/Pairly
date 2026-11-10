@@ -11,6 +11,8 @@ public sealed class MediaCatalog
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, MediaItemPayload>> _itemsByDevice = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, string?> _nextPageTokens = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, string> _snapshotIds = new(StringComparer.Ordinal);
+    // Media ids seen in the snapshot that is still arriving, per device.
+    private readonly ConcurrentDictionary<string, HashSet<string>> _arriving = new(StringComparer.Ordinal);
 
     public void UpsertPage(MediaIndexPagePayload page)
     {
@@ -26,17 +28,35 @@ public sealed class MediaCatalog
                 || (_snapshotIds.TryGetValue(page.DeviceId, out currentSnapshot)
                     && !string.Equals(currentSnapshot, page.SnapshotId, StringComparison.Ordinal)
                     && string.IsNullOrWhiteSpace(page.Cursor));
+            // A new snapshot arrives page by page. The previous items stay until its last page,
+            // so the gallery never shrinks to one page and grows back; what the new snapshot
+            // no longer lists goes when it is complete.
             if (startsNewSnapshot)
             {
-                items.Clear();
+                _arriving[page.DeviceId] = new HashSet<string>(StringComparer.Ordinal);
             }
 
             _snapshotIds[page.DeviceId] = page.SnapshotId;
         }
 
+        _arriving.TryGetValue(page.DeviceId, out var arriving);
         foreach (var item in page.Items)
         {
             items[item.MediaId] = Normalize(item);
+            arriving?.Add(item.MediaId);
+        }
+
+        if (arriving is not null && page.SnapshotComplete)
+        {
+            foreach (var mediaId in items.Keys)
+            {
+                if (!arriving.Contains(mediaId))
+                {
+                    items.TryRemove(mediaId, out _);
+                }
+            }
+
+            _arriving.TryRemove(page.DeviceId, out _);
         }
 
         _nextPageTokens[page.DeviceId] = page.NextPageToken;
