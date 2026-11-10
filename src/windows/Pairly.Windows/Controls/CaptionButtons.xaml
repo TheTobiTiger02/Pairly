@@ -1,6 +1,7 @@
 <UserControl x:Class="Pairly.Windows.Controls.CaptionButtons"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:Pairly.Windows.Localization"
              WindowChrome.IsHitTestVisibleInChrome="True" VerticalAlignment="Top">
     <UserControl.Resources>
         <Style x:Key="CaptionButton" TargetType="Button">
@@ -68,10 +69,10 @@
 
     <StackPanel Orientation="Horizontal">
         <Button x:Name="MinimizeButton" Style="{StaticResource CaptionButton}" Content="&#xE921;"
-                ToolTip="Minimize" AutomationProperties.Name="Minimize" Click="MinimizeButton_Click" />
+                ToolTip="{l:Loc minimize}" AutomationProperties.Name="{l:Loc minimize}" Click="MinimizeButton_Click" />
         <Button x:Name="MaximizeButton" Style="{StaticResource CaptionButton}" Content="&#xE922;"
-                ToolTip="Maximize" AutomationProperties.Name="Maximize" Click="MaximizeButton_Click" />
+                ToolTip="{l:Loc maximize}" AutomationProperties.Name="{l:Loc maximize}" Click="MaximizeButton_Click" />
         <Button x:Name="CloseButton" Style="{StaticResource CloseCaptionButton}" Content="&#xE8BB;"
-                ToolTip="Close" AutomationProperties.Name="Close" Click="CloseButton_Click" />
+                ToolTip="{l:Loc close}" AutomationProperties.Name="{l:Loc close}" Click="CloseButton_Click" />
     </StackPanel>
 </UserControl>

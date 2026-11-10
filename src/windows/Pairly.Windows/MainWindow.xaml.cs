@@ -363,11 +363,13 @@ public partial class MainWindow : Window
 
     private async void DevicesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (_refreshInProgress || !IsLoaded)
+        if (_settingDeviceSelection || !IsLoaded)
         {
             return;
         }
 
+        // Chosen while a refresh is under way: that refresh must not put the old phone back.
+        _userPickedDeviceId = (DevicesList.SelectedItem as DeviceViewModel)?.DeviceId;
         _storageDeviceId = null;
         DevicePickerToggle.IsChecked = false;
         await RefreshFromHostAsync(showErrors: false);
@@ -689,7 +691,7 @@ public partial class MainWindow : Window
         var reasons = diagnostics.ReconnectReasons();
         DiagnosticsReasonsText.Text = reasons.Count == 0
             ? L.T("no_reconnects_recorded_since_this_app_starte")
-            : "Reconnects: " + string.Join(", ", reasons.Select(reason => $"{reason.Key} x{reason.Value}"));
+            : L.T("reconnects") + ": " + string.Join(", ", reasons.Select(reason => $"{reason.Key} x{reason.Value}"));
 
         _diagnosticsEvents.Clear();
         foreach (var entry in diagnostics.Snapshot(200))
@@ -1198,7 +1200,6 @@ public partial class MainWindow : Window
 
     private Task<bool> PublishClipboardTextAsync(string text) => App.ClipboardSync.PublishTextAsync(text);
 
-    private IReadOnlyList<SmsThreadViewModel> _allSmsThreads = Array.Empty<SmsThreadViewModel>();
 
     private void SmsSearchBox_TextChanged(object sender, TextChangedEventArgs e)
     {
@@ -1244,7 +1245,6 @@ public partial class MainWindow : Window
             }
         }
 
-        _allSmsThreads = _smsThreads.ToArray();
 
         // A new message in the open conversation (received, or a reply sent from here): show it.
         if (open is not null && ReferenceEquals(SmsThreadsList.SelectedItem, open) && open.UpdatedAt != openUpdatedAt)
@@ -1262,13 +1262,13 @@ public partial class MainWindow : Window
     {
         if (thread is null)
         {
-            SmsMessagesList.ItemsSource = Array.Empty<SmsMessagePayload>();
+            SmsMessagesList.ItemsSource = Array.Empty<SmsMessageViewModel>();
             return;
         }
 
         if (App.DemoMode)
         {
-            SmsMessagesList.ItemsSource = DemoMessages(thread.ThreadId, _demoLanguage == "de", DemoNow);
+            SmsMessagesList.ItemsSource = SmsMessageViewModel.From(DemoMessages(thread.ThreadId, _demoLanguage == "de", DemoNow));
             return;
         }
 
@@ -1279,7 +1279,13 @@ public partial class MainWindow : Window
                 JsonOptions) ?? Array.Empty<SmsMessagePayload>();
             if (ReferenceEquals(SmsThreadsList.SelectedItem, thread))
             {
-                SmsMessagesList.ItemsSource = messages;
+                var shown = SmsMessageViewModel.From(messages.OrderBy(message => message.SentAt));
+                SmsMessagesList.ItemsSource = shown;
+                if (shown.Count > 0)
+                {
+                    // Open at the newest message, like a messaging app.
+                    SmsMessagesList.ScrollIntoView(shown[^1]);
+                }
             }
         }
         catch (Exception ex)
@@ -2064,13 +2070,33 @@ public partial class MainWindow : Window
             }
         }
 
+        selectedDeviceId = _userPickedDeviceId ?? selectedDeviceId;
+        _userPickedDeviceId = null;
         var target = _devices.FirstOrDefault(device => string.Equals(device.DeviceId, selectedDeviceId, StringComparison.Ordinal))
             ?? _devices.FirstOrDefault();
         if (!ReferenceEquals(DevicesList.SelectedItem, target))
         {
-            DevicesList.SelectedItem = target;
+            _settingDeviceSelection = true;
+            try
+            {
+                DevicesList.SelectedItem = target;
+            }
+            finally
+            {
+                _settingDeviceSelection = false;
+            }
+        }
+
+        // A phone that dropped off mid-call never says the call ended: don't leave its card on screen.
+        if (_activeCallOverlay is not null && devices.All(device => device.DeviceId != _activeCallOverlay.DeviceId || !device.Connected))
+        {
+            _activeCallOverlay.Close();
+            _activeCallOverlay = null;
         }
     }
+
+    private bool _settingDeviceSelection;
+    private string? _userPickedDeviceId;
 
     private static string FormatTrustStoreStatus(DeviceRegistryPersistenceStatus? status)
     {
@@ -2080,17 +2106,17 @@ public partial class MainWindow : Window
         }
 
         var source = status.LoadedFromBackup ? L.T("backup_restored") : L.T("primary_file");
-        var health = status.Healthy ? "healthy" : L.T("needs_attention");
+        var health = status.Healthy ? L.T("healthy") : L.T("needs_attention");
         var message = L.F("trusted_device_s", status.PersistedDeviceCount, health, source);
 
         if (!string.IsNullOrWhiteSpace(status.LastLoadError))
         {
-            message += $" Load: {status.LastLoadError}";
+            message += $" {L.T("load_error")}: {status.LastLoadError}";
         }
 
         if (!string.IsNullOrWhiteSpace(status.LastSaveError))
         {
-            message += $" Save: {status.LastSaveError}";
+            message += $" {L.T("save_error")}: {status.LastSaveError}";
         }
 
         return message;
@@ -2103,7 +2129,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        var previousFilter = NotificationAppFilter.SelectedItem as string ?? "All apps";
+        var previousFilter = NotificationAppFilter.SelectedItem as string ?? L.T("all_apps");
         if (updateAppFilter)
         {
             var appNames = _allNotifications
@@ -2265,16 +2291,13 @@ public partial class MainWindow : Window
     {
         if (_allStorageItems == null) return;
         var query = StorageSearchBox?.Text;
-        if (string.IsNullOrWhiteSpace(query))
-        {
-            StorageItemsList.ItemsSource = _allStorageItems;
-        }
-        else
-        {
-            StorageItemsList.ItemsSource = _allStorageItems
-                .Where(item => item.Name.Contains(query, StringComparison.OrdinalIgnoreCase))
-                .ToArray();
-        }
+        var shown = string.IsNullOrWhiteSpace(query)
+            ? _allStorageItems
+            : _allStorageItems.Where(item => item.Name.Contains(query, StringComparison.OrdinalIgnoreCase)).ToArray();
+        StorageItemsList.ItemsSource = shown;
+        StorageEmptyText.Text = L.T(_allStorageItems.Count == 0 ? "this_folder_is_empty" : "nothing_matches_search");
+        StorageEmptyText.Visibility = _storageLoaded && shown.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        StorageBackButton.IsEnabled = _storagePathHistory.Count > 0;
     }
 
     /// <summary>A phone storage error as a sentence: the phone's JSON error unwrapped, access problems explained.</summary>
@@ -2328,10 +2351,10 @@ public partial class MainWindow : Window
             {
                 _currentStoragePath = result.CurrentPath ?? "/";
                 _allStorageItems = result.Items.Select(item => new StorageItemViewModel(item)).ToArray();
+                _storageLoaded = true;
                 FilterStorageItems();
                 UpdateBreadcrumbs(_currentStoragePath);
                 StorageStatusText.Text = _currentStoragePath == "/" ? L.T("files_phone_storage") : _currentStoragePath;
-                _storageLoaded = true;
             });
         }
         catch (Exception ex)
@@ -2454,7 +2477,7 @@ public partial class MainWindow : Window
             var saveDialog = new Microsoft.Win32.SaveFileDialog
             {
                 FileName = item.Name,
-                Filter = "All Files (*.*)|*.*"
+                Filter = $"{L.T("all_files")}|*.*"
             };
 
             if (saveDialog.ShowDialog() == true)
@@ -2592,17 +2615,6 @@ public partial class MainWindow : Window
                 return;
             }
         }
-    }
-
-    private static int BitrateForResolution(int maxWidth, int maxHeight)
-    {
-        var maxDimension = Math.Max(maxWidth, maxHeight);
-        if (maxDimension <= 0 || maxDimension >= 2560)
-        {
-            return 8000;
-        }
-
-        return maxDimension >= 1920 ? 5000 : 2500;
     }
 }
 
@@ -2769,10 +2781,7 @@ public class NotificationViewModel : System.ComponentModel.INotifyPropertyChange
     {
         get
         {
-            var date = PostedAt.LocalDateTime.Date;
-            if (date == DateTime.Today) return L.T("today");
-            if (date == DateTime.Today.AddDays(-1)) return L.T("yesterday");
-            return date.ToString("dddd, MMMM d");
+            return FriendlyDates.Day(PostedAt.LocalDateTime);
         }
     }
 
@@ -2793,9 +2802,22 @@ public class NotificationViewModel : System.ComponentModel.INotifyPropertyChange
     public bool HasLargeIcon => !string.IsNullOrWhiteSpace(LargeIconBase64);
     public bool HasPicture => !string.IsNullOrWhiteSpace(PictureBase64);
 
-    public System.Windows.Media.ImageSource? AppIcon => Base64ToImage(AppIconBase64);
-    public System.Windows.Media.ImageSource? LargeIcon => Base64ToImage(LargeIconBase64);
-    public System.Windows.Media.ImageSource? Picture => Base64ToImage(PictureBase64);
+    // Decoded once per picture: the list recycles its rows and reads these on every scroll step.
+    private (string? Source, System.Windows.Media.ImageSource? Image) _appIcon, _largeIcon, _picture;
+
+    public System.Windows.Media.ImageSource? AppIcon => Decoded(ref _appIcon, AppIconBase64);
+    public System.Windows.Media.ImageSource? LargeIcon => Decoded(ref _largeIcon, LargeIconBase64);
+    public System.Windows.Media.ImageSource? Picture => Decoded(ref _picture, PictureBase64);
+
+    private static System.Windows.Media.ImageSource? Decoded(ref (string? Source, System.Windows.Media.ImageSource? Image) cache, string? base64)
+    {
+        if (!ReferenceEquals(cache.Source, base64))
+        {
+            cache = (base64, Base64ToImage(base64));
+        }
+
+        return cache.Image;
+    }
 
     private static System.Windows.Media.ImageSource? Base64ToImage(string? base64)
     {
@@ -2849,6 +2871,7 @@ internal sealed class SmsThreadViewModel : INotifyPropertyChanged
     public string Address => Payload.Address;
     public string Snippet => Payload.Snippet;
     public DateTimeOffset UpdatedAt => Payload.UpdatedAt;
+    public string TimeText => FriendlyDates.Short(Payload.UpdatedAt);
     public int UnreadCount => Payload.UnreadCount;
     public bool HasUnread => UnreadCount > 0;
 

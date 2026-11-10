@@ -60,6 +60,9 @@ public partial class CallOverlayWindow : Window
         CallerNumberText.Visibility = string.IsNullOrWhiteSpace(CallerNumberText.Text) ? Visibility.Collapsed : Visibility.Visible;
     }
 
+    /// <summary>Hides the card on the PC only; the call on the phone is not touched.</summary>
+    private void Dismiss_Click(object sender, RoutedEventArgs e) => Close();
+
     private async void Action_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not System.Windows.Controls.Button { Tag: string action } button)

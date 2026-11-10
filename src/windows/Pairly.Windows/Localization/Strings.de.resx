@@ -599,4 +599,10 @@
   <data name="showing_n_of_m" xml:space="preserve"><value>{0} von {1} angezeigt</value></data>
   <data name="n_conversations" xml:space="preserve"><value>{0} Unterhaltungen</value></data>
   <data name="no_photos_from_phone_yet" xml:space="preserve"><value>Von diesem Smartphone sind noch keine Fotos da.</value></data>
+  <data name="this_folder_is_empty" xml:space="preserve"><value>Dieser Ordner ist leer.</value></data>
+  <data name="nothing_matches_search" xml:space="preserve"><value>Hier passt nichts zu deiner Suche.</value></data>
+  <data name="reconnects" xml:space="preserve"><value>Neuverbindungen</value></data>
+  <data name="healthy" xml:space="preserve"><value>in Ordnung</value></data>
+  <data name="load_error" xml:space="preserve"><value>Ladefehler</value></data>
+  <data name="save_error" xml:space="preserve"><value>Speicherfehler</value></data>
 </root>
