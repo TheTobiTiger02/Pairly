@@ -579,4 +579,14 @@
   <data name="home_latest" xml:space="preserve"><value>Neu von deinem Handy</value></data>
   <data name="home_see_all" xml:space="preserve"><value>Alle ansehen</value></data>
   <data name="home_latest_empty" xml:space="preserve"><value>Noch nichts Neues. Benachrichtigungen von deinem Handy erscheinen hier.</value></data>
+  <data name="n_photos" xml:space="preserve"><value>{0} Fotos</value></data>
+  <data name="photo_n_of" xml:space="preserve"><value>{0} von {1}</value></data>
+  <data name="open_in_default_app" xml:space="preserve"><value>In Standard-App öffnen</value></data>
+  <data name="photo_preview_failed" xml:space="preserve"><value>Dieses Foto kann hier nicht angezeigt werden. Öffne es in deiner Standard-App oder speichere es auf dem PC.</value></data>
+  <data name="photo_not_loaded" xml:space="preserve"><value>{0} konnte nicht vom Smartphone geladen werden. Prüfe, ob das Smartphone verbunden ist.</value></data>
+  <data name="saving_photo_n_of" xml:space="preserve"><value>Speichere Foto {0} von {1} …</value></data>
+  <data name="photos_not_saved" xml:space="preserve"><value>Nicht gespeichert: {0}</value></data>
+  <data name="image_files" xml:space="preserve"><value>Bilddateien</value></data>
+  <data name="all_files" xml:space="preserve"><value>Alle Dateien</value></data>
+  <data name="next" xml:space="preserve"><value>Weiter</value></data>
 </root>

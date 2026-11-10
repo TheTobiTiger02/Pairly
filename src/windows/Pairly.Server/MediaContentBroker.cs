@@ -55,6 +55,18 @@ public sealed class MediaContentBroker
         }
     }
 
+    /// <summary>The phone disconnected: stop waiting for its answers so callers fail at once, not after the timeout.</summary>
+    public void CancelDevice(string deviceId)
+    {
+        foreach (var pending in _pending.Values)
+        {
+            if (string.Equals(pending.DeviceId, deviceId, StringComparison.Ordinal))
+            {
+                pending.Source.TrySetCanceled();
+            }
+        }
+    }
+
     public MediaContentBrokerOperationResult AcceptResponse(
         string sourceDeviceId,
         MediaContentResponsePayload response)

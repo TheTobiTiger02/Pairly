@@ -579,4 +579,14 @@
   <data name="home_latest" xml:space="preserve"><value>Latest from your phone</value></data>
   <data name="home_see_all" xml:space="preserve"><value>See all</value></data>
   <data name="home_latest_empty" xml:space="preserve"><value>Nothing new yet. Notifications from your phone show up here.</value></data>
+  <data name="n_photos" xml:space="preserve"><value>{0} photos</value></data>
+  <data name="photo_n_of" xml:space="preserve"><value>{0} of {1}</value></data>
+  <data name="open_in_default_app" xml:space="preserve"><value>Open in default app</value></data>
+  <data name="photo_preview_failed" xml:space="preserve"><value>This photo can’t be shown here. Open it in your default app or save it to your PC.</value></data>
+  <data name="photo_not_loaded" xml:space="preserve"><value>{0} could not be loaded from the phone. Check that the phone is connected.</value></data>
+  <data name="saving_photo_n_of" xml:space="preserve"><value>Saving photo {0} of {1}…</value></data>
+  <data name="photos_not_saved" xml:space="preserve"><value>Not saved: {0}</value></data>
+  <data name="image_files" xml:space="preserve"><value>Image files</value></data>
+  <data name="all_files" xml:space="preserve"><value>All files</value></data>
+  <data name="next" xml:space="preserve"><value>Next</value></data>
 </root>

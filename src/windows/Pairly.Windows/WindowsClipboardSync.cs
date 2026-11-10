@@ -27,7 +27,7 @@ internal sealed class WindowsClipboardSync(Dispatcher dispatcher, HttpClient? ho
     // The window is short so a deliberate re-copy still reaches a phone whose own copies this app could not see.
     private static readonly TimeSpan EchoWindow = TimeSpan.FromSeconds(30);
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
-    private readonly HttpClient _host = host ?? new() { BaseAddress = new Uri("http://localhost:7816/") };
+    private readonly HttpClient _host = host ?? new() { BaseAddress = new Uri("http://127.0.0.1:7816/") };
     private readonly ClipboardOrdering _ordering = new();
     private (string Fingerprint, DateTimeOffset At)? _lastContent;
     private readonly CancellationTokenSource _stop = new();

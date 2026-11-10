@@ -35,12 +35,12 @@ public partial class MainWindow : Window
 
     private readonly HttpClient _host = new()
     {
-        BaseAddress = new Uri("http://localhost:7816/")
+        BaseAddress = new Uri("http://127.0.0.1:7816/")
     };
     private readonly PairlyServer _embeddedServer = new();
     private readonly DispatcherTimer _refreshTimer;
     private readonly ObservableCollection<DeviceViewModel> _devices = new();
-    private readonly ObservableCollection<MediaItemViewModel> _photos = new();
+    private readonly Controls.BulkObservableCollection<MediaItemViewModel> _photos = new();
     private readonly ObservableCollection<NotificationViewModel> _notifications = new();
     private readonly ObservableCollection<DiagnosticsEventViewModel> _diagnosticsEvents = new();
     private readonly ObservableCollection<string> _notificationApps = new();
@@ -50,7 +50,6 @@ public partial class MainWindow : Window
     private ListCollectionView? _notificationsView;
     private ListCollectionView? _smsThreadsView;
     private MediaItemViewModel[] _allPhotos = Array.Empty<MediaItemViewModel>();
-    private CancellationTokenSource? _photoPrefetchCts;
     private NotificationViewModel[] _allNotifications = Array.Empty<NotificationViewModel>();
     private readonly HashSet<string> _mutedNotificationPackages = new(StringComparer.Ordinal);
     private readonly DesktopPreferences _preferences = App.Preferences;
@@ -119,9 +118,10 @@ public partial class MainWindow : Window
         };
         _refreshTimer.Tick += async (_, _) => await RefreshFromHostAsync(showErrors: false);
         DevicesList.ItemsSource = _devices;
-        // Flat, like Phone Link: grouping would stop the tile grid from virtualizing.
+        // Month headings are items of their own, so the tile grid still virtualizes.
         _photosView = new ListCollectionView(_photos);
         PhotosList.ItemsSource = _photosView;
+        ApplyPhotoFilters();
         _notificationsView = new ListCollectionView(_notifications);
         _notifications.CollectionChanged += (_, _) => UpdateHomeLatest();
         _notificationsView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(NotificationViewModel.DateGroup)));
@@ -178,8 +178,6 @@ public partial class MainWindow : Window
 
             _refreshTimer.Stop();
             App.ClipboardSync.StatusChanged -= UpdateClipboardStatus;
-            _photoPrefetchCts?.Cancel();
-            _photoPrefetchCts?.Dispose();
             _cts.Cancel();
             _eventSocket?.Dispose();
             _notifyIcon?.Dispose();
@@ -735,7 +733,7 @@ public partial class MainWindow : Window
                 _eventSocket = socket;
                 _realtimeDeviceId = string.Empty;
 
-                await socket.ConnectAsync(new Uri("ws://localhost:7816/ws/v1/session?role=pc-app"), cancellationToken);
+                await socket.ConnectAsync(new Uri("ws://127.0.0.1:7816/ws/v1/session?role=pc-app"), cancellationToken);
 
                 attempt = 0;
                 Interlocked.Exchange(ref _realtimeLastPongTicks, DateTimeOffset.UtcNow.UtcTicks);
@@ -1759,217 +1757,6 @@ public partial class MainWindow : Window
     private void HideMutedNotificationsCheck_Changed(object sender, RoutedEventArgs e) =>
         ApplyNotificationFilters(updateAppFilter: false);
 
-    private void PhotoSearchBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        ApplyPhotoFilters();
-    }
-
-    private void PhotoSortCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        ApplyPhotoFilters();
-    }
-
-    private void PhotoAlbumFilter_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        ApplyPhotoFilters();
-    }
-
-    private void PhotoTileSizeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (_photoGridPanel is not null)
-        {
-            _photoGridPanel.ItemSize = CurrentPhotoTileSize();
-        }
-    }
-
-    private async Task OpenSelectedPhotoAsync(MediaItemViewModel photo)
-    {
-        var device = GetSelectedDevice();
-        if (device is null)
-        {
-            PhotosStatusText.Text = L.T("select_a_connected_phone_first");
-            return;
-        }
-
-        try
-        {
-            PhotosStatusText.Text = L.F("downloading_item", photo.FileName);
-            using var response = await _host.GetAsync(
-                $"v1/media/{Uri.EscapeDataString(device.DeviceId)}/{Uri.EscapeDataString(photo.MediaId)}/content");
-            if (!response.IsSuccessStatusCode)
-            {
-                PhotosStatusText.Text = L.F("photo_download_failed", response.StatusCode, await response.Content.ReadAsStringAsync());
-                return;
-            }
-
-            var pictures = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
-            var directory = Path.Combine(pictures, "Pairly");
-            Directory.CreateDirectory(directory);
-
-            var safeFileName = SanitizeFileName(photo.FileName);
-            var targetPath = Path.Combine(directory, safeFileName);
-            if (File.Exists(targetPath))
-            {
-                targetPath = Path.Combine(
-                    directory,
-                    $"{Path.GetFileNameWithoutExtension(safeFileName)}-{DateTime.Now:yyyyMMdd-HHmmss}{Path.GetExtension(safeFileName)}");
-            }
-
-            await using (var file = File.Create(targetPath))
-            {
-                await response.Content.CopyToAsync(file);
-            }
-
-            Process.Start(new ProcessStartInfo(targetPath)
-            {
-                UseShellExecute = true
-            });
-            PhotosStatusText.Text = L.F("opened_item", System.IO.Path.GetFileName(targetPath));
-        }
-        catch (Exception ex)
-        {
-            PhotosStatusText.Text = UserFacingError(L.T("the_photo_could_not_be_opened_check_the_phon"), ex);
-        }
-    }
-
-    private async void OpenSelectedPhoto_Click(object sender, RoutedEventArgs e)
-    {
-        if (PhotosList.SelectedItem is MediaItemViewModel photo)
-        {
-            await OpenSelectedPhotoAsync(photo);
-        }
-        else
-        {
-            PhotosStatusText.Text = L.T("select_a_photo_first");
-        }
-    }
-
-    private void PhotosList_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (PhotoSelectionText is not null)
-        {
-            var count = PhotosList.SelectedItems.Count;
-            PhotoSelectionText.Text = L.F("n_selected", count);
-            SavePhotosButton.IsEnabled = count > 0;
-            OpenPhotoButton.IsEnabled = count == 1;
-        }
-    }
-
-    private async void SaveSelectedPhotos_Click(object sender, RoutedEventArgs e)
-    {
-        var selectedPhotos = PhotosList.SelectedItems.Cast<MediaItemViewModel>().ToArray();
-        var device = GetSelectedDevice();
-        if (device is null || selectedPhotos.Length == 0)
-        {
-            PhotosStatusText.Text = L.T("select_one_or_more_photos_first");
-            return;
-        }
-
-        using var folderDialog = new System.Windows.Forms.FolderBrowserDialog
-        {
-            Description = L.T("save_selected_pairly_photos"),
-            UseDescriptionForTitle = true,
-            ShowNewFolderButton = true
-        };
-        if (folderDialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
-        {
-            return;
-        }
-
-        var saved = 0;
-        foreach (var photo in selectedPhotos)
-        {
-            try
-            {
-                using var response = await _host.GetAsync(
-                    $"v1/media/{Uri.EscapeDataString(device.DeviceId)}/{Uri.EscapeDataString(photo.MediaId)}/content");
-                if (!response.IsSuccessStatusCode)
-                {
-                    continue;
-                }
-
-                var fileName = SanitizeFileName(photo.FileName);
-                var targetPath = Path.Combine(folderDialog.SelectedPath, fileName);
-                if (File.Exists(targetPath))
-                {
-                    targetPath = Path.Combine(
-                        folderDialog.SelectedPath,
-                        $"{Path.GetFileNameWithoutExtension(fileName)}-{photo.MediaId[..Math.Min(8, photo.MediaId.Length)]}{Path.GetExtension(fileName)}");
-                }
-
-                await using var target = File.Create(targetPath);
-                await response.Content.CopyToAsync(target);
-                saved++;
-            }
-            catch
-            {
-                // Continue saving the remaining selection and report the honest aggregate below.
-            }
-        }
-
-        PhotosStatusText.Text = L.F("saved_of_selected_photo_s_to", saved, selectedPhotos.Length, folderDialog.SelectedPath);
-    }
-
-    private async void PhotosList_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
-    {
-        if (PhotosList.SelectedItem is MediaItemViewModel photo)
-        {
-            await OpenSelectedPhotoAsync(photo);
-        }
-    }
-
-    private async void OpenPhotoInline_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is FrameworkElement fe && fe.DataContext is MediaItemViewModel photo)
-        {
-            await OpenSelectedPhotoAsync(photo);
-        }
-    }
-
-    private async void SavePhotoInline_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is FrameworkElement fe && fe.DataContext is MediaItemViewModel photo)
-        {
-            var device = GetSelectedDevice();
-            if (device is null)
-            {
-                PhotosStatusText.Text = L.T("select_a_connected_phone_first");
-                return;
-            }
-
-            try
-            {
-                var saveDialog = new Microsoft.Win32.SaveFileDialog
-                {
-                    FileName = photo.FileName,
-                    Filter = "Image Files (*.jpg;*.jpeg;*.png;*.webp)|*.jpg;*.jpeg;*.png;*.webp|All Files (*.*)|*.*"
-                };
-
-                if (saveDialog.ShowDialog() == true)
-                {
-                    PhotosStatusText.Text = L.F("downloading_item", photo.FileName);
-                    using var response = await _host.GetAsync(
-                        $"v1/media/{Uri.EscapeDataString(device.DeviceId)}/{Uri.EscapeDataString(photo.MediaId)}/content");
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        PhotosStatusText.Text = L.F("photo_download_failed", response.StatusCode, await response.Content.ReadAsStringAsync());
-                        return;
-                    }
-
-                    await using (var file = File.Create(saveDialog.FileName))
-                    {
-                        await response.Content.CopyToAsync(file);
-                    }
-                    PhotosStatusText.Text = L.F("saved_to", Path.GetFileName(saveDialog.FileName));
-                }
-            }
-            catch (Exception ex)
-            {
-                PhotosStatusText.Text = UserFacingError(L.T("the_selected_photo_could_not_be_saved_try_ag"), ex);
-            }
-        }
-    }
-
     private readonly HashSet<string> _notifiedLowBatteryDevices = new(StringComparer.Ordinal);
 
     private async Task RefreshFromHostAsync(bool showErrors)
@@ -2046,29 +1833,7 @@ public partial class MainWindow : Window
 
             if (selectedDevice is not null)
             {
-                var media = await _host.GetFromJsonAsync<MediaIndexPagePayload>(
-                    $"v1/media/{Uri.EscapeDataString(selectedDevice.DeviceId)}",
-                    JsonOptions);
-                var photos = media?.Items
-                    .Select(item => new MediaItemViewModel(
-                        selectedDevice.DeviceId,
-                        item.MediaId,
-                        item.FileName,
-                        $"{item.Width}x{item.Height}  {item.ByteCount:n0} bytes",
-                        $"http://localhost:7816/v1/media/{Uri.EscapeDataString(selectedDevice.DeviceId)}/{Uri.EscapeDataString(item.MediaId)}/thumb",
-                        item.TakenAt,
-                        item.ByteCount,
-                        item.AlbumName))
-                    .ToArray() ?? Array.Empty<MediaItemViewModel>();
-                ReconcilePhotos(photos);
-                ApplyPhotoFilters();
-                StartPhotoThumbnailPrefetch(_photosView?.Cast<MediaItemViewModel>().Take(24).ToArray() ?? Array.Empty<MediaItemViewModel>());
-                var photosPermission = PermissionText(selectedDevice, "photos");
-                PhotosStatusText.Text = !PermissionGranted(selectedDevice, "photos")
-                    ? L.F("photos_permission_open_the_android_app_and_g", photosPermission)
-                    : photos.Length == 0
-                        ? L.T("photos_permission_granted_no_photo_metadata")
-                        : L.F("photos_permission_granted_showing_of_photo_s", PhotosList.Items.Count, photos.Length);
+                ReconcilePhotos(await FetchPhotosAsync(selectedDevice.DeviceId));
                 MirrorStatusText.Text = selectedDevice.Connected
                     ? L.F("connected_mirror_permission", selectedDevice.DisplayName, PermissionText(selectedDevice, "mirroring"))
                     : L.F("is_paired_but_offline", selectedDevice.DisplayName);
@@ -2086,8 +1851,6 @@ public partial class MainWindow : Window
             else
             {
                 ReconcilePhotos(Array.Empty<MediaItemViewModel>());
-                ApplyPhotoFilters();
-                PhotosStatusText.Text = L.T("select_a_paired_device_to_browse_photos");
                 MirrorStatusText.Text = L.T("no_active_mirror_session");
             }
 
@@ -2125,9 +1888,10 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
+            AppLog.Write("Refreshing from the local service failed.", ex);
             if (showErrors)
             {
-                StatusText.Text = UserFacingError(L.T("pairly_is_reconnecting_to_its_local_service"), ex);
+                StatusText.Text = L.T("pairly_is_reconnecting_to_its_local_service");
             }
         }
         finally
@@ -2251,85 +2015,6 @@ public partial class MainWindow : Window
         NotificationsEmptyState.Visibility = _notificationsView.IsEmpty ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private void ApplyPhotoFilters()
-    {
-        var albumFilter = PhotoAlbumFilter;
-        if (PhotosList is null || albumFilter is null || _photosView is null)
-        {
-            return;
-        }
-
-        var search = PhotoSearchBox?.Text?.Trim() ?? string.Empty;
-        var sort = (PhotoSortCombo?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "newest";
-        var previousAlbum = albumFilter.SelectedItem as string ?? L.T("all_albums");
-        var albumItems = new[] { L.T("all_albums") }
-            .Concat(_photos
-                .Select(photo => photo.AlbumName)
-                .Where(album => !string.IsNullOrWhiteSpace(album))
-                .Select(album => album!)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(album => album, StringComparer.OrdinalIgnoreCase))
-            .ToArray();
-        ReconcileOrderedCollection(_photoAlbums, albumItems, item => item);
-        albumFilter.SelectedItem = albumItems.Contains(previousAlbum, StringComparer.OrdinalIgnoreCase)
-            ? previousAlbum
-            : L.T("all_albums");
-        var selectedAlbum = albumFilter.SelectedItem as string ?? L.T("all_albums");
-        _photosView.Filter = item => item is MediaItemViewModel photo
-            && (string.IsNullOrWhiteSpace(search)
-                || photo.FileName.Contains(search, StringComparison.OrdinalIgnoreCase)
-                || photo.Details.Contains(search, StringComparison.OrdinalIgnoreCase))
-            && (string.Equals(selectedAlbum, L.T("all_albums"), StringComparison.OrdinalIgnoreCase)
-                || string.Equals(photo.AlbumName, selectedAlbum, StringComparison.OrdinalIgnoreCase));
-        _photosView.CustomSort = Comparer<MediaItemViewModel>.Create((left, right) => sort switch
-        {
-            "oldest" => left.TakenAt.CompareTo(right.TakenAt),
-            "largest" => right.ByteCount.CompareTo(left.ByteCount),
-            "name" => StringComparer.OrdinalIgnoreCase.Compare(left.FileName, right.FileName),
-            _ => right.TakenAt.CompareTo(left.TakenAt)
-        });
-        _photosView.Refresh();
-
-        var visibleCount = _photosView.Cast<MediaItemViewModel>().Count();
-        if (_allPhotos.Length > 0)
-        {
-            PhotosStatusText.Text = L.F("showing_of_photo_s", visibleCount, _allPhotos.Length);
-        }
-        if (PhotosEmptyState is not null)
-        {
-            var empty = _photosView.IsEmpty;
-            PhotosEmptyState.Visibility = empty ? Visibility.Visible : Visibility.Collapsed;
-            PhotosEmptyBody.Text = L.T(_photos.Count == 0 ? "photos_empty_body" : "photos_empty_filtered");
-        }
-    }
-
-    private void ReconcilePhotos(IReadOnlyList<MediaItemViewModel> latest)
-    {
-        var latestIds = latest.Select(photo => photo.MediaId).ToHashSet(StringComparer.Ordinal);
-        for (var index = _photos.Count - 1; index >= 0; index--)
-        {
-            if (!latestIds.Contains(_photos[index].MediaId))
-            {
-                _photos.RemoveAt(index);
-            }
-        }
-
-        var existingById = _photos.ToDictionary(photo => photo.MediaId, StringComparer.Ordinal);
-        foreach (var incoming in latest)
-        {
-            if (existingById.TryGetValue(incoming.MediaId, out var existing))
-            {
-                existing.Update(incoming);
-            }
-            else
-            {
-                _photos.Add(incoming);
-            }
-        }
-
-        _allPhotos = _photos.ToArray();
-    }
-
     private void ReconcileNotifications(IReadOnlyList<NotificationPayload> latest)
     {
         var latestIds = latest.Select(notification => notification.NotificationId).ToHashSet(StringComparer.Ordinal);
@@ -2409,43 +2094,6 @@ public partial class MainWindow : Window
     {
         var tag = (PhotoTileSizeCombo?.SelectedItem as ComboBoxItem)?.Tag?.ToString();
         return double.TryParse(tag, out var size) ? size : 176;
-    }
-
-    private void StartPhotoThumbnailPrefetch(IReadOnlyList<MediaItemViewModel> photos)
-    {
-        if (App.DemoMode) return;
-        _photoPrefetchCts?.Cancel();
-        _photoPrefetchCts?.Dispose();
-        _photoPrefetchCts = new CancellationTokenSource();
-        var token = _photoPrefetchCts.Token;
-        _ = Task.Run(async () =>
-        {
-            using var gate = new SemaphoreSlim(4);
-            var tasks = photos.Select(async photo =>
-            {
-                await gate.WaitAsync(token);
-                try
-                {
-                    using var request = new HttpRequestMessage(HttpMethod.Get, photo.ThumbUrl);
-                    using var response = await _host.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, token);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        await response.Content.LoadIntoBufferAsync(token);
-                    }
-                }
-                catch (OperationCanceledException)
-                {
-                }
-                catch
-                {
-                }
-                finally
-                {
-                    gate.Release();
-                }
-            }).ToArray();
-            await Task.WhenAll(tasks);
-        }, token);
     }
 
     private string _currentStoragePath = "/";
@@ -2762,7 +2410,7 @@ public partial class MainWindow : Window
 
     private static string UserFacingError(string message, Exception exception)
     {
-        Debug.WriteLine($"{message} {exception}");
+        AppLog.Write(message, exception);
         return message;
     }
 
@@ -2843,141 +2491,6 @@ internal sealed record PairingTicketResponse(
     int ProtocolVersion,
     int WssPort,
     string CertificateFingerprint);
-
-internal sealed class MediaItemViewModel : INotifyPropertyChanged
-{
-    private string _fileName;
-    private string _details;
-    private string _thumbUrl;
-    private DateTimeOffset _takenAt;
-    private long _byteCount;
-    private string? _albumName;
-    private System.Windows.Media.ImageSource? _thumbnail;
-    private bool _thumbnailRequested;
-
-    private static readonly HttpClient ThumbnailClient = new() { Timeout = TimeSpan.FromSeconds(20) };
-
-    public MediaItemViewModel(
-        string deviceId,
-        string mediaId,
-        string fileName,
-        string details,
-        string thumbUrl,
-        DateTimeOffset takenAt,
-        long byteCount,
-        string? albumName = null)
-    {
-        DeviceId = deviceId;
-        MediaId = mediaId;
-        _fileName = fileName;
-        _details = details;
-        _thumbUrl = thumbUrl;
-        _takenAt = takenAt;
-        _byteCount = byteCount;
-        _albumName = albumName;
-    }
-
-    public string DeviceId { get; }
-    public string MediaId { get; }
-    public string FileName { get => _fileName; private set => SetField(ref _fileName, value, nameof(FileName)); }
-    public string Details { get => _details; private set => SetField(ref _details, value, nameof(Details)); }
-    public string ThumbUrl
-    {
-        get => _thumbUrl;
-        private set
-        {
-            if (SetField(ref _thumbUrl, value, nameof(ThumbUrl)))
-            {
-                _thumbnail = null;
-                _thumbnailRequested = false;
-                OnPropertyChanged(nameof(Thumbnail));
-            }
-        }
-    }
-
-    /// <summary>
-    /// The decoded thumbnail, fetched the first time a visible tile asks for it. Loading it here
-    /// instead of binding the URL keeps decode size small and only touches tiles on screen.
-    /// </summary>
-    /// <summary>Demo mode: a picture drawn in code instead of one loaded from the phone.</summary>
-    internal void SetPreview(System.Windows.Media.ImageSource image)
-    {
-        _thumbnail = image;
-        _thumbnailRequested = true;
-        OnPropertyChanged(nameof(Thumbnail));
-    }
-
-    public System.Windows.Media.ImageSource? Thumbnail
-    {
-        get
-        {
-            if (!_thumbnailRequested)
-            {
-                _thumbnailRequested = true;
-                _ = LoadThumbnailAsync(_thumbUrl);
-            }
-
-            return _thumbnail;
-        }
-    }
-
-    private async Task LoadThumbnailAsync(string url)
-    {
-        try
-        {
-            var bytes = await ThumbnailClient.GetByteArrayAsync(url);
-            var image = new System.Windows.Media.Imaging.BitmapImage();
-            using (var stream = new System.IO.MemoryStream(bytes))
-            {
-                image.BeginInit();
-                image.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
-                image.DecodePixelWidth = 320;
-                image.StreamSource = stream;
-                image.EndInit();
-            }
-
-            image.Freeze();
-            if (url == _thumbUrl)
-            {
-                _thumbnail = image;
-                OnPropertyChanged(nameof(Thumbnail));
-            }
-        }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or NotSupportedException or FormatException or InvalidOperationException or System.IO.IOException)
-        {
-            // Let the next time the tile is shown try again.
-            _thumbnailRequested = false;
-        }
-    }
-    public DateTimeOffset TakenAt { get => _takenAt; private set => SetField(ref _takenAt, value, nameof(TakenAt)); }
-    public long ByteCount { get => _byteCount; private set => SetField(ref _byteCount, value, nameof(ByteCount)); }
-    public string? AlbumName { get => _albumName; private set => SetField(ref _albumName, value, nameof(AlbumName)); }
-    public void Update(MediaItemViewModel incoming)
-    {
-        FileName = incoming.FileName;
-        Details = incoming.Details;
-        ThumbUrl = incoming.ThumbUrl;
-        TakenAt = incoming.TakenAt;
-        ByteCount = incoming.ByteCount;
-        AlbumName = incoming.AlbumName;
-    }
-
-    private bool SetField<T>(ref T field, T value, string propertyName)
-    {
-        if (EqualityComparer<T>.Default.Equals(field, value))
-        {
-            return false;
-        }
-
-        field = value;
-        OnPropertyChanged(propertyName);
-        return true;
-    }
-
-    public event PropertyChangedEventHandler? PropertyChanged;
-    private void OnPropertyChanged(string propertyName) =>
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-}
 
 public class NotificationViewModel : System.ComponentModel.INotifyPropertyChanged
 {

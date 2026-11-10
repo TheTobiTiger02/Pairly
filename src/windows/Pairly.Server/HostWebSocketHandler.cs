@@ -38,6 +38,7 @@ public sealed class HostWebSocketHandler(
 {
     private static readonly TimeSpan ChallengeLifetime = TimeSpan.FromMinutes(2);
     private const int MaxInboundMessageBytes = 12 * 1024 * 1024;
+    private const int MediaIndexPageSize = 200;
 
     private readonly ConcurrentDictionary<string, PendingClipboardTransfer> _pendingClipboardTransfers = new(StringComparer.Ordinal);
     private long _hostSequence;
@@ -108,6 +109,7 @@ public sealed class HostWebSocketHandler(
                 {
                     devices.MarkConnected(connection.SessionId, connected: false);
                     fileShares.CancelSession(connection.SessionId);
+                    mediaContent.CancelDevice(connection.SessionId);
                 }
             }
         }
@@ -190,8 +192,7 @@ public sealed class HostWebSocketHandler(
                     await HandleContentTransferCompleteAsync(envelope, connection, cancellationToken);
                     break;
                 case ProtocolMessageTypes.MediaIndexPage:
-                    media.UpsertPage(envelope.ReadPayload<MediaIndexPagePayload>()
-                        ?? throw new InvalidOperationException("Missing media page payload."));
+                    await HandleMediaIndexPageAsync(envelope, connection, cancellationToken);
                     break;
                 case ProtocolMessageTypes.MediaContentResponse:
                     if (!connection.IsPhysicalDevice)
@@ -857,6 +858,42 @@ public sealed class HostWebSocketHandler(
 
     private Task SendFileShareResultAsync(string sessionId, FileShareResultPayload result, CancellationToken cancellationToken) =>
         sessions.SendAsync(sessionId, ProtocolEnvelope.Create(ProtocolMessageTypes.FileShareResult, "pc-host", NextSequence(), result), cancellationToken);
+
+    /// <summary>
+    /// Stores a page of the phone's photo index and asks for the next one until the phone has
+    /// listed everything, so the PC can show the whole library and not only the newest page.
+    /// </summary>
+    private async Task HandleMediaIndexPageAsync(ProtocolEnvelope envelope, ConnectionSession connection, CancellationToken cancellationToken)
+    {
+        var page = envelope.ReadPayload<MediaIndexPagePayload>()
+            ?? throw new InvalidOperationException("Missing media page payload.");
+        media.UpsertPage(page);
+
+        var more = !page.SnapshotComplete && !string.IsNullOrWhiteSpace(page.Cursor) && !string.IsNullOrWhiteSpace(page.SnapshotId);
+        if (more && connection.IsPhysicalDevice && connection.SessionId is not null)
+        {
+            await sessions.SendAsync(
+                connection.SessionId,
+                ProtocolEnvelope.Create(
+                    ProtocolMessageTypes.MediaIndexRequest,
+                    "pc-host",
+                    NextSequence(),
+                    new MediaIndexRequestPayload(page.Cursor, MediaIndexPageSize, Array.Empty<string>(), page.Cursor, SnapshotId: page.SnapshotId)),
+                cancellationToken);
+        }
+
+        // Tell the PC app when there is something new to show: at the first page and at the end.
+        if (page.SnapshotStart || !more)
+        {
+            await RelayToPcAppsAsync(
+                ProtocolEnvelope.Create(
+                    ProtocolMessageTypes.MediaIndexPage,
+                    page.DeviceId,
+                    NextSequence(),
+                    new MediaIndexPagePayload(page.DeviceId, null, Array.Empty<MediaItemPayload>(), SnapshotId: page.SnapshotId, SnapshotComplete: !more)),
+                cancellationToken);
+        }
+    }
 
     /// <summary>Forwards a phone event as-is to the PC app's realtime sockets.</summary>
     private async Task RelayToPcAppsAsync(ProtocolEnvelope envelope, CancellationToken cancellationToken)

@@ -657,8 +657,8 @@
                                        TextWrapping="Wrap" TextAlignment="Center" Margin="0,4,0,0" />
                         </StackPanel>
                         <ListView x:Name="PhotosList" Grid.Row="2" Margin="-3,0,-12,0" SelectionMode="Extended"
-                                  ItemContainerStyle="{StaticResource TileListItem}"
                                   MouseDoubleClick="PhotosList_MouseDoubleClick" SelectionChanged="PhotosList_SelectionChanged"
+                                  KeyDown="PhotosList_KeyDown"
                                   VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Standard"
                                   ScrollViewer.CanContentScroll="True" AutomationProperties.Name="{l:Loc photos}">
                             <ListView.ItemsPanel>
@@ -666,48 +666,95 @@
                                     <controls:VirtualizingWrapPanel ItemSize="176" Loaded="PhotoGridPanel_Loaded" Margin="0,0,12,0" />
                                 </ItemsPanelTemplate>
                             </ListView.ItemsPanel>
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem" BasedOn="{StaticResource TileListItem}">
+                                    <Style.Triggers>
+                                        <!-- A month heading is a label, not something to select or tab to. -->
+                                        <DataTrigger Binding="{Binding IsSectionHeader}" Value="True">
+                                            <Setter Property="IsHitTestVisible" Value="False" />
+                                            <Setter Property="Focusable" Value="False" />
+                                            <Setter Property="IsEnabled" Value="False" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ListView.ItemContainerStyle>
                             <ListView.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid x:Name="Tile" ToolTip="{Binding FileName}">
-                                        <Grid.ContextMenu>
-                                            <ContextMenu>
-                                                <MenuItem Header="{l:Loc open}" Click="OpenPhotoInline_Click">
-                                                    <MenuItem.Icon><TextBlock Text="&#xE8A7;" /></MenuItem.Icon>
-                                                </MenuItem>
-                                                <MenuItem Header="{l:Loc save_to_pc}" Click="SavePhotoInline_Click">
-                                                    <MenuItem.Icon><TextBlock Text="&#xE74E;" /></MenuItem.Icon>
-                                                </MenuItem>
-                                            </ContextMenu>
-                                        </Grid.ContextMenu>
-                                        <Border CornerRadius="6" Background="{DynamicResource ControlFillBrush}" Margin="2">
-                                            <TextBlock Text="&#xEB9F;" Style="{StaticResource IconGlyph}" FontSize="22"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        </Border>
-                                        <!-- An image brush crops to the square tile from the centre and follows the rounded corners. -->
-                                        <Border CornerRadius="6" Margin="2">
-                                            <Border.Background>
-                                                <ImageBrush ImageSource="{Binding Thumbnail}" Stretch="UniformToFill" />
-                                            </Border.Background>
-                                        </Border>
-                                        <Border x:Name="Caption" CornerRadius="0,0,6,6" Margin="2" VerticalAlignment="Bottom" Padding="8,14,8,6"
-                                                Visibility="Hidden">
-                                            <Border.Background>
-                                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                                    <GradientStop Offset="0" Color="#00000000" />
-                                                    <GradientStop Offset="1" Color="#B0000000" />
-                                                </LinearGradientBrush>
-                                            </Border.Background>
-                                            <StackPanel>
-                                                <TextBlock Text="{Binding FileName}" Foreground="White" FontSize="12" FontWeight="SemiBold" />
-                                                <TextBlock Text="{Binding TakenAt.LocalDateTime, StringFormat={}{0:d MMM yyyy, HH:mm}}"
-                                                           Foreground="#D0FFFFFF" FontSize="11" />
-                                            </StackPanel>
-                                        </Border>
+                                    <Grid>
+                                        <TextBlock x:Name="Heading" Text="{Binding FileName}" FontSize="15" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Bottom" Margin="4,0,0,6"
+                                                   Visibility="Collapsed" />
+                                        <Grid x:Name="Tile" ToolTip="{Binding FileName}">
+                                            <Grid.ContextMenu>
+                                                <ContextMenu>
+                                                    <MenuItem Header="{l:Loc open}" Click="OpenPhotoInline_Click">
+                                                        <MenuItem.Icon><TextBlock Text="&#xE8A7;" /></MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <MenuItem Header="{l:Loc open_in_default_app}" Click="OpenPhotoExternallyInline_Click">
+                                                        <MenuItem.Icon><TextBlock Text="&#xE8AD;" /></MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <MenuItem Header="{l:Loc save_to_pc}" Click="SavePhotoInline_Click">
+                                                        <MenuItem.Icon><TextBlock Text="&#xE74E;" /></MenuItem.Icon>
+                                                    </MenuItem>
+                                                </ContextMenu>
+                                            </Grid.ContextMenu>
+                                            <!-- Shown while the thumbnail loads; pulses so it reads as loading, not as empty. -->
+                                            <Border x:Name="Placeholder" CornerRadius="6" Background="{DynamicResource ControlFillBrush}" Margin="2">
+                                                <TextBlock x:Name="PlaceholderGlyph" Text="&#xEB9F;" Style="{StaticResource IconGlyph}" FontSize="22"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            </Border>
+                                            <!-- An image brush crops to the square tile from the centre and follows the rounded corners. -->
+                                            <Border CornerRadius="6" Margin="2">
+                                                <Border.Background>
+                                                    <ImageBrush ImageSource="{Binding Thumbnail}" Stretch="UniformToFill" />
+                                                </Border.Background>
+                                            </Border>
+                                            <Border x:Name="Caption" CornerRadius="0,0,6,6" Margin="2" VerticalAlignment="Bottom" Padding="8,14,8,6"
+                                                    Visibility="Hidden">
+                                                <Border.Background>
+                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                        <GradientStop Offset="0" Color="#00000000" />
+                                                        <GradientStop Offset="1" Color="#B0000000" />
+                                                    </LinearGradientBrush>
+                                                </Border.Background>
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding FileName}" Foreground="White" FontSize="12" FontWeight="SemiBold"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Text="{Binding TakenAt.LocalDateTime, StringFormat={}{0:d MMM yyyy, HH:mm}}"
+                                                               Foreground="#D0FFFFFF" FontSize="11" />
+                                                </StackPanel>
+                                            </Border>
+                                        </Grid>
                                     </Grid>
                                     <DataTemplate.Triggers>
                                         <Trigger SourceName="Tile" Property="IsMouseOver" Value="True">
                                             <Setter TargetName="Caption" Property="Visibility" Value="Visible" />
                                         </Trigger>
+                                        <DataTrigger Binding="{Binding IsSectionHeader}" Value="True">
+                                            <Setter TargetName="Tile" Property="Visibility" Value="Collapsed" />
+                                            <Setter TargetName="Heading" Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding ThumbnailFailed}" Value="True">
+                                            <Setter TargetName="PlaceholderGlyph" Property="Text" Value="&#xE7BA;" />
+                                        </DataTrigger>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding Thumbnail}" Value="{x:Null}" />
+                                                <Condition Binding="{Binding ThumbnailFailed}" Value="False" />
+                                                <Condition Binding="{Binding IsSectionHeader}" Value="False" />
+                                            </MultiDataTrigger.Conditions>
+                                            <MultiDataTrigger.EnterActions>
+                                                <BeginStoryboard x:Name="Pulse">
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetName="Placeholder" Storyboard.TargetProperty="Opacity"
+                                                                         From="1" To="0.45" Duration="0:0:0.8" AutoReverse="True" RepeatBehavior="Forever" />
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </MultiDataTrigger.EnterActions>
+                                            <MultiDataTrigger.ExitActions>
+                                                <StopStoryboard BeginStoryboardName="Pulse" />
+                                            </MultiDataTrigger.ExitActions>
+                                        </MultiDataTrigger>
                                     </DataTemplate.Triggers>
                                 </DataTemplate>
                             </ListView.ItemTemplate>
@@ -2080,6 +2127,96 @@
                     </Border>
                 </Grid>
             </Border>
+        </Grid>
+
+        <!-- Photo viewer: the picture over the whole window, on a dark stage whatever the theme. -->
+        <Grid x:Name="PhotoViewerOverlay" Grid.RowSpan="2" Grid.ColumnSpan="3" Panel.ZIndex="18" Background="#F20E0E12"
+              Visibility="Collapsed" Focusable="True" FocusVisualStyle="{x:Null}" PreviewKeyDown="PhotoViewerOverlay_PreviewKeyDown"
+              KeyboardNavigation.TabNavigation="Cycle" AutomationProperties.Name="{l:Loc photos}">
+            <Grid.Resources>
+                <Style x:Key="ViewerButton" TargetType="Button">
+                    <Setter Property="Width" Value="40" />
+                    <Setter Property="Height" Value="40" />
+                    <Setter Property="Foreground" Value="White" />
+                    <Setter Property="Background" Value="Transparent" />
+                    <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
+                    <Setter Property="FontSize" Value="16" />
+                    <Setter Property="Cursor" Value="Hand" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="Chrome" Background="{TemplateBinding Background}" CornerRadius="20">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Chrome" Property="Background" Value="#33FFFFFF" />
+                                    </Trigger>
+                                    <Trigger Property="IsKeyboardFocused" Value="True">
+                                        <Setter TargetName="Chrome" Property="BorderBrush" Value="White" />
+                                        <Setter TargetName="Chrome" Property="BorderThickness" Value="2" />
+                                    </Trigger>
+                                    <Trigger Property="IsPressed" Value="True">
+                                        <Setter TargetName="Chrome" Property="Background" Value="#55FFFFFF" />
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Opacity" Value="0.3" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Grid.Resources>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid Margin="20,40,12,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock x:Name="PhotoViewerTitle" Foreground="White" FontSize="15" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                    <TextBlock x:Name="PhotoViewerDetails" Foreground="#B3FFFFFF" FontSize="12" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock x:Name="PhotoViewerCounter" Foreground="#B3FFFFFF" FontSize="12" VerticalAlignment="Center" Margin="0,0,12,0" />
+                    <Button Style="{StaticResource ViewerButton}" Content="&#xE74E;" Click="PhotoViewerSave_Click"
+                            ToolTip="{l:Loc save_to_pc}" AutomationProperties.Name="{l:Loc save_to_pc}" />
+                    <Button Style="{StaticResource ViewerButton}" Content="&#xE8AD;" Click="PhotoViewerOpenExternally_Click"
+                            ToolTip="{l:Loc open_in_default_app}" AutomationProperties.Name="{l:Loc open_in_default_app}" />
+                    <Button Style="{StaticResource ViewerButton}" Content="&#xE711;" Click="PhotoViewerClose_Click" Margin="8,0,0,0"
+                            ToolTip="{l:Loc close}" AutomationProperties.Name="{l:Loc close}" />
+                </StackPanel>
+            </Grid>
+            <!-- The stage: wheel and double-click zoom, drag pans, a click beside the photo closes. -->
+            <Grid x:Name="PhotoViewerStage" Grid.Row="1" Background="Transparent" ClipToBounds="True" Margin="0,0,0,20"
+                  MouseWheel="PhotoViewerStage_MouseWheel" MouseLeftButtonDown="PhotoViewerStage_MouseLeftButtonDown"
+                  MouseMove="PhotoViewerStage_MouseMove" MouseLeftButtonUp="PhotoViewerStage_MouseLeftButtonUp">
+                <Image x:Name="PhotoViewerImage" Stretch="Uniform" Margin="64,0" RenderTransformOrigin="0.5,0.5"
+                       RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Image.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform x:Name="PhotoViewerScale" />
+                            <TranslateTransform x:Name="PhotoViewerTranslate" />
+                        </TransformGroup>
+                    </Image.RenderTransform>
+                </Image>
+                <Button x:Name="PhotoViewerPrevious" Style="{StaticResource ViewerButton}" Content="&#xE76B;" Click="PhotoViewerPrevious_Click"
+                        HorizontalAlignment="Left" VerticalAlignment="Center" Margin="12,0,0,0"
+                        ToolTip="{l:Loc previous}" AutomationProperties.Name="{l:Loc previous}" />
+                <Button x:Name="PhotoViewerNext" Style="{StaticResource ViewerButton}" Content="&#xE76C;" Click="PhotoViewerNext_Click"
+                        HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0"
+                        ToolTip="{l:Loc next}" AutomationProperties.Name="{l:Loc next}" />
+                <ProgressBar x:Name="PhotoViewerProgress" IsIndeterminate="True" Height="3" Width="220" VerticalAlignment="Bottom"
+                             HorizontalAlignment="Center" Margin="0,0,0,6" Visibility="Collapsed" />
+                <Border x:Name="PhotoViewerError" Background="#CC000000" CornerRadius="8" Padding="14,10" VerticalAlignment="Bottom"
+                        HorizontalAlignment="Center" Margin="0,0,0,16" Visibility="Collapsed" MaxWidth="460">
+                    <TextBlock Text="{l:Loc photo_preview_failed}" Foreground="White" FontSize="13" TextWrapping="Wrap" TextAlignment="Center" />
+                </Border>
+            </Grid>
         </Grid>
 
         <!-- What's new, once after an update. -->
