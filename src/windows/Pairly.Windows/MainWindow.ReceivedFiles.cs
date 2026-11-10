@@ -21,6 +21,7 @@ public partial class MainWindow
         ReceivedFilesCard.Visibility = Visibility.Visible;
         _lastReceivedFolder = Path.GetDirectoryName(received.FilePath);
 
+        _balloonClick = () => { if (_lastReceivedFolder is not null) StartShell(_lastReceivedFolder); };
         _notifyIcon?.ShowBalloonTip(
             4000,
             L.T("file_received"),
@@ -42,11 +43,6 @@ public partial class MainWindow
             // Opens Explorer with the file selected rather than running whatever was shared.
             StartShell("explorer.exe", $"/select,\"{path}\"");
         }
-    }
-
-    private void ReceivedBalloon_Clicked(object? sender, EventArgs e)
-    {
-        if (_lastReceivedFolder is not null) StartShell(_lastReceivedFolder);
     }
 
     private static void StartShell(string target, string? arguments = null)

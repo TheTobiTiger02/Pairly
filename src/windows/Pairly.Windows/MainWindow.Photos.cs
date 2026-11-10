@@ -291,9 +291,9 @@ public partial class MainWindow
         PhotosStatusText.Text = device is null
             ? L.T("select_a_paired_device_to_browse_photos")
             : !PermissionGranted(device, "photos")
-                ? L.F("photos_permission_open_the_android_app_and_g", PermissionText(device, "photos"))
+                ? FeatureOffText("photos")
                 : _allPhotos.Length == 0
-                    ? L.T("photos_permission_granted_no_photo_metadata")
+                    ? L.T("no_photos_from_phone_yet")
                     : shown == _allPhotos.Length
                         ? L.F("n_photos", _allPhotos.Length)
                         : L.F("showing_of_photo_s", shown, _allPhotos.Length);

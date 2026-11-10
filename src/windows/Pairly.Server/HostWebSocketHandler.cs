@@ -219,29 +219,34 @@ public sealed class HostWebSocketHandler(
                         envelope.DeviceId,
                         envelope.ReadPayload<NotificationPayload>()
                             ?? throw new InvalidOperationException("Missing notification payload."));
+                    await SignalPcAppsAsync(envelope, cancellationToken);
                     break;
                 case ProtocolMessageTypes.NotificationRemove:
                     var removed = envelope.ReadPayload<NotificationRemovePayload>()
                         ?? throw new InvalidOperationException("Missing notification removal payload.");
                     notifications.Remove(envelope.DeviceId, removed.NotificationId);
+                    await SignalPcAppsAsync(envelope, cancellationToken);
                     break;
                 case ProtocolMessageTypes.NotificationSnapshotEnd:
                     notifications.EndSnapshot(
                         envelope.DeviceId,
                         envelope.ReadPayload<NotificationSnapshotPayload>()
                             ?? throw new InvalidOperationException("Missing notification snapshot payload."));
+                    await SignalPcAppsAsync(envelope, cancellationToken);
                     break;
                 case ProtocolMessageTypes.SmsThreadPage:
                     sms.UpsertThreads(
                         envelope.DeviceId,
                         envelope.ReadPayload<SmsThreadPagePayload>()
                             ?? throw new InvalidOperationException("Missing SMS thread page payload."));
+                    await SignalPcAppsAsync(envelope, cancellationToken);
                     break;
                 case ProtocolMessageTypes.SmsMessagePage:
                     sms.UpsertMessages(
                         envelope.DeviceId,
                         envelope.ReadPayload<SmsMessagePagePayload>()
                             ?? throw new InvalidOperationException("Missing SMS message page payload."));
+                    await SignalPcAppsAsync(envelope, cancellationToken);
                     break;
                 case ProtocolMessageTypes.CommandResult:
                     commandResults.Complete(envelope.ReadPayload<CommandResultPayload>()
@@ -894,6 +899,15 @@ public sealed class HostWebSocketHandler(
                 cancellationToken);
         }
     }
+
+    /// <summary>
+    /// Tells the PC app that this kind of phone data changed, without the data: the app reads it
+    /// from the host, so notifications and messages appear at once and not at the next poll.
+    /// </summary>
+    private Task SignalPcAppsAsync(ProtocolEnvelope source, CancellationToken cancellationToken) =>
+        RelayToPcAppsAsync(
+            ProtocolEnvelope.Create(source.Type, source.DeviceId, NextSequence(), new Dictionary<string, string>()),
+            cancellationToken);
 
     /// <summary>Forwards a phone event as-is to the PC app's realtime sockets.</summary>
     private async Task RelayToPcAppsAsync(ProtocolEnvelope envelope, CancellationToken cancellationToken)

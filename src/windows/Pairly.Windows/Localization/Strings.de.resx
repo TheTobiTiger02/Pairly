@@ -75,7 +75,7 @@
   <data name="connect_your_android_phone" xml:space="preserve"><value>Verbinde dein Android-Handy</value></data>
   <data name="connected" xml:space="preserve"><value>Verbunden</value></data>
   <data name="connected_for" xml:space="preserve"><value>{0}: verbunden seit {1}, </value></data>
-  <data name="connected_mirror_permission" xml:space="preserve"><value>Verbunden: {0}. Berechtigung zur Spiegelung: {1}.</value></data>
+  <data name="connected_mirror_permission" xml:space="preserve"><value>Verbunden: {0}.</value></data>
   <data name="connecting" xml:space="preserve"><value>Verbinde</value></data>
   <data name="connecting_to_your_phone" xml:space="preserve"><value>Verbinde mit deinem Handy</value></data>
   <data name="connection" xml:space="preserve"><value>Verbindung</value></data>
@@ -589,4 +589,14 @@
   <data name="image_files" xml:space="preserve"><value>Bilddateien</value></data>
   <data name="all_files" xml:space="preserve"><value>Alle Dateien</value></data>
   <data name="next" xml:space="preserve"><value>Weiter</value></data>
+  <data name="show_phone_notifications" xml:space="preserve"><value>Smartphone-Benachrichtigungen in Windows anzeigen</value></data>
+  <data name="show_phone_notifications_detail" xml:space="preserve"><value>Zeigt für neue Smartphone-Benachrichtigungen eine Windows-Benachrichtigung.</value></data>
+  <data name="n_new_phone_notifications" xml:space="preserve"><value>{0} neue Benachrichtigungen auf deinem Smartphone</value></data>
+  <data name="clear_all_notifications_question" xml:space="preserve"><value>Alle Benachrichtigungen aus dieser Liste entfernen? Auf deinem Smartphone bleiben sie erhalten.</value></data>
+  <data name="forget_phone_question" xml:space="preserve"><value>{0} vergessen? Die Verbindung wird getrennt, und du musst es neu koppeln, um es mit diesem PC zu nutzen.</value></data>
+  <data name="feature_off_on_phone" xml:space="preserve"><value>{0} ist noch nicht eingeschaltet. Öffne Pairly auf deinem Smartphone und schalte es unter Funktionen ein.</value></data>
+  <data name="n_notifications" xml:space="preserve"><value>{0} Benachrichtigungen</value></data>
+  <data name="showing_n_of_m" xml:space="preserve"><value>{0} von {1} angezeigt</value></data>
+  <data name="n_conversations" xml:space="preserve"><value>{0} Unterhaltungen</value></data>
+  <data name="no_photos_from_phone_yet" xml:space="preserve"><value>Von diesem Smartphone sind noch keine Fotos da.</value></data>
 </root>

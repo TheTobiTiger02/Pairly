@@ -574,7 +574,7 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBox x:Name="SmsReplyText" MinHeight="36" MaxHeight="140" TextWrapping="Wrap" AcceptsReturn="True"
+                                    <TextBox x:Name="SmsReplyText" MinHeight="36" MaxHeight="140" TextWrapping="Wrap" AcceptsReturn="True" PreviewKeyDown="SmsReplyText_PreviewKeyDown"
                                              VerticalScrollBarVisibility="Auto" controls:Fluent.Placeholder="{l:Loc enter_a_message}"
                                              AutomationProperties.Name="{l:Loc message_text}" />
                                     <Button Grid.Column="1" Style="{StaticResource AccentIconButton}" Content="&#xE724;" Margin="8,0,0,0"
@@ -861,14 +861,14 @@
                                             <TextBlock Grid.Column="2" Text="{Binding Details}" Style="{StaticResource CaptionText}" VerticalAlignment="Center" />
                                         </Grid>
                                         <DataTemplate.Triggers>
-                                            <DataTrigger Binding="{Binding IconType}" Value="Folder">
+                                            <DataTrigger Binding="{Binding IconKind}" Value="Folder">
                                                 <Setter TargetName="FileGlyph" Property="Text" Value="&#xE8B7;" />
                                                 <Setter TargetName="FileGlyph" Property="Foreground" Value="{DynamicResource CautionBrush}" />
                                             </DataTrigger>
-                                            <DataTrigger Binding="{Binding IconType}" Value="Image"><Setter TargetName="FileGlyph" Property="Text" Value="&#xEB9F;" /></DataTrigger>
-                                            <DataTrigger Binding="{Binding IconType}" Value="Audio"><Setter TargetName="FileGlyph" Property="Text" Value="&#xE8D6;" /></DataTrigger>
-                                            <DataTrigger Binding="{Binding IconType}" Value="Video"><Setter TargetName="FileGlyph" Property="Text" Value="&#xE8B2;" /></DataTrigger>
-                                            <DataTrigger Binding="{Binding IconType}" Value="Document"><Setter TargetName="FileGlyph" Property="Text" Value="&#xE8A5;" /></DataTrigger>
+                                            <DataTrigger Binding="{Binding IconKind}" Value="Image"><Setter TargetName="FileGlyph" Property="Text" Value="&#xEB9F;" /></DataTrigger>
+                                            <DataTrigger Binding="{Binding IconKind}" Value="Audio"><Setter TargetName="FileGlyph" Property="Text" Value="&#xE8D6;" /></DataTrigger>
+                                            <DataTrigger Binding="{Binding IconKind}" Value="Video"><Setter TargetName="FileGlyph" Property="Text" Value="&#xE8B2;" /></DataTrigger>
+                                            <DataTrigger Binding="{Binding IconKind}" Value="Document"><Setter TargetName="FileGlyph" Property="Text" Value="&#xE8A5;" /></DataTrigger>
                                         </DataTemplate.Triggers>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
@@ -1042,6 +1042,19 @@
                                                 <StackPanel VerticalAlignment="Center">
                                                     <TextBlock Text="{l:Loc keep_running_in_the_notification_area}" Style="{StaticResource SettingsCardTitle}" />
                                                     <TextBlock Text="{l:Loc keeps_paired_phones_connected_after_this_win}" Style="{StaticResource SettingsCardDescription}" />
+                                                </StackPanel>
+                                            </DockPanel>
+                                        </Border>
+                                        <Border Style="{StaticResource SettingsCard}">
+                                            <DockPanel>
+                                                <TextBlock Text="&#xEA8F;" Style="{StaticResource SettingsCardGlyph}" />
+                                                <CheckBox x:Name="PhoneToastsCheck" Style="{StaticResource ToggleSwitch}" IsChecked="True"
+                                                          DockPanel.Dock="Right" VerticalAlignment="Center" Margin="16,0,0,0"
+                                                          AutomationProperties.Name="{l:Loc show_phone_notifications}"
+                                                          Checked="PhoneToastsCheck_Changed" Unchecked="PhoneToastsCheck_Changed" />
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="{l:Loc show_phone_notifications}" Style="{StaticResource SettingsCardTitle}" />
+                                                    <TextBlock Text="{l:Loc show_phone_notifications_detail}" Style="{StaticResource SettingsCardDescription}" />
                                                 </StackPanel>
                                             </DockPanel>
                                         </Border>

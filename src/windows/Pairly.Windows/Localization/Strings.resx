@@ -75,7 +75,7 @@
   <data name="connect_your_android_phone" xml:space="preserve"><value>Connect your Android phone</value></data>
   <data name="connected" xml:space="preserve"><value>Connected</value></data>
   <data name="connected_for" xml:space="preserve"><value>{0}: connected for {1}, </value></data>
-  <data name="connected_mirror_permission" xml:space="preserve"><value>Connected: {0}. Mirror permission: {1}.</value></data>
+  <data name="connected_mirror_permission" xml:space="preserve"><value>Connected: {0}.</value></data>
   <data name="connecting" xml:space="preserve"><value>Connecting</value></data>
   <data name="connecting_to_your_phone" xml:space="preserve"><value>Connecting to your phone</value></data>
   <data name="connection" xml:space="preserve"><value>Connection</value></data>
@@ -589,4 +589,14 @@
   <data name="image_files" xml:space="preserve"><value>Image files</value></data>
   <data name="all_files" xml:space="preserve"><value>All files</value></data>
   <data name="next" xml:space="preserve"><value>Next</value></data>
+  <data name="show_phone_notifications" xml:space="preserve"><value>Show phone notifications in Windows</value></data>
+  <data name="show_phone_notifications_detail" xml:space="preserve"><value>Shows a Windows notification for new phone notifications.</value></data>
+  <data name="n_new_phone_notifications" xml:space="preserve"><value>{0} new notifications on your phone</value></data>
+  <data name="clear_all_notifications_question" xml:space="preserve"><value>Clear all notifications from this list? They stay on your phone.</value></data>
+  <data name="forget_phone_question" xml:space="preserve"><value>Forget {0}? It disconnects, and you need to pair it again to use it with this PC.</value></data>
+  <data name="feature_off_on_phone" xml:space="preserve"><value>{0} is not turned on yet. Open Pairly on your phone and turn it on under Features.</value></data>
+  <data name="n_notifications" xml:space="preserve"><value>{0} notifications</value></data>
+  <data name="showing_n_of_m" xml:space="preserve"><value>Showing {0} of {1}</value></data>
+  <data name="n_conversations" xml:space="preserve"><value>{0} conversations</value></data>
+  <data name="no_photos_from_phone_yet" xml:space="preserve"><value>No photos from this phone yet.</value></data>
 </root>

@@ -251,6 +251,7 @@ public partial class MainWindow
         label.Children.Add(new TextBlock
         {
             Text = L.T(clay ? "style_clay" : "style_glass"),
+            Foreground = (System.Windows.Media.Brush)FindResource("TextPrimaryBrush"),
             FontWeight = FontWeights.Bold,
             FontFamily = new System.Windows.Media.FontFamily(new Uri("pack://application:,,,/"), clay ? "./Fonts/#Nunito" : "./Fonts/#Manrope")
         });

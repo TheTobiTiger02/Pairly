@@ -102,6 +102,7 @@ public partial class MainWindow : Window
         }
         _initializingPreferences = true;
         MinimizeToTrayCheck.IsChecked = _preferences.MinimizeToTray;
+        PhoneToastsCheck.IsChecked = _preferences.ShowPhoneNotifications;
         MirrorUseAdbCheck.IsChecked = _preferences.MirrorUseAdb;
         _initializingPreferences = false;
 
@@ -417,7 +418,7 @@ public partial class MainWindow : Window
 
             _notifyIcon.ContextMenuStrip = contextMenu;
             _notifyIcon.DoubleClick += (s, e) => ShowDashboard();
-            _notifyIcon.BalloonTipClicked += ReceivedBalloon_Clicked;
+            _notifyIcon.BalloonTipClicked += (_, _) => _balloonClick?.Invoke();
         }
         catch (Exception ex)
         {
@@ -516,6 +517,72 @@ public partial class MainWindow : Window
         _preferences.MinimizeToTray = MinimizeToTrayCheck.IsChecked == true;
         _preferences.Save();
     }
+
+    private void PhoneToastsCheck_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_initializingPreferences)
+        {
+            return;
+        }
+
+        _preferences.ShowPhoneNotifications = PhoneToastsCheck.IsChecked == true;
+        _preferences.Save();
+    }
+
+    // Notifications already seen for the phone the toasts are tracking, so only new ones pop up.
+    private string? _toastDeviceId;
+    private readonly HashSet<string> _toastSeenNotifications = new(StringComparer.Ordinal);
+    private Action? _balloonClick;
+
+    /// <summary>
+    /// A Windows notification for each phone notification that is new since the last look. What is
+    /// already on the phone when it connects or is chosen never pops up, and muted apps stay quiet.
+    /// </summary>
+    private void ShowToastsForNewNotifications(string? deviceId, IReadOnlyList<NotificationPayload> notifications)
+    {
+        var firstLook = !string.Equals(deviceId, _toastDeviceId, StringComparison.Ordinal);
+        if (firstLook)
+        {
+            _toastDeviceId = deviceId;
+            _toastSeenNotifications.Clear();
+        }
+
+        var fresh = notifications.Where(notification => _toastSeenNotifications.Add(notification.NotificationId)).ToArray();
+        _toastSeenNotifications.IntersectWith(notifications.Select(notification => notification.NotificationId));
+        if (firstLook || !_preferences.ShowPhoneNotifications || (IsActive && MainTabs.SelectedIndex == 6))
+        {
+            return;
+        }
+
+        var toShow = fresh
+            .Where(notification => !notification.IsOngoing && !notification.IsGroupSummary
+                && !_mutedNotificationPackages.Contains(notification.PackageName)
+                && DateTimeOffset.UtcNow - notification.PostedAt < TimeSpan.FromMinutes(2)
+                && (notification.Title.Length > 0 || notification.Text.Length > 0))
+            .ToArray();
+        if (toShow.Length == 0)
+        {
+            return;
+        }
+
+        // Windows shows one at a time from the notification area, so a burst becomes one summary.
+        var latest = toShow.OrderByDescending(notification => notification.PostedAt).First();
+        var title = toShow.Length == 1
+            ? (latest.Title.Length > 0 ? $"{latest.AppName}: {latest.Title}" : latest.AppName)
+            : L.F("n_new_phone_notifications", toShow.Length);
+        var text = toShow.Length == 1
+            ? (latest.Text.Length > 0 ? latest.Text : latest.Title)
+            : string.Join(", ", toShow.Select(notification => notification.AppName).Distinct().Take(4));
+        _balloonClick = () =>
+        {
+            ShowDashboard();
+            NavNotifications.IsChecked = true;
+        };
+        _notifyIcon?.ShowBalloonTip(5000, Truncate(title, 60), Truncate(text, 200), System.Windows.Forms.ToolTipIcon.None);
+    }
+
+    private static string Truncate(string text, int length) =>
+        text.Length <= length ? text : text[..(length - 1)] + "…";
 
     private void StartWithWindowsCheck_Changed(object sender, RoutedEventArgs e)
     {
@@ -985,7 +1052,7 @@ public partial class MainWindow : Window
                          || type.StartsWith("clipboard.", StringComparison.Ordinal)
                          || string.Equals(type, "session.ready", StringComparison.Ordinal)))
             {
-                _ = Dispatcher.InvokeAsync(async () => await RefreshFromHostAsync(showErrors: false), DispatcherPriority.Background);
+                _ = Dispatcher.InvokeAsync(ScheduleRefresh, DispatcherPriority.Background);
             }
         }
         catch (Exception ex)
@@ -1087,6 +1154,11 @@ public partial class MainWindow : Window
         if (device is null)
         {
             StatusText.Text = L.T("select_a_device_to_forget");
+            return;
+        }
+
+        if (MessageBox.Show(this, L.F("forget_phone_question", device.DisplayName), L.T("forget_phone"), MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+        {
             return;
         }
 
@@ -1231,28 +1303,50 @@ public partial class MainWindow : Window
             return;
         }
 
+        var text = SmsReplyText.Text.Trim();
+        if (text.Length == 0 || !SmsReplyText.IsEnabled)
+        {
+            return;
+        }
+
+        // The text stays in the box until the phone has taken it, so a failed send loses nothing.
+        SmsReplyText.IsEnabled = false;
         try
         {
             using var response = await _host.PostAsJsonAsync(
                 $"v1/sms/{Uri.EscapeDataString(device.DeviceId)}/send",
-                new SmsSendPayload(thread.Address, SmsReplyText.Text, thread.ThreadId),
+                new SmsSendPayload(thread.Address, text, thread.ThreadId),
                 JsonOptions);
-            var responseText = await response.Content.ReadAsStringAsync();
-            StatusText.Text = response.IsSuccessStatusCode
-                ? L.F("sms_sent_by", device.DisplayName)
-                : L.F("sms_send_failed", response.StatusCode, responseText);
             if (response.IsSuccessStatusCode)
             {
-                await Task.Delay(1_000);
-                await RefreshFromHostAsync(showErrors: true);
+                SmsReplyText.Clear();
+                StatusText.Text = L.F("sms_sent_by", device.DisplayName);
+            }
+            else
+            {
+                AppLog.Write($"SMS send failed: {(int)response.StatusCode} {await response.Content.ReadAsStringAsync()}");
+                StatusText.Text = L.T("the_message_could_not_be_sent_check_the_phon");
             }
         }
         catch (Exception ex)
         {
             StatusText.Text = UserFacingError(L.T("the_message_could_not_be_sent_check_the_phon"), ex);
         }
+        finally
+        {
+            SmsReplyText.IsEnabled = true;
+            SmsReplyText.Focus();
+        }
+    }
 
-        SmsReplyText.Clear();
+    /// <summary>Enter sends, Shift+Enter starts a new line.</summary>
+    private void SmsReplyText_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.Enter && System.Windows.Input.Keyboard.Modifiers == System.Windows.Input.ModifierKeys.None)
+        {
+            e.Handled = true;
+            QueueSms_Click(sender, e);
+        }
     }
 
     private void StartMirror_Click(object sender, RoutedEventArgs e)
@@ -1733,11 +1827,21 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (_allNotifications.Length == 0
+            || MessageBox.Show(this, L.T("clear_all_notifications_question"), L.T("clear_all"), MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
         try
         {
             using var response = await _host.DeleteAsync($"v1/notifications/{Uri.EscapeDataString(device.DeviceId)}");
-            ReconcileNotifications(Array.Empty<NotificationPayload>());
-            ApplyNotificationFilters(updateAppFilter: true);
+            if (response.IsSuccessStatusCode)
+            {
+                ReconcileNotifications(Array.Empty<NotificationPayload>());
+                ApplyNotificationFilters(updateAppFilter: true);
+            }
+
             NotificationStatusText.Text = response.IsSuccessStatusCode
                 ? L.T("cleared_the_local_notification_list")
                 : L.F("clear_failed", response.StatusCode);
@@ -1758,6 +1862,25 @@ public partial class MainWindow : Window
         ApplyNotificationFilters(updateAppFilter: false);
 
     private readonly HashSet<string> _notifiedLowBatteryDevices = new(StringComparer.Ordinal);
+
+    /// <summary>Phone events often arrive in bursts (a snapshot is many messages): one refresh covers them.</summary>
+    private void ScheduleRefresh()
+    {
+        if (_scheduledRefresh is null)
+        {
+            _scheduledRefresh = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
+            _scheduledRefresh.Tick += async (_, _) =>
+            {
+                _scheduledRefresh.Stop();
+                await RefreshFromHostAsync(showErrors: false);
+            };
+        }
+
+        _scheduledRefresh.Stop();
+        _scheduledRefresh.Start();
+    }
+
+    private DispatcherTimer? _scheduledRefresh;
 
     private async Task RefreshFromHostAsync(bool showErrors)
     {
@@ -1859,11 +1982,16 @@ public partial class MainWindow : Window
                 : await _host.GetFromJsonAsync<NotificationPayload[]>(
                     $"v1/notifications/{Uri.EscapeDataString(selectedDevice.DeviceId)}",
                     JsonOptions) ?? Array.Empty<NotificationPayload>();
+            ShowToastsForNewNotifications(selectedDevice?.DeviceId, notifications);
             ReconcileNotifications(notifications);
             ApplyNotificationFilters(updateAppFilter: true);
             NotificationStatusText.Text = selectedDevice is null
                 ? L.T("select_a_paired_device_to_view_notifications")
-                : L.F("notification_access", PermissionText(selectedDevice, "notifications"), NotificationsList.Items.Count, _allNotifications.Length);
+                : !PermissionGranted(selectedDevice, "notifications")
+                    ? FeatureOffText("tour_notifications_title")
+                    : NotificationsList.Items.Count == _allNotifications.Length
+                        ? L.F("n_notifications", _allNotifications.Length)
+                        : L.F("showing_n_of_m", NotificationsList.Items.Count, _allNotifications.Length);
 
             var smsThreads = selectedDevice is null
                 ? Array.Empty<SmsThreadViewModel>()
@@ -1876,7 +2004,9 @@ public partial class MainWindow : Window
             FilterSmsThreads();
             SmsStatusText.Text = selectedDevice is null
                 ? L.T("select_a_paired_device_to_view_sms")
-                : L.F("sms_permission", PermissionText(selectedDevice, "sms"));
+                : !PermissionGranted(selectedDevice, "sms")
+                    ? FeatureOffText("messages")
+                    : L.F("n_conversations", smsThreads.Length);
 
 
             var onlineCount = devicesData.Count(device => device.Connected);
@@ -2444,6 +2574,9 @@ public partial class MainWindow : Window
         };
     }
 
+    /// <summary>What to do when a feature is not turned on in the phone app, in plain words.</summary>
+    private static string FeatureOffText(string featureNameKey) => L.F("feature_off_on_phone", L.T(featureNameKey));
+
     private static bool PermissionGranted(LinkedDevice device, string feature) =>
         device.Permissions is not null
         && device.Permissions.TryGetValue(feature, out var value)
@@ -2877,10 +3010,25 @@ public sealed class StorageItemViewModel
     public string Name => Payload.Name;
     public string Details => Payload.IsDirectory 
         ? L.T("folder") 
-        : $"{Payload.SizeBytes:n0} bytes";
+        : MainWindow.FormatSize(Payload.SizeBytes);
         
     public bool IsDirectory => Payload.IsDirectory;
     public bool IsFile => !Payload.IsDirectory;
+
+    /// <summary>What the icon is chosen by. Not shown, so it is the same in every language.</summary>
+    public string IconKind
+    {
+        get
+        {
+            if (Payload.IsDirectory) return "Folder";
+            var ext = System.IO.Path.GetExtension(Name).ToLowerInvariant();
+            if (ext is ".jpg" or ".jpeg" or ".png" or ".webp" or ".gif" or ".bmp" or ".heic") return "Image";
+            if (ext is ".mp3" or ".wav" or ".ogg" or ".m4a" or ".flac" or ".wma") return "Audio";
+            if (ext is ".mp4" or ".mkv" or ".avi" or ".mov" or ".wmv" or ".flv" or ".webm") return "Video";
+            if (ext is ".pdf" or ".doc" or ".docx" or ".txt" or ".rtf" or ".xls" or ".xlsx" or ".ppt" or ".pptx") return "Document";
+            return "File";
+        }
+    }
 
     public string IconType
     {
