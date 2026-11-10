@@ -32,6 +32,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -169,7 +170,9 @@ private fun CodeEntry(state: AppState, callbacks: PairingCallbacks, busy: Boolea
     var manualHost by rememberSaveable { mutableStateOf(callbacks.savedManualAddress) }
     var selectedName by rememberSaveable { mutableStateOf<String?>(null) }
     val compatible = state.discoveredPcs.filter { it.isSecurePairingCompatible }
+    // The only PC found needs no tap to choose it.
     val selected = state.discoveredPcs.firstOrNull { it.name == selectedName && it.isSecurePairingCompatible }
+        ?: state.discoveredPcs.singleOrNull { it.isSecurePairingCompatible }
         ?: compatible.singleOrNull()
 
     Column(verticalArrangement = Arrangement.spacedBy(Space.m)) {
@@ -202,7 +205,17 @@ private fun CodeEntry(state: AppState, callbacks: PairingCallbacks, busy: Boolea
         ) { NotFoundHelp() }
 
         Text(stringResource(R.string.onboarding_pair_code), style = MaterialTheme.typography.titleMedium)
-        CodeBoxes(code = code, onCodeChange = { code = it })
+        // The sixth digit pairs right away; the button stays for a code typed before a PC was chosen.
+        val keyboard = LocalSoftwareKeyboardController.current
+        CodeBoxes(code = code, onCodeChange = { typed ->
+            val completed = typed.length == PAIRING_CODE_LENGTH && code.length < PAIRING_CODE_LENGTH
+            code = typed
+            val pc = selected
+            if (completed && pc != null && !busy) {
+                keyboard?.hide()
+                callbacks.pair(pc, typed)
+            }
+        })
         PrimaryButton(
             stringResource(R.string.action_pair_securely),
             onClick = { selected?.let { callbacks.pair(it, code) } },

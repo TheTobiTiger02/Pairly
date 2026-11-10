@@ -32,6 +32,8 @@ import dev.pairly.android.ui.navigation.Motion
 import dev.pairly.android.ui.theme.Pairly
 import dev.pairly.android.ui.theme.PairlyTheme
 import dev.pairly.android.ui.whatsnew.WhatsNewSheet
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.ui.Modifier
 import kotlinx.coroutines.delay
 
 @Composable
@@ -97,6 +99,8 @@ fun PairlyApp(
         PairlyBackground {
             AnimatedContent(
                 targetState = prefs.onboardingDone,
+                // Keeps text fields above the keyboard instead of pushing the screen under the status bar.
+                modifier = Modifier.imePadding(),
                 // Finishing setup moves forward into the app; replaying setup moves back.
                 transitionSpec = { Motion.slideIn(style, forward = targetState).togetherWith(Motion.slideOut(style, forward = targetState)) },
                 label = "onboarding-or-app"
