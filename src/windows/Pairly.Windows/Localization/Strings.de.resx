@@ -605,4 +605,5 @@
   <data name="healthy" xml:space="preserve"><value>in Ordnung</value></data>
   <data name="load_error" xml:space="preserve"><value>Ladefehler</value></data>
   <data name="save_error" xml:space="preserve"><value>Speicherfehler</value></data>
+  <data name="files_phone_offline" xml:space="preserve"><value>Dein Smartphone ist nicht verbunden. Die Dateien erscheinen hier, sobald es wieder da ist.</value></data>
 </root>

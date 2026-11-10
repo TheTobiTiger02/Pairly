@@ -605,4 +605,5 @@
   <data name="healthy" xml:space="preserve"><value>healthy</value></data>
   <data name="load_error" xml:space="preserve"><value>Load error</value></data>
   <data name="save_error" xml:space="preserve"><value>Save error</value></data>
+  <data name="files_phone_offline" xml:space="preserve"><value>Your phone is not connected. Its files show up here when it is back.</value></data>
 </root>

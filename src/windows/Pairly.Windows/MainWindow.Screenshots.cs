@@ -214,6 +214,9 @@ public partial class MainWindow
             var contrastFailures = ThemeManager.ContrastFailures();
             Expect(contrastFailures.Count == 0, "every style and accent to meet 4.5:1 text contrast " + string.Join("; ", contrastFailures));
             ApplyAppearance("Glass", "Violet");
+            // From Light, so choosing Dark is a change even on a PC whose saved theme is already Dark.
+            ThemeCombo.SelectedIndex = 1;
+            await settle(100);
             ThemeCombo.SelectedIndex = 2; // Dark
             await settle(150);
             Expect(ThemeManager.IsDark || ThemeManager.IsHighContrast, "Dark to switch the theme");

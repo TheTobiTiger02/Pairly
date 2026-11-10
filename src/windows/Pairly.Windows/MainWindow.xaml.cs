@@ -2316,9 +2316,18 @@ public partial class MainWindow : Window
         catch (System.Text.Json.JsonException)
         {
         }
-        return message.Contains("not been granted", StringComparison.OrdinalIgnoreCase)
-            ? L.T("files_need_access")
-            : L.F("failed_to_load_folder", message);
+        if (message.Contains("not been granted", StringComparison.OrdinalIgnoreCase))
+        {
+            return L.T("files_need_access");
+        }
+
+        if (message.Contains("not connected", StringComparison.OrdinalIgnoreCase) || message.Contains("timed out", StringComparison.OrdinalIgnoreCase))
+        {
+            return L.T("files_phone_offline");
+        }
+
+        AppLog.Write($"Phone storage error: {message}");
+        return L.F("failed_to_load_folder", message);
     }
 
     private async Task LoadStorageDirectoryAsync(string deviceId, string path)
