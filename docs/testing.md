@@ -46,4 +46,15 @@ Do not convert an unrun device scenario into a pass. Preserve the observed build
 
 ## Manual feature checks
 
-Pair at least three phones, select each phone in Windows, and verify that photos, notifications, messages, files, and mirroring never show data from another selection. Clipboard history should show global relay metadata without retaining expired content. Confirm that phone notification dismissal and local Windows clearing are visually distinct, photo selection and lightbox preserve scroll, mirror unload releases its lease, and an unavailable Android permission produces an actionable state rather than a raw exception.
+Pair at least three phones, select each phone in Windows, and verify that photos, notifications, messages, files, and mirroring never show data from another selection. Clipboard history should show global relay metadata without retaining expired content. Confirm that phone notification dismissal and local Windows clearing are visually distinct, the photo viewer (double-click or Enter; arrow keys, wheel zoom, Esc) returns to the same place in the grid, a refresh does not move the grid, mirror unload releases its lease, and an unavailable Android permission produces an actionable state rather than a raw exception.
+
+## Running both apps on one PC
+
+1. Quit the installed Pairly (tray icon → Exit); the development build needs the same ports.
+2. `dotnet build Pairly.sln` and start `src/windows/Pairly.Windows/bin/Debug/<framework>/Pairly.Windows.exe`.
+3. Start an emulator, `adb install -r src/android/app/build/outputs/apk/debug/app-debug.apk`, and pair with the 6-digit code (`Add device` on the PC).
+4. Problems the PC app runs into are written to `%LOCALAPPDATA%\Pairly\logs\desktop.log`.
+
+### Restricted settings (SMS on Android 15+)
+
+`adb install` does not count as sideloading, so Android never blocks anything. To see what a user who installed the APK sees, push the APK to the emulator's Download folder and install it from the Files app. Then **Text messages → Turn on** must show Android's "App was denied access" notice followed by Pairly's App info steps, and coming back from App info after **⋮ → Allow restricted settings** must bring up the SMS permission dialog on its own. Android 15+ does not let an app read the restricted-settings state, so Pairly goes by the denial itself.
