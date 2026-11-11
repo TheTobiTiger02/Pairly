@@ -55,6 +55,12 @@ object FeaturePermissionState {
         Manifest.permission.SEND_SMS
     )
 
+    /**
+     * What "Turn on" asks for. RECEIVE_SMS is in the same Android permission group, so the dialog
+     * is the same one; without it new messages only reach the PC at the next full sync.
+     */
+    fun smsRequestPermissions(): Array<String> = smsPermissions() + Manifest.permission.RECEIVE_SMS
+
     fun postNotificationPermission(): String? =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) Manifest.permission.POST_NOTIFICATIONS else null
 

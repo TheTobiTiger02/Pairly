@@ -307,6 +307,9 @@
   <data name="phone_not_connected" xml:space="preserve"><value>Handy nicht verbunden</value></data>
   <data name="phone_screen" xml:space="preserve"><value>Handybildschirm</value></data>
   <data name="phone_screen_2" xml:space="preserve"><value>{0} | Handybildschirm</value></data>
+  <data name="mirror_waiting_for_phone" xml:space="preserve"><value>Dein Handy fragt, ob es den Bildschirm teilen darf. Erlaube es am Handy.</value></data>
+  <data name="mirror_declined_on_phone" xml:space="preserve"><value>Die Bildschirmfreigabe wurde am Handy abgelehnt.</value></data>
+  <data name="mirror_failed_on_phone" xml:space="preserve"><value>Das Handy konnte die Bildschirmfreigabe nicht starten.</value></data>
   <data name="phone_screen_needs_attention" xml:space="preserve"><value>Handybildschirm braucht Aufmerksamkeit</value></data>
   <data name="phone_screen_settings" xml:space="preserve"><value>Einstellungen für den Handybildschirm</value></data>
   <data name="phone_sound_on_this_pc" xml:space="preserve"><value>Handyton auf diesem PC</value></data>

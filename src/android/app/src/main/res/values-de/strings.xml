@@ -106,6 +106,7 @@
     <string name="pair_on_pc_step2">Wähle Handy hinzufügen. Ein QR-Code und ein 6-stelliger Code erscheinen.</string>
     <string name="pair_on_pc_step3_scan">Tippe unten auf QR-Code scannen und richte die Kamera darauf.</string>
     <string name="pair_on_pc_step3_code">Wähle unten deinen PC und gib den 6-stelligen Code ein.</string>
+    <string name="scan_failed">Der Scanner ließ sich nicht öffnen. Tippe auf „Stattdessen einen Code eingeben“ und gib den Code von deinem PC ein.</string>
     <string name="scan_not_pairing_code">Das ist kein Pairly-Code. Scanne den QR-Code, den Pairly auf deinem PC anzeigt.</string>
     <string name="onboarding_choose_pc">Wähle deinen PC</string>
     <string name="onboarding_pair_code">Gib den 6-stelligen Code von deinem PC ein</string>

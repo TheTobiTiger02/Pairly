@@ -48,7 +48,7 @@ object PairlyConnection {
         private set
 
     @Volatile
-    var connectionState: ConnectionState = ConnectionState(ConnectionPhase.Disconnected, "Disconnected")
+    var connectionState: ConnectionState = ConnectionState(ConnectionPhase.Disconnected, "")
         private set
 
     fun send(json: String): Boolean = client.send(json)

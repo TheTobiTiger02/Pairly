@@ -37,7 +37,11 @@ public partial class MainWindow
     private bool PhotoSortIsByDate => _photoSort is "newest" or "oldest";
 
     /// <summary>Every photo the PC knows about for this phone, read page by page from the local host.</summary>
-    private async Task<MediaItemViewModel[]> FetchPhotosAsync(string deviceId)
+    /// <remarks>
+    /// Returns null when the phone re-indexed its library between two pages: the host then refuses
+    /// the old cursor. The caller keeps what it shows and the next refresh reads the new library.
+    /// </remarks>
+    private async Task<MediaItemViewModel[]?> FetchPhotosAsync(string deviceId)
     {
         var photos = new List<MediaItemViewModel>();
         string? cursor = null;
@@ -45,7 +49,14 @@ public partial class MainWindow
         {
             var url = $"v1/media/{Uri.EscapeDataString(deviceId)}?pageSize={PhotoPageSize}"
                 + (cursor is null ? string.Empty : $"&cursor={Uri.EscapeDataString(cursor)}");
-            var page = await _host.GetFromJsonAsync<MediaIndexPagePayload>(url, JsonOptions);
+            using var response = await _host.GetAsync(url);
+            if (cursor is not null && response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+            {
+                return null;
+            }
+
+            response.EnsureSuccessStatusCode();
+            var page = await response.Content.ReadFromJsonAsync<MediaIndexPagePayload>(JsonOptions);
             if (page is null)
             {
                 break;

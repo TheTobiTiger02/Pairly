@@ -35,8 +35,21 @@ public partial class MainWindow
         // Start on Home with its navigation item checked (the tab control's first page is Messages).
         SelectPage(HomeTabIndex);
         MainTabs.SelectedIndex = HomeTabIndex;
-        LocalizationSource.Instance.LanguageChanged += (_, _) => RefreshLocalizedCodeText();
+        LocalizationSource.Instance.LanguageChanged += (_, _) =>
+        {
+            ApplyBindingLanguage();
+            RefreshLocalizedCodeText();
+        };
+        ApplyBindingLanguage();
     }
+
+    /// <summary>
+    /// Dates and times formatted in XAML bindings follow the element's Language, which WPF leaves
+    /// at en-US whatever the app's culture is. Without this a German UI shows "11:17 PM".
+    /// </summary>
+    private void ApplyBindingLanguage() =>
+        Language = System.Windows.Markup.XmlLanguage.GetLanguage(
+            System.Globalization.CultureInfo.CurrentUICulture.IetfLanguageTag);
 
     /// <summary>Texts set from code rather than bound in XAML, refreshed after a language switch.</summary>
     private void RefreshLocalizedCodeText()

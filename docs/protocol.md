@@ -1,10 +1,10 @@
 # Protocol
 
-All WebSocket messages use the shared JSON envelope. Version 2 is current; optional v2 fields keep v1 payload defaults valid during migration.
+All WebSocket messages use the shared JSON envelope. The envelope version `v` is 1 and both sides require an exact match. (The `protocolVersion` 2 in discovery replies and pairing tickets names the secure pairing scheme, not the envelope.)
 
 ```json
 {
-  "v": 2,
+  "v": 1,
   "id": "uuid",
   "type": "clipboard.item",
   "deviceId": "android-device-id",
@@ -36,7 +36,7 @@ The host does not accept feature messages before authentication. A session chall
 - Media: `media.index.request`, `media.index.page`, `media.content.request`, `media.content.response`.
 - Notifications: `notification.snapshot.begin`, `notification.upsert`, `notification.remove`, `notification.snapshot.end`, `notification.action`.
 - SMS: `sms.thread.page`, `sms.message.page`, `sms.send`.
-- Mirroring: `mirror.start`, `mirror.configure`, `mirror.telemetry`, `mirror.state`, `mirror.signal`, `mirror.input`, `mirror.stop`.
+- Mirroring: `stream.open`, `stream.ready`, `mirror.video.format`, `mirror.quality`, `mirror.state`, `mirror.input` (navigation fallback), `mirror.stop`. Video, input and audio travel on the stream port, see `mirror-pipeline.md`. The phone sends `mirror.state` (`needs_user_action`, `denied`, `failed`, `stopped`) and the host forwards it to the PC app, which shows it in the phone-screen window.
 - Media sessions: `media.session.state` (phone to PC: active sessions with title, artist, position, capabilities and a small JPEG cover), `media.session.command` (PC to phone: `play`, `pause`, `toggle`, `next`, `previous`, `stop`, `seek` with `positionMs`). Needs the notification-access grant the phone already uses for notification sync.
 - Phone audio while mirroring: `stream.open` carries `audioTicket` and `audioStreamId`; the phone dials stream kind 2 and sends 10 ms records of 48 kHz 16-bit stereo PCM captured from playback (Android 10+, needs the microphone permission, asked once when mirroring starts).
 - File push: `file.push.start` (PC to phone) offers a file with a single-use ticket; the phone dials the stream port as kind 5 and the PC writes exactly `byteCount` raw bytes. The phone saves to Downloads/Pairly and answers `file.push.result` (`saved`, `failed`, `rejected`).
@@ -53,6 +53,6 @@ All HTTP management and content endpoints are loopback-only. Principal routes in
 - `GET /v1/clipboard/{itemId}/content`, `POST /v1/clipboard/{itemId}/ack`
 - `GET /v1/media/{deviceId}` and media thumbnail/content routes
 - notification, SMS, call, and storage action routes scoped by device ID
-- mirror prepare/start/stop/state routes and `/mirror/viewer.html`
+- mirror prepare/start/stop/lease routes
 
 The only LAN HTTP upgrade allowed is HTTPS `/ws/v1/session`; phones connect to it through certificate-pinned WSS.

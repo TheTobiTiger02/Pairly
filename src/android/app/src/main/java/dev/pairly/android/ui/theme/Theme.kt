@@ -113,6 +113,9 @@ data class PairlyStyle(
     fun offsetSpring(): FiniteAnimationSpec<IntOffset> = spring()
 }
 
+/** Icon and text colour on a [PairlyStyle.success] fill: dark on the light green of dark mode. */
+val PairlyStyle.onSuccess: Color get() = if (success.luminance() > 0.5f) Color(0xFF0B2A1A) else Color.White
+
 val LocalPairlyStyle = staticCompositionLocalOf {
     PairlyStyle(
         appStyle = AppStyle.Glass, dark = false, cardRadius = 22.dp, cardColor = Color.White, cardBorder = null,

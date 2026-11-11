@@ -86,6 +86,7 @@ import androidx.compose.ui.unit.dp
 import dev.pairly.android.R
 import dev.pairly.android.network.ConnectionPhase
 import dev.pairly.android.ui.theme.Pairly
+import dev.pairly.android.ui.theme.onSuccess
 import dev.pairly.android.ui.theme.Space
 
 /** Paints the style's ground behind a screen. */
@@ -351,7 +352,7 @@ fun CheckBadge(size: Dp = 28.dp, modifier: Modifier = Modifier) {
     Box(
         modifier.size(size).clip(CircleShape).background(Pairly.style.success),
         contentAlignment = Alignment.Center
-    ) { Icon(Icons.Rounded.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(size * 0.62f)) }
+    ) { Icon(Icons.Rounded.Check, contentDescription = null, tint = Pairly.style.onSuccess, modifier = Modifier.size(size * 0.62f)) }
 }
 
 /** Question with an answer that expands on tap. */

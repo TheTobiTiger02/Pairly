@@ -307,6 +307,9 @@
   <data name="phone_not_connected" xml:space="preserve"><value>Phone not connected</value></data>
   <data name="phone_screen" xml:space="preserve"><value>Phone screen</value></data>
   <data name="phone_screen_2" xml:space="preserve"><value>{0} | Phone screen</value></data>
+  <data name="mirror_waiting_for_phone" xml:space="preserve"><value>Your phone is asking whether it may share its screen. Allow it on the phone.</value></data>
+  <data name="mirror_declined_on_phone" xml:space="preserve"><value>Screen sharing was declined on the phone.</value></data>
+  <data name="mirror_failed_on_phone" xml:space="preserve"><value>The phone could not start screen sharing.</value></data>
   <data name="phone_screen_needs_attention" xml:space="preserve"><value>Phone screen needs attention</value></data>
   <data name="phone_screen_settings" xml:space="preserve"><value>Phone screen settings</value></data>
   <data name="phone_sound_on_this_pc" xml:space="preserve"><value>Phone sound on this PC</value></data>
