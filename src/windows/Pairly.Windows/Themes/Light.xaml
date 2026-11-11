@@ -52,6 +52,7 @@
     <SolidColorBrush x:Key="WindowBrush" Color="{StaticResource WindowColor}" />
     <SolidColorBrush x:Key="NavigationBrush" Color="{StaticResource NavigationColor}" />
     <SolidColorBrush x:Key="LayerBrush" Color="{StaticResource LayerColor}" />
+    <SolidColorBrush x:Key="SheetBrush" Color="#FFF4F5F7" />
     <SolidColorBrush x:Key="LayerStrokeBrush" Color="{StaticResource LayerStrokeColor}" />
     <SolidColorBrush x:Key="CardFillBrush" Color="{StaticResource CardFillColor}" />
     <SolidColorBrush x:Key="CardFillSecondaryBrush" Color="{StaticResource CardFillSecondaryColor}" />

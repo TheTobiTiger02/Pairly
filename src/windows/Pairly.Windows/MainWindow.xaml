@@ -27,10 +27,6 @@
             <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
         </Style>
         <Style x:Key="PaneHeader" TargetType="TextBlock" BasedOn="{StaticResource SubtitleText}" />
-        <Style x:Key="QuickActionGlyph" TargetType="TextBlock" BasedOn="{StaticResource IconGlyph}">
-            <Setter Property="FontSize" Value="18" />
-            <Setter Property="Margin" Value="0,2,0,5" />
-        </Style>
         <Style x:Key="SettingsCardGlyph" TargetType="TextBlock" BasedOn="{StaticResource IconGlyph}">
             <Setter Property="FontSize" Value="20" />
             <Setter Property="Width" Value="20" />
@@ -98,13 +94,59 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
-        <Style x:Key="NavPaneButton" TargetType="RadioButton" BasedOn="{StaticResource SettingsNavButton}">
-            <Setter Property="Height" Value="40" />
-            <Setter Property="Margin" Value="0,2" />
+        <!-- A page in the navigation. The selected one has no fill of its own: the sliding marker
+             behind the items shows it. -->
+        <Style x:Key="NavPaneButton" TargetType="RadioButton">
+            <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Margin" Value="0,1" />
+            <Setter Property="Padding" Value="11,0" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource DefaultFocusVisual}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Chrome" CornerRadius="{DynamicResource ControlRadius}" Background="Transparent">
+                            <ContentPresenter Margin="{TemplateBinding Padding}" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsMouseOver" Value="True" />
+                                    <Condition Property="IsChecked" Value="False" />
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+                            </MultiTrigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter Property="Foreground" Value="{DynamicResource NavSelectedTextBrush}" />
+                                <Setter Property="FontWeight" Value="Bold" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
         <Style x:Key="NavGlyph" TargetType="TextBlock" BasedOn="{StaticResource IconGlyph}">
-            <Setter Property="FontSize" Value="16" />
-            <Setter Property="Margin" Value="0,0,16,0" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="Width" Value="18" />
+            <Setter Property="Margin" Value="0,0,11,0" />
+        </Style>
+        <!-- Labels hide when the navigation is collapsed to icons. -->
+        <Style x:Key="NavLabel" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Tag, ElementName=NavPane}" Value="Compact">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <!-- The one main action of a surface, with the pair corner. -->
+        <Style x:Key="MainActionButton" TargetType="Button" BasedOn="{StaticResource AccentButton}">
+            <Style.Resources>
+                <CornerRadius x:Key="ControlRadius">12,12,12,3</CornerRadius>
+            </Style.Resources>
         </Style>
         <Style x:Key="HomeTileButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="Height" Value="128" />
@@ -132,7 +174,7 @@
 
     <Grid x:Name="RootGrid">
         <Grid.RowDefinitions>
-            <RowDefinition Height="48" />
+            <RowDefinition Height="40" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -140,79 +182,74 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <!-- Title bar: brand, host status and caption buttons. -->
+        <!-- Title bar: only the caption buttons. The brand sits at the top of the navigation. -->
         <Grid Grid.ColumnSpan="2">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0" HorizontalAlignment="Left">
-                <controls:BrandMark Width="18" Height="18" />
-                <TextBlock x:Name="BrandTitleText" Text="Pairly" FontSize="12" Margin="12,0,0,1" VerticalAlignment="Center" />
-            </StackPanel>
-
-
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
-                <Border Style="{StaticResource StatusPill}" VerticalAlignment="Center" Margin="0,8,8,0"
-                        ToolTip="{l:Loc connection_between_this_window_and_the_pairl}">
-                    <StackPanel Orientation="Horizontal">
-                        <Ellipse x:Name="RealtimeStatusDot" Width="6" Height="6" Fill="{DynamicResource CautionBrush}"
-                                 VerticalAlignment="Center" Margin="0,0,6,0" />
-                        <TextBlock x:Name="RealtimeStatusText" Text="{l:Loc starting}" FontSize="11" VerticalAlignment="Center"
-                                   Foreground="{DynamicResource TextSecondaryBrush}" />
-                    </StackPanel>
-                </Border>
-                <controls:CaptionButtons />
-            </StackPanel>
+            <controls:CaptionButtons HorizontalAlignment="Right" VerticalAlignment="Top" />
         </Grid>
 
-        <!-- Navigation-pane layout: phone card on top, then every page. -->
-        <Grid x:Name="NavPane" Grid.Row="1" Width="292" Margin="12,4,8,12">
+        <!-- Navigation: brand, the phone, every page, the main action, settings. It sits directly on
+             the window; the page is a sheet beside it. -->
+        <Grid x:Name="NavPane" Grid.RowSpan="2" Width="212" Margin="8,10,8,8">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-            <ContentControl x:Name="NavDeviceHost" Focusable="False" IsTabStop="False">
-                <Border x:Name="DeviceCard" Style="{StaticResource PageCard}" Padding="12" Background="{DynamicResource HeroBrush}" BorderThickness="0">
-                    <StackPanel>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <ToggleButton x:Name="DevicePickerToggle" Style="{StaticResource SubtleToggleButton}" Padding="6" Resources="{StaticResource OnHeroResources}"
-                                          IsHitTestVisible="{Binding IsOpen, ElementName=DevicePickerPopup, Converter={StaticResource InverseBool}}"
-                                          AutomationProperties.Name="{l:Loc choose_phone}" ToolTip="{l:Loc choose_which_phone_to_use}">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <Border Width="44" Height="44" CornerRadius="22" Background="{DynamicResource AccentSubtleBrush}">
-                                        <TextBlock Text="&#xE8EA;" Style="{StaticResource IconGlyph}" FontSize="20" Foreground="{DynamicResource AccentBrush}" />
-                                    </Border>
-                                    <StackPanel Grid.Column="1" Margin="12,0,8,0" VerticalAlignment="Center">
-                                        <StackPanel Style="{StaticResource DeviceSelected}">
-                                            <TextBlock Text="{Binding SelectedItem.DisplayName, ElementName=DevicesList}"
-                                                       FontSize="16" FontWeight="SemiBold" />
-                                            <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
-                                                <Ellipse Width="7" Height="7" Margin="0,0,6,0" VerticalAlignment="Center"
-                                                         Fill="{Binding SelectedItem.StatusBrush, ElementName=DevicesList}" />
-                                                <TextBlock Text="{Binding SelectedItem.StatusText, ElementName=DevicesList}" Style="{StaticResource CaptionText}" />
-                                            </StackPanel>
-                                        </StackPanel>
-                                        <StackPanel Style="{StaticResource NoDeviceSelected}">
-                                            <TextBlock Text="{l:Loc no_phone_linked}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" />
-                                            <TextBlock Text="{l:Loc add_a_device_to_get_started}" Style="{StaticResource CaptionText}" Margin="0,3,0,0" />
+            <!-- The selection marker slides between pages; see MoveNavIndicator. -->
+            <Canvas Grid.RowSpan="5" IsHitTestVisible="False">
+                <Border x:Name="NavIndicator" Height="34" Width="{Binding ActualWidth, ElementName=NavPane}" Visibility="Collapsed"
+                        CornerRadius="{DynamicResource PairRadius}" Background="{DynamicResource NavSelectedBrush}">
+                    <Border.RenderTransform>
+                        <TranslateTransform x:Name="NavIndicatorOffset" />
+                    </Border.RenderTransform>
+                </Border>
+            </Canvas>
+            <StackPanel Orientation="Horizontal" Margin="10,2,0,12" WindowChrome.IsHitTestVisibleInChrome="False">
+                <controls:BrandMark Width="20" Height="20" />
+                <TextBlock x:Name="BrandTitleText" Text="Pairly" FontFamily="{DynamicResource DisplayFontFamily}" FontSize="16" FontWeight="ExtraBold"
+                           Margin="9,0,0,1" VerticalAlignment="Center" />
+            </StackPanel>
+            <ContentControl x:Name="NavDeviceHost" Grid.Row="1" Focusable="False" IsTabStop="False" Margin="0,0,0,10">
+                <Border x:Name="DeviceCard" Background="{DynamicResource CardFillBrush}" BorderBrush="{DynamicResource CardStrokeBrush}"
+                        BorderThickness="1" CornerRadius="{DynamicResource CardRadius}">
+                    <Grid>
+                        <ToggleButton x:Name="DevicePickerToggle" Style="{StaticResource SubtleToggleButton}" Padding="7" HorizontalContentAlignment="Stretch"
+                                      IsHitTestVisible="{Binding IsOpen, ElementName=DevicePickerPopup, Converter={StaticResource InverseBool}}"
+                                      AutomationProperties.Name="{l:Loc choose_phone}" ToolTip="{l:Loc choose_which_phone_to_use}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Border Width="32" Height="32" CornerRadius="9" Background="{DynamicResource AccentSubtleBrush}">
+                                    <TextBlock Text="&#xE8EA;" Style="{StaticResource IconGlyph}" FontSize="15" Foreground="{DynamicResource AccentBrush}" />
+                                </Border>
+                                <StackPanel x:Name="DeviceSwitcherText" Grid.Column="1" Margin="10,0,6,0" VerticalAlignment="Center">
+                                    <StackPanel Style="{StaticResource DeviceSelected}">
+                                        <TextBlock Text="{Binding SelectedItem.DisplayName, ElementName=DevicesList}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                        <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                            <controls:LinkLine IsActive="{Binding SelectedItem.Connected, ElementName=DevicesList, FallbackValue=False}" Margin="0,1,7,0" />
+                                            <TextBlock Text="{Binding SelectedItem.SwitcherStatusText, ElementName=DevicesList}" Style="{StaticResource CaptionText}" />
+                                            <TextBlock Text="&#xE945;" Style="{StaticResource IconGlyph}" FontSize="11" Margin="6,0,0,0" VerticalAlignment="Center"
+                                                       Foreground="{Binding SelectedItem.PowerModeBrush, ElementName=DevicesList}"
+                                                       ToolTip="{Binding SelectedItem.PowerModeText, ElementName=DevicesList}"
+                                                       Visibility="{Binding SelectedItem.HasPowerModeText, ElementName=DevicesList, Converter={StaticResource BoolToVisConverter}, FallbackValue=Collapsed}" />
                                         </StackPanel>
                                     </StackPanel>
-                                    <TextBlock Grid.Column="2" Text="&#xE70D;" Style="{StaticResource IconGlyph}" FontSize="12"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                </Grid>
-                            </ToggleButton>
-                            <Button Grid.Column="1" Style="{StaticResource IconButton}" Content="&#xE710;" VerticalAlignment="Top" Margin="4,0,0,0" Resources="{StaticResource OnHeroResources}"
-                                    ToolTip="{l:Loc add_a_device}" Click="OpenPairingPanel_Click" AutomationProperties.Name="{l:Loc add_device}" />
-
+                                    <StackPanel Style="{StaticResource NoDeviceSelected}">
+                                        <TextBlock Text="{l:Loc no_phone_linked}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{l:Loc add_a_device_to_get_started}" Style="{StaticResource CaptionText}" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                </StackPanel>
+                                <TextBlock x:Name="DeviceSwitcherChevron" Grid.Column="2" Text="&#xE70D;" Style="{StaticResource IconGlyph}" FontSize="10"
+                                           Foreground="{DynamicResource TextTertiaryBrush}" Margin="0,0,3,0" />
+                            </Grid>
+                        </ToggleButton>
                             <Popup x:Name="DevicePickerPopup" PlacementTarget="{Binding ElementName=DevicePickerToggle}" Placement="Bottom"
-                                   StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade" HorizontalOffset="-12"
+                                   StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade" HorizontalOffset="0" VerticalOffset="4"
                                    IsOpen="{Binding IsChecked, ElementName=DevicePickerToggle, Mode=TwoWay}">
                                 <Border Style="{StaticResource FlyoutBorder}" Width="320" Padding="6">
                                     <StackPanel>
@@ -257,139 +294,74 @@
                                     </StackPanel>
                                 </Border>
                             </Popup>
-                        </Grid>
-
-                        <!-- Battery and sync status of the selected phone. -->
-                        <Grid Style="{StaticResource DeviceSelected}" Margin="6,10,6,0" Resources="{StaticResource OnHeroResources}">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Orientation="Horizontal" ToolTip="{l:Loc battery}">
-                                <TextBlock Text="{Binding SelectedItem.BatteryGlyph, ElementName=DevicesList}" Style="{StaticResource IconGlyph}"
-                                           FontSize="15" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,7,0" />
-                                <TextBlock Text="{Binding SelectedItem.BatteryDisplayText, ElementName=DevicesList}" Style="{StaticResource CaptionText}"
-                                           VerticalAlignment="Center" />
-                            </StackPanel>
-                            <Border Grid.Row="1" Grid.ColumnSpan="2" HorizontalAlignment="Left" Margin="0,8,0,0" Padding="8,3"
-                                    CornerRadius="10" Background="{DynamicResource AccentSubtleBrush}" ToolTip="{l:Loc power_mode_tooltip}"
-                                    Visibility="{Binding SelectedItem.HasPowerModeText, ElementName=DevicesList, Converter={StaticResource BoolToVisConverter}, FallbackValue=Collapsed}">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE945;" Style="{StaticResource IconGlyph}" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center" />
-                                    <TextBlock Text="{Binding SelectedItem.PowerModeText, ElementName=DevicesList}" Style="{StaticResource CaptionText}" />
-                                </StackPanel>
-                            </Border>
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" ToolTip="{l:Loc last_sync}">
-                                <TextBlock Text="&#xE895;" Style="{StaticResource IconGlyph}" FontSize="13"
-                                           Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,7,0" />
-                                <TextBlock Text="{Binding SelectedItem.LastSeenText, ElementName=DevicesList}" Style="{StaticResource CaptionText}"
-                                           VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Grid>
-
-                        <!-- Quick actions -->
-                        <Grid x:Name="DeviceQuickActions" Margin="0,12,-6,0" Resources="{StaticResource OnHeroResources}">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition />
-                                <ColumnDefinition />
-                                <ColumnDefinition />
-                                <ColumnDefinition />
-                            </Grid.ColumnDefinitions>
-                            <Button Style="{StaticResource QuickActionButton}" Click="StartMirror_Click"
-                                    ToolTip="{l:Loc open_your_phone_s_screen_in_a_window}" AutomationProperties.Name="{l:Loc open_phone_screen}">
-                                <StackPanel>
-                                    <TextBlock Text="&#xEE64;" Style="{StaticResource QuickActionGlyph}" />
-                                    <TextBlock Text="{l:Loc screen}" HorizontalAlignment="Center" />
-                                </StackPanel>
-                            </Button>
-                            <Button Grid.Column="1" Style="{StaticResource QuickActionButton}" Click="SendFiles_Click"
-                                    ToolTip="{l:Loc send_files_to_this_phone_s_downloads_folder}"
-                                    AutomationProperties.Name="{l:Loc send_files}">
-                                <StackPanel>
-                                    <TextBlock Text="&#xE898;" Style="{StaticResource QuickActionGlyph}" />
-                                    <TextBlock Text="{l:Loc files}" HorizontalAlignment="Center" />
-                                </StackPanel>
-                            </Button>
-                            <Button Grid.Column="2" Style="{StaticResource QuickActionButton}" Click="PublishClipboard_Click"
-                                    ToolTip="{l:Loc send_the_text_from_settings_clipboard_to_all}" AutomationProperties.Name="{l:Loc send_clipboard}">
-                                <StackPanel>
-                                    <TextBlock Text="&#xE77F;" Style="{StaticResource QuickActionGlyph}" />
-                                    <TextBlock Text="{l:Loc qa_clipboard}" HorizontalAlignment="Center" />
-                                </StackPanel>
-                            </Button>
-                            <Button Grid.Column="3" Style="{StaticResource QuickActionButton}" Click="RefreshPhoneData_Click"
-                                    ToolTip="{l:Loc refresh_phone_data}" AutomationProperties.Name="{l:Loc refresh_phone_data}">
-                                <StackPanel>
-                                    <TextBlock Text="&#xE72C;" Style="{StaticResource QuickActionGlyph}" />
-                                    <TextBlock Text="{l:Loc qa_sync}" HorizontalAlignment="Center" />
-                                </StackPanel>
-                            </Button>
-                        </Grid>
-                    </StackPanel>
+                    </Grid>
                 </Border>
             </ContentControl>
-            <StackPanel x:Name="NavItemsPanel" Grid.Row="1" Margin="0,14,0,0" KeyboardNavigation.TabNavigation="Once"
+            <StackPanel x:Name="NavItemsPanel" Grid.Row="2" KeyboardNavigation.TabNavigation="Once"
                         KeyboardNavigation.DirectionalNavigation="Cycle">
                 <RadioButton x:Name="NavHome" GroupName="MainNavigation" Tag="5" IsChecked="True" Style="{StaticResource NavPaneButton}"
-                             Checked="Navigate_Click" AutomationProperties.Name="{l:Loc home}">
+                             Checked="Navigate_Click" AutomationProperties.Name="{l:Loc home}" ToolTip="{l:Loc home}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE80F;" Style="{StaticResource NavGlyph}" />
-                        <TextBlock Text="{l:Loc home}" />
+                        <TextBlock Text="{l:Loc home}" Style="{StaticResource NavLabel}" />
                     </StackPanel>
                 </RadioButton>
                 <RadioButton x:Name="NavMessages" GroupName="MainNavigation" Tag="0" Style="{StaticResource NavPaneButton}"
-                             Checked="Navigate_Click" AutomationProperties.Name="{l:Loc messages}">
+                             Checked="Navigate_Click" AutomationProperties.Name="{l:Loc messages}" ToolTip="{l:Loc messages}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE8BD;" Style="{StaticResource NavGlyph}" />
-                        <TextBlock Text="{l:Loc messages}" />
-                    </StackPanel>
-                </RadioButton>
-                <RadioButton GroupName="MainNavigation" Tag="1" Style="{StaticResource NavPaneButton}"
-                             Checked="Navigate_Click" AutomationProperties.Name="{l:Loc photos}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xEB9F;" Style="{StaticResource NavGlyph}" />
-                        <TextBlock Text="{l:Loc photos}" />
-                    </StackPanel>
-                </RadioButton>
-                <RadioButton GroupName="MainNavigation" Tag="2" Style="{StaticResource NavPaneButton}"
-                             Checked="Navigate_Click" AutomationProperties.Name="{l:Loc files}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE8B7;" Style="{StaticResource NavGlyph}" />
-                        <TextBlock Text="{l:Loc files}" />
-                    </StackPanel>
-                </RadioButton>
-                <RadioButton GroupName="MainNavigation" Tag="3" Style="{StaticResource NavPaneButton}"
-                             Checked="Navigate_Click" AutomationProperties.Name="{l:Loc apps}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE71D;" Style="{StaticResource NavGlyph}" />
-                        <TextBlock Text="{l:Loc apps}" />
+                        <TextBlock Text="{l:Loc messages}" Style="{StaticResource NavLabel}" />
                     </StackPanel>
                 </RadioButton>
                 <RadioButton x:Name="NavNotifications" GroupName="MainNavigation" Tag="6" Style="{StaticResource NavPaneButton}"
-                             Checked="Navigate_Click" AutomationProperties.Name="{l:Loc tour_notifications_title}">
+                             Checked="Navigate_Click" AutomationProperties.Name="{l:Loc tour_notifications_title}" ToolTip="{l:Loc tour_notifications_title}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xEA8F;" Style="{StaticResource NavGlyph}" />
-                        <TextBlock Text="{l:Loc tour_notifications_title}" />
+                        <TextBlock Text="{l:Loc tour_notifications_title}" Style="{StaticResource NavLabel}" />
+                    </StackPanel>
+                </RadioButton>
+                <RadioButton GroupName="MainNavigation" Tag="1" Style="{StaticResource NavPaneButton}"
+                             Checked="Navigate_Click" AutomationProperties.Name="{l:Loc photos}" ToolTip="{l:Loc photos}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xEB9F;" Style="{StaticResource NavGlyph}" />
+                        <TextBlock Text="{l:Loc photos}" Style="{StaticResource NavLabel}" />
+                    </StackPanel>
+                </RadioButton>
+                <RadioButton GroupName="MainNavigation" Tag="2" Style="{StaticResource NavPaneButton}"
+                             Checked="Navigate_Click" AutomationProperties.Name="{l:Loc files}" ToolTip="{l:Loc files}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE8B7;" Style="{StaticResource NavGlyph}" />
+                        <TextBlock Text="{l:Loc files}" Style="{StaticResource NavLabel}" />
+                    </StackPanel>
+                </RadioButton>
+                <RadioButton GroupName="MainNavigation" Tag="3" Style="{StaticResource NavPaneButton}"
+                             Checked="Navigate_Click" AutomationProperties.Name="{l:Loc apps}" ToolTip="{l:Loc apps}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE71D;" Style="{StaticResource NavGlyph}" />
+                        <TextBlock Text="{l:Loc apps}" Style="{StaticResource NavLabel}" />
                     </StackPanel>
                 </RadioButton>
             </StackPanel>
-            <StackPanel x:Name="NavFooterPanel" Grid.Row="2">
+            <Button x:Name="NavMirrorButton" Grid.Row="3" Style="{StaticResource MainActionButton}" Height="34" Margin="0,0,0,6" Click="StartMirror_Click"
+                    ToolTip="{l:Loc open_your_phone_s_screen_in_a_window}" AutomationProperties.Name="{l:Loc open_phone_screen}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xEE64;" Style="{StaticResource IconGlyph}" FontSize="14" Foreground="{DynamicResource AccentTextBrush}" />
+                    <TextBlock Text="{l:Loc open_phone_screen}" Style="{StaticResource NavLabel}" Margin="8,0,0,0" FontWeight="SemiBold" />
+                </StackPanel>
+            </Button>
+            <StackPanel x:Name="NavFooterPanel" Grid.Row="4">
                 <RadioButton x:Name="NavHelp" GroupName="MainNavigation" Tag="7" Style="{StaticResource NavPaneButton}"
-                             Checked="Navigate_Click" AutomationProperties.Name="{l:Loc help}">
+                             Checked="Navigate_Click" AutomationProperties.Name="{l:Loc help}" ToolTip="{l:Loc help}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE897;" Style="{StaticResource NavGlyph}" />
-                        <TextBlock Text="{l:Loc help}" />
+                        <TextBlock Text="{l:Loc help}" Style="{StaticResource NavLabel}" />
                     </StackPanel>
                 </RadioButton>
                 <RadioButton x:Name="NavSettings" GroupName="MainNavigation" Tag="4" Style="{StaticResource NavPaneButton}"
-                             Checked="Navigate_Click" AutomationProperties.Name="{l:Loc settings}">
+                             Checked="Navigate_Click" AutomationProperties.Name="{l:Loc settings}" ToolTip="{l:Loc settings}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE713;" Style="{StaticResource NavGlyph}" />
-                        <TextBlock Text="{l:Loc settings}" />
+                        <TextBlock Text="{l:Loc settings}" Style="{StaticResource NavLabel}" />
                     </StackPanel>
                 </RadioButton>
             </StackPanel>
@@ -397,12 +369,13 @@
 
 
         <!-- Content layer: the selected page, with a status line for messages from any page. -->
-        <Grid Grid.Row="1" Grid.Column="1">
+        <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource Sheet}">
+        <Grid controls:Fluent.ClipRadius="17">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-        <Border Style="{StaticResource ContentLayer}">
+        <Border>
             <TabControl x:Name="MainTabs" SelectedIndex="0" Style="{StaticResource ContentOnlyTabControl}" SelectionChanged="TabControl_SelectionChanged">
                 <!-- Messages -->
                 <TabItem>
@@ -993,20 +966,17 @@
                                     <StackPanel Margin="16,20,32,32" MaxWidth="1000">
                                         <TextBlock Text="{l:Loc general}" Style="{StaticResource PageTitle}" Margin="0,0,0,8" />
                                         <TextBlock Text="{l:Loc appearance}" Style="{StaticResource SettingsGroupHeader}" />
-                                        <!-- Style gallery and accent swatches; filled in by BuildAppearancePickers. -->
+                                        <!-- Accent swatches; filled in by BuildAppearancePickers. -->
                                         <Border Style="{StaticResource SettingsCard}">
                                             <StackPanel>
                                                 <DockPanel>
-                                                    <TextBlock Text="&#xE771;" Style="{StaticResource SettingsCardGlyph}" />
+                                                    <TextBlock Text="&#xE790;" Style="{StaticResource SettingsCardGlyph}" />
                                                     <StackPanel VerticalAlignment="Center">
-                                                        <TextBlock Text="{l:Loc style}" Style="{StaticResource SettingsCardTitle}" />
-                                                        <TextBlock Text="{l:Loc style_description}" Style="{StaticResource SettingsCardDescription}" />
+                                                        <TextBlock Text="{l:Loc accent_color}" Style="{StaticResource SettingsCardTitle}" />
+                                                        <TextBlock Text="{l:Loc accent_color_description}" Style="{StaticResource SettingsCardDescription}" />
                                                     </StackPanel>
                                                 </DockPanel>
-                                                <UniformGrid x:Name="StylePickerPanel" Columns="2" Margin="0,14,-12,0" HorizontalAlignment="Left" Width="452"
-                                                             AutomationProperties.Name="{l:Loc style}" />
-                                                <TextBlock Text="{l:Loc accent_color}" Style="{StaticResource SettingsCardTitle}" Margin="0,18,0,0" />
-                                                <WrapPanel x:Name="AccentPickerPanel" Margin="0,8,0,0" AutomationProperties.Name="{l:Loc accent_color}" />
+                                                <WrapPanel x:Name="AccentPickerPanel" Margin="0,12,0,0" AutomationProperties.Name="{l:Loc accent_color}" />
                                                 <TextBlock x:Name="AccentNameText" Style="{StaticResource SettingsCardDescription}" Margin="2,6,0,0" />
                                             </StackPanel>
                                         </Border>
@@ -1861,8 +1831,8 @@
                 </TabItem>
             </TabControl>
         </Border>
-        <Border x:Name="StatusBar" Grid.Row="1" Padding="16,6" Background="{DynamicResource LayerBrush}"
-                BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1,1,0,0">
+        <Border x:Name="StatusBar" Grid.Row="1" Padding="20,6"
+                BorderBrush="{DynamicResource CardStrokeBrush}" BorderThickness="0,1,0,0">
             <DockPanel>
                 <TextBlock Text="&#xE946;" Style="{StaticResource IconGlyph}" FontSize="12" DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,8,0"
                            Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -1871,6 +1841,7 @@
             </DockPanel>
         </Border>
         </Grid>
+        </Border>
 
         <!-- Setup and add-a-device dialog. First run: welcome, features, get the app, pair, preferences, done.
              Adding another phone later: get the app, pair, done. -->
@@ -2088,20 +2059,6 @@
                                 <StackPanel VerticalAlignment="Center">
                                     <TextBlock Text="{l:Loc keep_running_in_the_notification_area}" Style="{StaticResource SettingsCardTitle}" />
                                     <TextBlock Text="{l:Loc closing_the_window_keeps_your_phone_connecte}" Style="{StaticResource SettingsCardDescription}" />
-                                </StackPanel>
-                            </DockPanel>
-                        </Border>
-<Border Style="{StaticResource SettingsCard}">
-                            <DockPanel>
-                                <TextBlock Text="&#xE771;" Style="{StaticResource SettingsCardGlyph}" />
-                                <ComboBox x:Name="OnboardingStyleCombo" DockPanel.Dock="Right" VerticalAlignment="Center" Margin="16,0,0,0" MinWidth="180"
-                                          SelectionChanged="StyleCombo_SelectionChanged" AutomationProperties.Name="{l:Loc style}">
-                                    <ComboBoxItem Tag="Glass" Content="{l:Loc style_glass}" />
-                                    <ComboBoxItem Tag="Clay" Content="{l:Loc style_clay}" />
-                                </ComboBox>
-                                <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="{l:Loc style}" Style="{StaticResource SettingsCardTitle}" />
-                                    <TextBlock Text="{l:Loc style_description}" Style="{StaticResource SettingsCardDescription}" />
                                 </StackPanel>
                             </DockPanel>
                         </Border>

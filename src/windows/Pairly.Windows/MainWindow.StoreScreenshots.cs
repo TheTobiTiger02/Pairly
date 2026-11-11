@@ -125,7 +125,6 @@ public partial class MainWindow
         var de = _demoLanguage == "de";
         var now = DemoNow;
         _realtimeConnected = true;
-        UpdateRealtimeStatusText();
         var granted = new[] { "notifications", "sms", "photos", "mirroring", "calls", "files", "clipboard" }
             .ToDictionary(key => key, _ => "granted");
         var phone = new LinkedDevice(

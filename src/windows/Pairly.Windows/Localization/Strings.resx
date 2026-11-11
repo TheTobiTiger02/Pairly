@@ -540,7 +540,6 @@
   <data name="file_received_detail" xml:space="preserve"><value>{0} is in Downloads\Pairly.</value></data>
   <data name="files_phone_storage" xml:space="preserve"><value>Phone storage</value></data>
   <data name="files_need_access" xml:space="preserve"><value>Your phone hasn't allowed file access yet. In Pairly on the phone, turn on Files, or turn on Power mode to allow everything at once.</value></data>
-  <data name="style" xml:space="preserve"><value>Style</value></data>
   <data name="permission_allowed" xml:space="preserve"><value>allowed</value></data>
   <data name="permission_denied" xml:space="preserve"><value>not allowed</value></data>
   <data name="permission_off" xml:space="preserve"><value>off</value></data>
@@ -563,11 +562,7 @@
   <data name="deleted_item" xml:space="preserve"><value>Deleted {0}.</value></data>
   <data name="opening_app" xml:space="preserve"><value>Opening {0}…</value></data>
   <data name="file_sent_to_downloads" xml:space="preserve"><value>{0} is in the Downloads folder on {1}.</value></data>
-  <data name="style_glass" xml:space="preserve"><value>Glass</value></data>
-  <data name="style_clay" xml:space="preserve"><value>Clay</value></data>
-  <data name="style_glass_detail" xml:space="preserve"><value>Clear panes, crisp type</value></data>
-  <data name="style_clay_detail" xml:space="preserve"><value>Soft shapes, friendly</value></data>
-  <data name="style_description" xml:space="preserve"><value>Shapes, type and motion. Matches the phone app.</value></data>
+  <data name="accent_color_description" xml:space="preserve"><value>Used for buttons, selection and state.</value></data>
   <data name="accent_color" xml:space="preserve"><value>Accent color</value></data>
   <data name="accent_system" xml:space="preserve"><value>Windows accent</value></data>
   <data name="accent_indigo" xml:space="preserve"><value>Indigo</value></data>

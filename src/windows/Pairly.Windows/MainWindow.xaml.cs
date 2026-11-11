@@ -209,6 +209,7 @@ public partial class MainWindow : Window
         }
 
         ClosePairingPanel();
+        Dispatcher.BeginInvoke(() => MoveNavIndicator(animate: true), DispatcherPriority.Loaded);
     }
 
     private void SettingsNav_Checked(object sender, RoutedEventArgs e)
@@ -382,9 +383,43 @@ public partial class MainWindow : Window
 
     private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        // Narrow windows keep every feature: the pane slims down.
-        NavPane.Width = ActualWidth < 1000 ? 272 : 292;
-        BrandTitleText.Visibility = ActualWidth < 1040 ? Visibility.Collapsed : Visibility.Visible;
+        // Narrow windows keep every page: the navigation collapses to icons.
+        var compact = ActualWidth < 1040;
+        NavPane.Tag = compact ? "Compact" : null;
+        NavPane.Width = compact ? 48 : 212;
+        var labels = compact ? Visibility.Collapsed : Visibility.Visible;
+        BrandTitleText.Visibility = labels;
+        DeviceSwitcherText.Visibility = labels;
+        DeviceSwitcherChevron.Visibility = labels;
+        Dispatcher.BeginInvoke(() => MoveNavIndicator(animate: false), DispatcherPriority.Loaded);
+    }
+
+    /// <summary>Slides the selection marker behind the checked page in the navigation.</summary>
+    private void MoveNavIndicator(bool animate)
+    {
+        var selected = FindVisualChildren<System.Windows.Controls.RadioButton>(NavPane)
+            .FirstOrDefault(button => button.GroupName == "MainNavigation" && button.IsChecked == true);
+        if (selected is null || !selected.IsLoaded)
+        {
+            NavIndicator.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        var y = selected.TransformToAncestor(NavPane).Transform(new System.Windows.Point(0, 0)).Y;
+        var first = NavIndicator.Visibility != Visibility.Visible;
+        NavIndicator.Visibility = Visibility.Visible;
+        if (!animate || first || !Motion.Enabled)
+        {
+            NavIndicatorOffset.BeginAnimation(System.Windows.Media.TranslateTransform.YProperty, null);
+            NavIndicatorOffset.Y = y;
+            return;
+        }
+
+        NavIndicatorOffset.BeginAnimation(System.Windows.Media.TranslateTransform.YProperty,
+            new System.Windows.Media.Animation.DoubleAnimation(y, TimeSpan.FromMilliseconds(420))
+            {
+                EasingFunction = new System.Windows.Media.Animation.BackEase { Amplitude = 0.35, EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut }
+            });
     }
 
     private static IEnumerable<T> FindVisualChildren<T>(System.Windows.DependencyObject root) where T : System.Windows.DependencyObject
@@ -957,13 +992,6 @@ public partial class MainWindow : Window
         }
 
         _realtimeConnected = connected;
-        Dispatcher.InvokeAsync(UpdateRealtimeStatusText, DispatcherPriority.Background);
-    }
-
-    private void UpdateRealtimeStatusText()
-    {
-        RealtimeStatusText.Text = _realtimeConnected ? L.T("live") : L.T("reconnecting");
-        RealtimeStatusDot.SetResourceReference(System.Windows.Shapes.Shape.FillProperty, _realtimeConnected ? "SuccessBrush" : "CautionBrush");
     }
 
     private void HandleRealtimeEvent(string messageJson)
@@ -2976,6 +3004,15 @@ public sealed class DeviceViewModel : INotifyPropertyChanged
             : string.Empty;
 
     public bool HasPowerModeText => PowerModeText.Length > 0;
+
+    /// <summary>Green while Power mode works, amber while paused, red when its helper fails.</summary>
+    public System.Windows.Media.Brush? PowerModeBrush => System.Windows.Application.Current?.TryFindResource(
+        Device.Permissions is not null && Device.Permissions.TryGetValue("powerMode", out var power)
+            ? power switch { "ready" => "SuccessBrush", "helperFailed" => "DangerBrush", _ => "CautionBrush" }
+            : "TextTertiaryBrush") as System.Windows.Media.Brush;
+
+    /// <summary>Beside the link line: the battery while connected, the connection state otherwise.</summary>
+    public string SwitcherStatusText => Device.Connected && !string.IsNullOrWhiteSpace(BatteryStatusText) ? BatteryStatusText : StatusText;
 
     public string BatteryDisplayText => string.IsNullOrWhiteSpace(BatteryStatusText) ? L.T("unavailable") : BatteryStatusText;
 

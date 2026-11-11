@@ -7,8 +7,9 @@ using FontFamily = System.Windows.Media.FontFamily;
 namespace Pairly.Windows;
 
 /// <summary>
-/// Pairly's look: a style (Glass or Clay) plus an accent color, in light or dark. The phone app uses
-/// the same names and colors (ui/theme/Theme.kt); keep the tables in sync.
+/// Pairly's look: one design in light or dark, with an accent color. Neutral grounds, hairline
+/// edges, and the accent only on actions, selection and state. The phone app uses the same names
+/// and colors (ui/theme/Theme.kt); keep the tables in sync.
 /// </summary>
 internal static class ThemeManager
 {
@@ -18,8 +19,6 @@ internal static class ThemeManager
     // AccentPalette holds eight RGBA entries: Light3, Light2, Light1, Base, Dark1, Dark2, Dark3, unused.
     private const int AccentLight2 = 1;
     private const int AccentDark1 = 4;
-
-    public static readonly string[] Styles = ["Glass", "Clay"];
 
     /// <summary>Accent choices; "System" uses the Windows accent color.</summary>
     public static readonly string[] Accents = ["System", "Indigo", "Violet", "Blue", "Teal", "Green", "Amber", "Coral", "Pink"];
@@ -34,25 +33,19 @@ internal static class ThemeManager
     /// <summary>"System" follows Windows; "Light" and "Dark" override it. High contrast always wins.</summary>
     public static string Preference { get; set; } = "System";
 
-    /// <summary>"Glass" (Manrope, neutral flat panes, graphite dark) or "Clay" (Nunito, warm, accent-filled cards, rounder).</summary>
-    public static string Style { get; set; } = "Glass";
-
     public static string Accent { get; set; } = "Violet";
 
-    public static bool IsClay => string.Equals(Style, "Clay", StringComparison.OrdinalIgnoreCase);
-
-    /// <summary>Every color and radius one style needs in one mode.</summary>
+    /// <summary>
+    /// Every color one mode needs. The window is the ground the navigation sits on; the sheet is
+    /// the page laid beside it; cards sit on the sheet.
+    /// </summary>
     internal sealed record Palette(
         Color Accent, Color OnAccent, Color AccentSubtle,
-        Color Window, Color Surface, Color Elevated,
-        Color Card, Color CardStroke,
-        Color Text, Color TextSecondary, Color TextTertiary,
-        Color Hero, Color OnHero,
-        Color NavSelected, Color OnNavSelected,
-        double Control, double Card_, double Overlay);
+        Color Window, Color Sheet, Color Card, Color Elevated, Color CardStroke,
+        Color Text, Color TextSecondary, Color TextTertiary);
 
-    // Glass: the accent on neutral light grounds, and a light tone of it for graphite dark.
-    private static readonly Dictionary<string, (int Accent, int Dark)> GlassTones = new(StringComparer.OrdinalIgnoreCase)
+    // The accent on light grounds, and a light tone of it for dark grounds.
+    private static readonly Dictionary<string, (int Light, int Dark)> Tones = new(StringComparer.OrdinalIgnoreCase)
     {
         ["Indigo"] = (0x4F46E5, 0xA5B4FC),
         ["Violet"] = (0x6D3FD9, 0xC4B5FD),
@@ -60,108 +53,42 @@ internal static class ThemeManager
         ["Teal"] = (0x0F766E, 0x5EEAD4),
         ["Green"] = (0x127536, 0x86EFAC),
         ["Amber"] = (0xA14A06, 0xFCD34D),
-        ["Coral"] = (0xC2410C, 0xFDBA9F),
+        ["Coral"] = (0xB03808, 0xFDBA9F),
         ["Pink"] = (0xBE185D, 0xF9A8D4),
     };
 
-    // Clay light: soft fill for cards, deep tone for buttons and text on it; dark: a pastel tone.
-    private static readonly Dictionary<string, (int Soft, int Deep, int Dark)> ClayTones = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["Indigo"] = (0xE2E1FF, 0x3730A3, 0xB4B4FF),
-        ["Violet"] = (0xEDE3FF, 0x5B21B6, 0xCDB4FF),
-        ["Blue"] = (0xD9E9FF, 0x1D4ED8, 0xA7CCFF),
-        ["Teal"] = (0xCFF3EC, 0x115E59, 0x8EE8DA),
-        ["Green"] = (0xD6F3DA, 0x166534, 0x9EE6A9),
-        ["Amber"] = (0xFFEBC4, 0x92400E, 0xFFD27A),
-        ["Coral"] = (0xFFE0D3, 0x9A3412, 0xFFB49E),
-        ["Pink"] = (0xFFDDEE, 0x9D174D, 0xFFB0D6),
-    };
+    private static readonly Color DarkInk = Rgb(0x14141A);
 
-    // Glass: neutral, no tint. Light is near-white with white cards; dark is graphite.
-    private static readonly Color GlassPaper = Rgb(0xF6F6F7);
-    private static readonly Color GlassHairline = Rgb(0xE6E6E9);
-    private static readonly Color GlassInk = Rgb(0x18181B);
-    private static readonly Color GraphiteNight = Rgb(0x0E0E10);
-    private static readonly Color GraphiteCard = Rgb(0x17171A);
-    private static readonly Color GraphiteElevated = Rgb(0x1F1F23);
-    private static readonly Color GraphiteText = Rgb(0xEDEDEF);
-
-    // Clay: warm. Cream and warm ink in light, warm charcoal in dark.
-    private static readonly Color ClayCream = Rgb(0xFBF7F1);
-    private static readonly Color ClayInk = Rgb(0x2B2520);
-    private static readonly Color ClayCharcoal = Rgb(0x1A1714);
-    private static readonly Color ClayCharcoalCard = Rgb(0x26221E);
-
-    /// <summary>The swatch shown for an accent in the current style and mode.</summary>
-    public static Color Swatch(string style, string accent, bool dark)
+    /// <summary>The swatch shown for an accent in the current mode.</summary>
+    public static Color Swatch(string accent, bool dark)
     {
         if (string.Equals(accent, "System", StringComparison.OrdinalIgnoreCase))
         {
             return TryReadSystemAccent(dark) ?? Rgb(0x0067C0);
         }
-        return string.Equals(style, "Clay", StringComparison.OrdinalIgnoreCase)
-            ? Rgb(dark ? ClayTones[accent].Dark : ClayTones[accent].Deep)
-            : Rgb(dark ? GlassTones[accent].Dark : GlassTones[accent].Accent);
+        return Rgb(dark ? Tones[accent].Dark : Tones[accent].Light);
     }
 
-    /// <summary>The palette for a style, accent and mode. "System" needs the Windows accent; null falls back to Violet.</summary>
-    internal static Palette For(string style, string accent, bool dark, Color? systemAccent = null)
+    /// <summary>The palette for an accent and mode. "System" needs the Windows accent; null falls back to Violet.</summary>
+    internal static Palette For(string accent, bool dark, Color? systemAccent = null)
     {
         var useSystem = string.Equals(accent, "System", StringComparison.OrdinalIgnoreCase) && systemAccent is not null;
-        if (!useSystem && !GlassTones.ContainsKey(accent))
+        if (!useSystem && !Tones.ContainsKey(accent))
         {
             accent = "Violet";
         }
 
-        if (string.Equals(style, "Clay", StringComparison.OrdinalIgnoreCase))
-        {
-            // Warm and colorful: cards filled with the accent's soft tone, deep-toned buttons and phone card.
-            var (soft, deep, tone) = useSystem
-                ? (Mix(Colors.White, systemAccent!.Value, 0.16), systemAccent!.Value, systemAccent!.Value)
-                : (Rgb(ClayTones[accent].Soft), Rgb(ClayTones[accent].Deep), Rgb(ClayTones[accent].Dark));
-            if (!dark)
-            {
-                var ground = Mix(ClayCream, soft, 0.18);
-                return new(deep, Colors.White, Mix(soft, deep, 0.12),
-                    ground, Mix(ground, soft, 0.55), Colors.White,
-                    soft, WithAlpha(soft, 0x00),
-                    ClayInk, Rgb(0x675C52), Rgb(0x8A7E73),
-                    deep, Colors.White,
-                    deep, Colors.White,
-                    18, 28, 28);
-            }
-            var card = Mix(ClayCharcoalCard, tone, 0.10);
-            var pastel = Mix(card, tone, 0.85);
-            return new(tone, ClayCharcoal, Mix(card, tone, 0.16),
-                ClayCharcoal, card, Mix(card, Colors.White, 0.05),
-                card, WithAlpha(card, 0x00),
-                Rgb(0xF5EFE8), Rgb(0xC2B8AC), Rgb(0x9C9083),
-                pastel, ClayCharcoal,
-                pastel, ClayCharcoal,
-                18, 28, 28);
-        }
-
-        // Neutral and flat: white or graphite panes with hairline edges; the accent marks actions and state.
-        var (glassAccent, darkTone) = useSystem
-            ? (systemAccent!.Value, systemAccent!.Value)
-            : (Rgb(GlassTones[accent].Accent), Rgb(GlassTones[accent].Dark));
+        var tone = useSystem ? systemAccent!.Value : Rgb(dark ? Tones[accent].Dark : Tones[accent].Light);
         if (!dark)
         {
-            return new(glassAccent, Colors.White, Mix(glassAccent, Colors.White, 0.88),
-                GlassPaper, Colors.White, Colors.White,
-                Colors.White, GlassHairline,
-                GlassInk, Rgb(0x52525B), Rgb(0x71717A),
-                GlassInk, Colors.White,
-                GlassInk, Colors.White,
-                6, 14, 14);
+            return new(tone, Colors.White, Mix(tone, Colors.White, 0.88),
+                Rgb(0xECEEF1), Rgb(0xF4F5F7), Colors.White, Colors.White, Rgb(0xDFE1E6),
+                Rgb(0x17181B), Rgb(0x555962), Rgb(0x666A74));
         }
-        return new(darkTone, GlassInk, Mix(GraphiteCard, darkTone, 0.16),
-            GraphiteNight, GraphiteCard, GraphiteElevated,
-            GraphiteCard, WithAlpha(Colors.White, 0x12),
-            GraphiteText, Rgb(0xA1A1AA), Rgb(0x71717A),
-            GraphiteElevated, GraphiteText,
-            darkTone, GlassInk,
-            6, 14, 14);
+        var card = Rgb(0x1A1B1E);
+        return new(tone, DarkInk, Mix(card, tone, 0.16),
+            Rgb(0x0C0D0E), Rgb(0x111214), card, Rgb(0x222327), Rgb(0x2C2E33),
+            Rgb(0xEDEDF0), Rgb(0xA6A9B2), Rgb(0x8B8E97));
     }
 
     private static Color Rgb(int value) => Color.FromRgb((byte)(value >> 16), (byte)(value >> 8), (byte)value);
@@ -198,18 +125,14 @@ internal static class ThemeManager
         }
         currentTheme = replacement;
 
-        var family = IsClay ? "Nunito" : "Manrope";
-        var font = new FontFamily(new Uri("pack://application:,,,/"), $"./Fonts/#{family}, Segoe UI");
+        var font = new FontFamily(new Uri("pack://application:,,,/"), "./Fonts/#Manrope, Segoe UI");
         resources["AppFontFamily"] = font;
         resources["DisplayFontFamily"] = font;
-
         resources["CardShadow"] = null;
-        var onHero = resources["OnHeroResources"] as ResourceDictionary;
-        onHero?.Clear();
 
         if (!IsHighContrast)
         {
-            var palette = For(Style, Accent, IsDark, TryReadSystemAccent(IsDark));
+            var palette = For(Accent, IsDark, TryReadSystemAccent(IsDark));
             SetBrush(currentTheme, "AccentBrush", palette.Accent);
             SetBrush(currentTheme, "AccentHoverBrush", WithAlpha(palette.Accent, 0xE6));
             SetBrush(currentTheme, "AccentPressedBrush", WithAlpha(palette.Accent, 0xCC));
@@ -218,45 +141,20 @@ internal static class ThemeManager
             SetBrush(currentTheme, "SolidBackgroundBrush", palette.Window);
             SetBrush(currentTheme, "WindowBrush", palette.Window);
             SetBrush(currentTheme, "NavigationBrush", palette.Window);
-            SetBrush(currentTheme, "SurfaceBrush", palette.Surface);
+            SetBrush(currentTheme, "SheetBrush", palette.Sheet);
+            SetBrush(currentTheme, "LayerBrush", palette.Sheet);
+            SetBrush(currentTheme, "SurfaceBrush", palette.Sheet);
             SetBrush(currentTheme, "FlyoutBrush", palette.Elevated);
             SetBrush(currentTheme, "SurfaceElevatedBrush", palette.Elevated);
             SetBrush(currentTheme, "CardFillBrush", palette.Card);
-            SetBrush(currentTheme, "CardFillSecondaryBrush", palette.Surface);
+            SetBrush(currentTheme, "CardFillSecondaryBrush", palette.Sheet);
             SetBrush(currentTheme, "CardStrokeBrush", palette.CardStroke);
             SetBrush(currentTheme, "TextPrimaryBrush", palette.Text);
             SetBrush(currentTheme, "TextSecondaryBrush", palette.TextSecondary);
             SetBrush(currentTheme, "TextTertiaryBrush", palette.TextTertiary);
-            SetBrush(currentTheme, "HeroBrush", palette.Hero);
-            SetBrush(currentTheme, "NavSelectedBrush", palette.NavSelected);
-            SetBrush(currentTheme, "NavSelectedTextBrush", palette.OnNavSelected);
-            resources["ControlRadius"] = new CornerRadius(palette.Control);
-            resources["CardRadius"] = new CornerRadius(palette.Card_);
-            resources["OverlayRadius"] = new CornerRadius(palette.Overlay);
-            resources["OverlayFooterRadius"] = new CornerRadius(0, 0, palette.Overlay, palette.Overlay);
-            resources["PillRadius"] = new CornerRadius(IsClay ? 24 : 10);
-            // Clay cards float on a soft shadow in their own accent; Glass stays flat.
-            resources["CardShadow"] = IsClay && !IsDark
-                ? new System.Windows.Media.Effects.DropShadowEffect { Color = palette.Accent, Opacity = 0.16, BlurRadius = 18, ShadowDepth = 4, Direction = 270 }
-                : null;
-
-            // Content on the phone card: the card's own ink, with translucent controls of the same ink.
-            if (onHero is not null)
-            {
-                var ink = palette.OnHero;
-                SetBrush(onHero, "TextPrimaryBrush", ink);
-                SetBrush(onHero, "TextSecondaryBrush", WithAlpha(ink, 0xE6));
-                SetBrush(onHero, "TextTertiaryBrush", WithAlpha(ink, 0xCC));
-                SetBrush(onHero, "AccentBrush", ink);
-                SetBrush(onHero, "AccentSubtleBrush", WithAlpha(ink, 0x2E));
-                SetBrush(onHero, "ControlFillBrush", WithAlpha(ink, 0x1F));
-                SetBrush(onHero, "ControlFillHoverBrush", WithAlpha(ink, 0x33));
-                SetBrush(onHero, "ControlFillPressedBrush", WithAlpha(ink, 0x17));
-                SetBrush(onHero, "ControlStrokeBrush", WithAlpha(ink, 0x1F));
-                SetBrush(onHero, "SurfaceHoverBrush", WithAlpha(ink, 0x1A));
-                SetBrush(onHero, "SurfacePressedBrush", WithAlpha(ink, 0x12));
-                SetBrush(onHero, "ControlElevationBorderBrush", WithAlpha(ink, 0x1F));
-            }
+            SetBrush(currentTheme, "HeroBrush", palette.Card);
+            SetBrush(currentTheme, "NavSelectedBrush", palette.AccentSubtle);
+            SetBrush(currentTheme, "NavSelectedTextBrush", palette.Accent);
         }
 
         ThemeChanged?.Invoke(null, EventArgs.Empty);
@@ -295,40 +193,35 @@ internal static class ThemeManager
         return Math.Max(l1, l2) / Math.Min(l1, l2);
     }
 
-    /// <summary>Text pairs below 4.5:1 across every style, accent and mode; empty when all pass.</summary>
+    /// <summary>Text pairs below 4.5:1 across every accent and mode; empty when all pass.</summary>
     internal static IReadOnlyList<string> ContrastFailures()
     {
         var failures = new List<string>();
-        foreach (var style in Styles)
+        foreach (var accent in Accents.Skip(1))
         {
-            foreach (var accent in Accents.Skip(1))
+            foreach (var dark in new[] { false, true })
             {
-                foreach (var dark in new[] { false, true })
+                var p = For(accent, dark);
+                var checks = new (string Name, Color Fg, Color Bg)[]
                 {
-                    var p = For(style, accent, dark);
-                    var card = Color.FromRgb(
-                        (byte)Math.Round(p.Card.R * p.Card.A / 255.0 + p.Window.R * (1 - p.Card.A / 255.0)),
-                        (byte)Math.Round(p.Card.G * p.Card.A / 255.0 + p.Window.G * (1 - p.Card.A / 255.0)),
-                        (byte)Math.Round(p.Card.B * p.Card.A / 255.0 + p.Window.B * (1 - p.Card.A / 255.0)));
-                    var checks = new (string Name, Color Fg, Color Bg)[]
+                    ("text on window", p.Text, p.Window),
+                    ("secondary text on window", p.TextSecondary, p.Window),
+                    ("secondary text on sheet", p.TextSecondary, p.Sheet),
+                    ("tertiary text on sheet", p.TextTertiary, p.Sheet),
+                    ("text on card", p.Text, p.Card),
+                    ("secondary text on card", p.TextSecondary, p.Card),
+                    ("accent on card", p.Accent, p.Card),
+                    ("accent on sheet", p.Accent, p.Sheet),
+                    ("accent on window", p.Accent, p.Window),
+                    ("accent button text", p.OnAccent, p.Accent),
+                    ("selected page", p.Accent, p.AccentSubtle),
+                };
+                foreach (var check in checks)
+                {
+                    var ratio = Contrast(check.Fg, check.Bg);
+                    if (ratio < 4.5)
                     {
-                        ("text on window", p.Text, p.Window),
-                        ("secondary text on window", p.TextSecondary, p.Window),
-                        ("text on card", p.Text, card),
-                        ("secondary text on card", p.TextSecondary, card),
-                        ("accent on card", p.Accent, card),
-                        ("accent on window", p.Accent, p.Window),
-                        ("accent button text", p.OnAccent, p.Accent),
-                        ("phone card text", p.OnHero, p.Hero),
-                        ("selected page", p.OnNavSelected, p.NavSelected),
-                    };
-                    foreach (var check in checks)
-                    {
-                        var ratio = Contrast(check.Fg, check.Bg);
-                        if (ratio < 4.5)
-                        {
-                            failures.Add($"{style} {accent} {(dark ? "dark" : "light")}: {check.Name} {ratio:0.00}:1");
-                        }
+                        failures.Add($"{accent} {(dark ? "dark" : "light")}: {check.Name} {ratio:0.00}:1");
                     }
                 }
             }

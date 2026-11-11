@@ -95,9 +95,6 @@ public partial class CaptionButtons : UserControl
             return;
         }
 
-        // Hidden, not collapsed: the native buttons still need the space.
-        Visibility = WindowBackdrop.SupportsMica ? Visibility.Hidden : Visibility.Visible;
-
         var maximized = _window.WindowState == WindowState.Maximized;
         MaximizeButton.Content = maximized ? RestoreGlyph : MaximizeGlyph;
         MaximizeButton.ToolTip = maximized ? L.T("restore") : L.T("maximize");

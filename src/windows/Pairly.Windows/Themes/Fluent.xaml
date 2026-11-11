@@ -7,15 +7,23 @@
     <FontFamily x:Key="AppFontFamily">Segoe UI Variable Text, Segoe UI</FontFamily>
     <FontFamily x:Key="DisplayFontFamily">Segoe UI Variable Display, Segoe UI</FontFamily>
     <FontFamily x:Key="IconFontFamily">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
-    <Thickness x:Key="PagePadding">24</Thickness>
-    <Thickness x:Key="CardPadding">16</Thickness>
+    <!-- Spacing in steps of 4. Pages share one padding; cards share one inner padding. -->
+    <Thickness x:Key="PagePadding">20</Thickness>
+    <Thickness x:Key="CardPadding">12</Thickness>
     <ResourceDictionary x:Key="OnHeroResources" Source="OnHero.xaml" />
-    <CornerRadius x:Key="OverlayFooterRadius">0,0,8,8</CornerRadius>
+    <!-- Three corner sizes: controls, cards, overlays. -->
+    <CornerRadius x:Key="OverlayFooterRadius">0,0,14,14</CornerRadius>
     <CornerRadius x:Key="SmallRadius">4</CornerRadius>
-    <CornerRadius x:Key="ControlRadius">4</CornerRadius>
-    <CornerRadius x:Key="CardRadius">8</CornerRadius>
-    <CornerRadius x:Key="OverlayRadius">8</CornerRadius>
-    <CornerRadius x:Key="PillRadius">16</CornerRadius>
+    <CornerRadius x:Key="ControlRadius">6</CornerRadius>
+    <CornerRadius x:Key="CardRadius">10</CornerRadius>
+    <CornerRadius x:Key="OverlayRadius">14</CornerRadius>
+    <CornerRadius x:Key="PillRadius">10</CornerRadius>
+    <!-- The page: a sheet beside the navigation with one large rounded side. -->
+    <CornerRadius x:Key="SheetRadius">18,8,8,18</CornerRadius>
+    <!-- The pair corner, from the logo: three soft corners and one tight one. Only for the selected
+         page, the main button and message bubbles. -->
+    <CornerRadius x:Key="PairRadius">12,12,12,3</CornerRadius>
+    <CornerRadius x:Key="PairRadiusMirrored">12,12,3,12</CornerRadius>
 
     <DropShadowEffect x:Key="FlyoutShadow" BlurRadius="16" ShadowDepth="4" Direction="270" Opacity="0.22" Color="#FF000000" />
     <DropShadowEffect x:Key="DialogShadow" BlurRadius="40" ShadowDepth="12" Direction="270" Opacity="0.34" Color="#FF000000" />
@@ -826,11 +834,13 @@
     </Style>
 
     <!-- Surfaces -->
-    <Style x:Key="ContentLayer" TargetType="Border">
-        <Setter Property="Background" Value="{DynamicResource LayerBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource LayerStrokeBrush}" />
-        <Setter Property="BorderThickness" Value="1,1,0,0" />
-        <Setter Property="CornerRadius" Value="8,0,0,0" />
+    <!-- The page: a sheet beside the navigation. -->
+    <Style x:Key="Sheet" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource SheetBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{DynamicResource SheetRadius}" />
+        <Setter Property="Margin" Value="0,0,8,8" />
     </Style>
 
     <Style x:Key="PageCard" TargetType="Border">
