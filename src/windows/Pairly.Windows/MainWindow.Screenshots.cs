@@ -219,7 +219,7 @@ public partial class MainWindow
             ThemeCombo.SelectedIndex = 2; // Dark
             await settle(150);
             Expect(ThemeManager.IsDark || ThemeManager.IsHighContrast, "Dark to switch the theme");
-            Expect(ThemeManager.IsHighContrast || (TryFindResource("WindowBrush") as SolidColorBrush)?.Color == Color.FromRgb(0x0C, 0x0D, 0x0E), "dark mode to use the dark ground");
+            Expect(ThemeManager.IsHighContrast || (TryFindResource("WindowBrush") as SolidColorBrush)?.Color == Color.FromRgb(0x17, 0x18, 0x1B), "dark mode to use the dark ground");
 
             // The accent picker applies live, and back.
             ((System.Windows.Controls.RadioButton)AccentPickerPanel.Children[8]).IsChecked = true; // Pink

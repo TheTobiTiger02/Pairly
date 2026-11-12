@@ -20,10 +20,9 @@
     <CornerRadius x:Key="PillRadius">10</CornerRadius>
     <!-- The page: a sheet beside the navigation with one large rounded side. -->
     <CornerRadius x:Key="SheetRadius">18,8,8,18</CornerRadius>
-    <!-- The pair corner, from the logo: three soft corners and one tight one. Only for the selected
-         page, the main button and message bubbles. -->
-    <CornerRadius x:Key="PairRadius">12,12,12,3</CornerRadius>
-    <CornerRadius x:Key="PairRadiusMirrored">12,12,3,12</CornerRadius>
+    <!-- Message bubbles: three soft corners and a tight one on the sender's side. -->
+    <CornerRadius x:Key="BubbleRadius">12,12,12,3</CornerRadius>
+    <CornerRadius x:Key="BubbleRadiusMirrored">12,12,3,12</CornerRadius>
 
     <DropShadowEffect x:Key="FlyoutShadow" BlurRadius="16" ShadowDepth="4" Direction="270" Opacity="0.22" Color="#FF000000" />
     <DropShadowEffect x:Key="DialogShadow" BlurRadius="40" ShadowDepth="12" Direction="270" Opacity="0.34" Color="#FF000000" />
@@ -148,7 +147,7 @@
     <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}" />
 
     <Style x:Key="AccentButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-        <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+        <Setter Property="Background" Value="{DynamicResource AccentFillBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource AccentTextBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource AccentElevationBorderBrush}" />
         <Setter Property="Template">
@@ -537,8 +536,8 @@
                             <Setter TargetName="Box" Property="Background" Value="{DynamicResource ControlFillHoverBrush}" />
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="Box" Property="Background" Value="{DynamicResource AccentBrush}" />
-                            <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                            <Setter TargetName="Box" Property="Background" Value="{DynamicResource AccentFillBrush}" />
+                            <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource AccentFillBrush}" />
                             <Setter TargetName="Check" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
@@ -580,8 +579,8 @@
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="StateText" Property="Text" Value="{l:Loc toggle_on}" />
-                            <Setter TargetName="Track" Property="Background" Value="{DynamicResource AccentBrush}" />
-                            <Setter TargetName="Track" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                            <Setter TargetName="Track" Property="Background" Value="{DynamicResource AccentFillBrush}" />
+                            <Setter TargetName="Track" Property="BorderBrush" Value="{DynamicResource AccentFillBrush}" />
                             <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right" />
                             <Setter TargetName="Knob" Property="Fill" Value="{DynamicResource AccentTextBrush}" />
                         </Trigger>
@@ -799,7 +798,7 @@
                         <Border x:Name="Ring" CornerRadius="{DynamicResource CardRadius}" BorderThickness="2"
                                 BorderBrush="{DynamicResource AccentBrush}" Visibility="Hidden" />
                         <Border x:Name="Badge" Width="20" Height="20" CornerRadius="10" Margin="0,7,7,0"
-                                HorizontalAlignment="Right" VerticalAlignment="Top" Background="{DynamicResource AccentBrush}"
+                                HorizontalAlignment="Right" VerticalAlignment="Top" Background="{DynamicResource AccentFillBrush}"
                                 Visibility="Hidden">
                             <TextBlock Text="&#xE73E;" Style="{StaticResource IconGlyph}" FontSize="11"
                                        Foreground="{DynamicResource AccentTextBrush}" />

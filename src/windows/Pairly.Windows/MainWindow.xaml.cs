@@ -420,9 +420,9 @@ public partial class MainWindow : Window
         }
 
         NavIndicatorOffset.BeginAnimation(System.Windows.Media.TranslateTransform.YProperty,
-            new System.Windows.Media.Animation.DoubleAnimation(y, TimeSpan.FromMilliseconds(420))
+            new System.Windows.Media.Animation.DoubleAnimation(y, TimeSpan.FromMilliseconds(200))
             {
-                EasingFunction = new System.Windows.Media.Animation.BackEase { Amplitude = 0.35, EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut }
+                EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut }
             });
     }
 

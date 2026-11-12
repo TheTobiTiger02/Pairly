@@ -26,11 +26,9 @@ public partial class MainWindow
         System.Windows.Automation.AutomationProperties.SetName(ToastHost, text);
         if (Motion.Enabled)
         {
-            var spring = new BackEase { Amplitude = 0.4, EasingMode = EasingMode.EaseOut };
             ToastHost.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(160)));
-            ToastOffset.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(14, 0, TimeSpan.FromMilliseconds(420)) { EasingFunction = spring });
-            ToastScale.BeginAnimation(ScaleTransform.ScaleXProperty, new DoubleAnimation(0.92, 1, TimeSpan.FromMilliseconds(420)) { EasingFunction = spring });
-            ToastScale.BeginAnimation(ScaleTransform.ScaleYProperty, new DoubleAnimation(0.92, 1, TimeSpan.FromMilliseconds(420)) { EasingFunction = spring });
+            ToastOffset.BeginAnimation(TranslateTransform.YProperty,
+                new DoubleAnimation(8, 0, TimeSpan.FromMilliseconds(220)) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
         }
         else
         {
@@ -75,7 +73,7 @@ public partial class MainWindow
         {
             ConfirmOverlay.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(140)));
             ConfirmOffset.BeginAnimation(TranslateTransform.YProperty,
-                new DoubleAnimation(12, 0, TimeSpan.FromMilliseconds(320)) { EasingFunction = new BackEase { Amplitude = 0.3, EasingMode = EasingMode.EaseOut } });
+                new DoubleAnimation(8, 0, TimeSpan.FromMilliseconds(220)) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
         }
 
         // Cancel has the focus, so Enter never confirms a deletion by accident.
@@ -104,7 +102,7 @@ public partial class MainWindow
 
     // --- Page motion ----------------------------------------------------------------------------
 
-    /// <summary>A page arrives by rising a little while it fades in.</summary>
+    /// <summary>A page arrives with a short fade and a few pixels of rise.</summary>
     private static void AnimatePageIn(FrameworkElement page)
     {
         if (!Motion.Enabled)
@@ -118,7 +116,7 @@ public partial class MainWindow
         page.RenderTransform = offset;
         page.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200)));
         offset.BeginAnimation(TranslateTransform.YProperty,
-            new DoubleAnimation(10, 0, TimeSpan.FromMilliseconds(360)) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
+            new DoubleAnimation(6, 0, TimeSpan.FromMilliseconds(240)) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } });
     }
 
     // --- Keyboard -------------------------------------------------------------------------------

@@ -161,8 +161,8 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource AccentBrush}" />
-                                <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource AccentFillBrush}" />
+                                <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource AccentFillBrush}" />
                                 <Setter Property="Foreground" Value="{DynamicResource AccentTextBrush}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -170,12 +170,8 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        <!-- The one main action of a surface, with the pair corner. -->
-        <Style x:Key="MainActionButton" TargetType="Button" BasedOn="{StaticResource AccentButton}">
-            <Style.Resources>
-                <CornerRadius x:Key="ControlRadius">12,12,12,3</CornerRadius>
-            </Style.Resources>
-        </Style>
+        <!-- The one main action of a surface. -->
+        <Style x:Key="MainActionButton" TargetType="Button" BasedOn="{StaticResource AccentButton}" />
         <Style x:Key="HomeTileButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="Height" Value="128" />
             <Setter Property="Margin" Value="0,0,8,8" />
@@ -228,7 +224,7 @@
             <!-- The selection marker slides between pages; see MoveNavIndicator. -->
             <Canvas Grid.RowSpan="5" IsHitTestVisible="False">
                 <Border x:Name="NavIndicator" Height="34" Width="{Binding ActualWidth, ElementName=NavPane}" Visibility="Collapsed"
-                        CornerRadius="{DynamicResource PairRadius}" Background="{DynamicResource NavSelectedBrush}">
+                        CornerRadius="{DynamicResource ControlRadius}" Background="{DynamicResource NavSelectedBrush}">
                     <Border.RenderTransform>
                         <TranslateTransform x:Name="NavIndicatorOffset" />
                     </Border.RenderTransform>
@@ -479,7 +475,7 @@
                                                 <StackPanel Grid.Column="2" HorizontalAlignment="Right">
                                                     <TextBlock Text="{Binding TimeText}" Style="{StaticResource CaptionText}"
                                                                HorizontalAlignment="Right" />
-                                                    <Border Background="{DynamicResource AccentBrush}" CornerRadius="9" MinWidth="18" Height="18" Padding="5,0"
+                                                    <Border Background="{DynamicResource AccentFillBrush}" CornerRadius="9" MinWidth="18" Height="18" Padding="5,0"
                                                             Margin="0,4,0,0" HorizontalAlignment="Right"
                                                             Visibility="{Binding HasUnread, Converter={StaticResource BoolToVisConverter}}">
                                                         <TextBlock Text="{Binding UnreadCount}" Foreground="{DynamicResource AccentTextBrush}" FontSize="11"
@@ -554,7 +550,7 @@
                                                 <TextBlock Text="{Binding DayHeader}" Style="{StaticResource CaptionText}" HorizontalAlignment="Center"
                                                            Margin="0,10,0,8" Visibility="{Binding HasDayHeader, Converter={StaticResource BoolToVisConverter}}" />
                                                 <Border x:Name="Bubble" Grid.Row="1" MaxWidth="480" HorizontalAlignment="Left" Padding="12,8,12,7"
-                                                        CornerRadius="{DynamicResource PairRadius}" Background="{DynamicResource CardFillBrush}"
+                                                        CornerRadius="{DynamicResource BubbleRadius}" Background="{DynamicResource CardFillBrush}"
                                                         BorderBrush="{DynamicResource CardStrokeBrush}" BorderThickness="1">
                                                     <StackPanel>
                                                         <TextBlock x:Name="MessageBody" Text="{Binding Body}" TextWrapping="Wrap" TextTrimming="None" />
@@ -566,9 +562,9 @@
                                             <DataTemplate.Triggers>
                                                 <DataTrigger Binding="{Binding FromMe}" Value="True">
                                                     <Setter TargetName="Bubble" Property="HorizontalAlignment" Value="Right" />
-                                                    <Setter TargetName="Bubble" Property="Background" Value="{DynamicResource AccentBrush}" />
+                                                    <Setter TargetName="Bubble" Property="Background" Value="{DynamicResource AccentFillBrush}" />
                                                     <Setter TargetName="Bubble" Property="BorderThickness" Value="0" />
-                                                    <Setter TargetName="Bubble" Property="CornerRadius" Value="{DynamicResource PairRadiusMirrored}" />
+                                                    <Setter TargetName="Bubble" Property="CornerRadius" Value="{DynamicResource BubbleRadiusMirrored}" />
                                                     <Setter TargetName="MessageBody" Property="Foreground" Value="{DynamicResource AccentTextBrush}" />
                                                     <Setter TargetName="MessageTime" Property="Foreground" Value="{DynamicResource AccentTextBrush}" />
                                                     <Setter TargetName="MessageTime" Property="Opacity" Value="0.75" />
@@ -2314,14 +2310,10 @@
         <!-- A short confirmation over the page; see ShowToast. The ink is the text color, so it reads
              as a note on top of the page in both modes. -->
         <Border x:Name="ToastHost" Grid.Row="1" Grid.Column="1" Panel.ZIndex="30" HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                Margin="0,0,28,48" Padding="12,8" CornerRadius="{DynamicResource PairRadiusMirrored}" IsHitTestVisible="False"
-                Background="{DynamicResource TextPrimaryBrush}" Visibility="Collapsed" RenderTransformOrigin="1,1"
-                AutomationProperties.LiveSetting="Polite">
+                Margin="0,0,28,48" Padding="12,8" CornerRadius="{DynamicResource CardRadius}" IsHitTestVisible="False"
+                Background="{DynamicResource TextPrimaryBrush}" Visibility="Collapsed" AutomationProperties.LiveSetting="Polite">
             <Border.RenderTransform>
-                <TransformGroup>
-                    <ScaleTransform x:Name="ToastScale" />
-                    <TranslateTransform x:Name="ToastOffset" />
-                </TransformGroup>
+                <TranslateTransform x:Name="ToastOffset" />
             </Border.RenderTransform>
             <StackPanel Orientation="Horizontal">
                 <TextBlock x:Name="ToastGlyph" Style="{StaticResource IconGlyph}" FontSize="13" Margin="0,0,8,0" Foreground="{DynamicResource SheetBrush}" />

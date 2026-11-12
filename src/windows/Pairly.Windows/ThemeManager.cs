@@ -39,8 +39,13 @@ internal static class ThemeManager
     /// Every color one mode needs. The window is the ground the navigation sits on; the sheet is
     /// the page laid beside it; cards sit on the sheet.
     /// </summary>
+    /// <remarks>
+    /// Accent is the tone for text, icons and marks. AccentFill is what buttons, switches and the
+    /// user's message bubbles are filled with, always under white: in dark mode that is the deeper
+    /// light-mode tone, so no pale surface sits on the dark ground.
+    /// </remarks>
     internal sealed record Palette(
-        Color Accent, Color OnAccent, Color AccentSubtle,
+        Color Accent, Color AccentFill, Color OnAccent, Color AccentSubtle,
         Color Window, Color Sheet, Color Card, Color Elevated, Color CardStroke,
         Color Text, Color TextSecondary, Color TextTertiary);
 
@@ -57,8 +62,6 @@ internal static class ThemeManager
         ["Pink"] = (0xBE185D, 0xF9A8D4),
     };
 
-    private static readonly Color DarkInk = Rgb(0x14141A);
-
     /// <summary>The swatch shown for an accent in the current mode.</summary>
     public static Color Swatch(string accent, bool dark)
     {
@@ -70,7 +73,8 @@ internal static class ThemeManager
     }
 
     /// <summary>The palette for an accent and mode. "System" needs the Windows accent; null falls back to Violet.</summary>
-    internal static Palette For(string accent, bool dark, Color? systemAccent = null)
+    /// <param name="systemFill">The Windows accent's darker shade, for fills in dark mode.</param>
+    internal static Palette For(string accent, bool dark, Color? systemAccent = null, Color? systemFill = null)
     {
         var useSystem = string.Equals(accent, "System", StringComparison.OrdinalIgnoreCase) && systemAccent is not null;
         if (!useSystem && !Tones.ContainsKey(accent))
@@ -81,14 +85,16 @@ internal static class ThemeManager
         var tone = useSystem ? systemAccent!.Value : Rgb(dark ? Tones[accent].Dark : Tones[accent].Light);
         if (!dark)
         {
-            return new(tone, Colors.White, Mix(tone, Colors.White, 0.88),
+            return new(tone, tone, Colors.White, Mix(tone, Colors.White, 0.88),
                 Rgb(0xECEEF1), Rgb(0xF4F5F7), Colors.White, Colors.White, Rgb(0xDFE1E6),
                 Rgb(0x17181B), Rgb(0x555962), Rgb(0x666A74));
         }
-        var card = Rgb(0x1A1B1E);
-        return new(tone, DarkInk, Mix(card, tone, 0.16),
-            Rgb(0x0C0D0E), Rgb(0x111214), card, Rgb(0x222327), Rgb(0x2C2E33),
-            Rgb(0xEDEDF0), Rgb(0xA6A9B2), Rgb(0x8B8E97));
+        // Dark gray, not black: the ground, the sheet and the cards are three clearly separate steps.
+        var card = Rgb(0x26282D);
+        var fill = useSystem ? systemFill ?? systemAccent!.Value : Rgb(Tones[accent].Light);
+        return new(tone, fill, Colors.White, Mix(card, tone, 0.16),
+            Rgb(0x17181B), Rgb(0x1D1E22), card, Rgb(0x2D2F35), Rgb(0x383A41),
+            Rgb(0xEDEDF0), Rgb(0xA6A9B2), Rgb(0x8F929B));
     }
 
     private static Color Rgb(int value) => Color.FromRgb((byte)(value >> 16), (byte)(value >> 8), (byte)value);
@@ -134,10 +140,11 @@ internal static class ThemeManager
 
         if (!IsHighContrast)
         {
-            var palette = For(Accent, IsDark, TryReadSystemAccent(IsDark));
+            var palette = For(Accent, IsDark, TryReadSystemAccent(IsDark), TryReadSystemAccent(dark: false));
             SetBrush(currentTheme, "AccentBrush", palette.Accent);
-            SetBrush(currentTheme, "AccentHoverBrush", WithAlpha(palette.Accent, 0xE6));
-            SetBrush(currentTheme, "AccentPressedBrush", WithAlpha(palette.Accent, 0xCC));
+            SetBrush(currentTheme, "AccentFillBrush", palette.AccentFill);
+            SetBrush(currentTheme, "AccentHoverBrush", WithAlpha(palette.AccentFill, 0xE6));
+            SetBrush(currentTheme, "AccentPressedBrush", WithAlpha(palette.AccentFill, 0xCC));
             SetBrush(currentTheme, "AccentSubtleBrush", palette.AccentSubtle);
             SetBrush(currentTheme, "AccentTextBrush", palette.OnAccent);
             SetBrush(currentTheme, "SolidBackgroundBrush", palette.Window);
@@ -215,7 +222,7 @@ internal static class ThemeManager
                     ("accent on card", p.Accent, p.Card),
                     ("accent on sheet", p.Accent, p.Sheet),
                     ("accent on window", p.Accent, p.Window),
-                    ("accent button text", p.OnAccent, p.Accent),
+                    ("accent button text", p.OnAccent, p.AccentFill),
                     ("selected page", p.Accent, p.AccentSubtle),
                 };
                 foreach (var check in checks)
