@@ -86,6 +86,7 @@ import androidx.compose.ui.unit.dp
 import dev.pairly.android.R
 import dev.pairly.android.network.ConnectionPhase
 import dev.pairly.android.ui.theme.Pairly
+import dev.pairly.android.ui.theme.PairShapeSmall
 import dev.pairly.android.ui.theme.onSuccess
 import dev.pairly.android.ui.theme.Space
 
@@ -98,7 +99,7 @@ fun PairlyBackground(modifier: Modifier = Modifier, content: @Composable BoxScop
     }
 }
 
-/** The style's card: Glass is a pale pane with a hairline edge, Clay a soft white pillow. */
+/** A card: white or graphite with a hairline edge, no shadow. */
 @Composable
 fun PairlyCard(
     modifier: Modifier = Modifier,
@@ -109,10 +110,7 @@ fun PairlyCard(
 ) {
     val style = Pairly.style
     val shape = RoundedCornerShape(style.cardRadius)
-    var box = if (style.cardShadow > 0.dp && brush == null) {
-        modifier.shadow(style.cardShadow, shape, clip = false, ambientColor = style.shadowColor, spotColor = style.shadowColor)
-    } else modifier
-    box = box.clip(shape)
+    var box = modifier.clip(shape)
     box = if (brush != null) box.background(brush) else box.background(style.cardColor)
     style.cardBorder?.let { box = box.border(it, shape) }
     if (onClick != null) box = box.clickable(role = Role.Button, onClick = onClick)
@@ -303,9 +301,9 @@ fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifi
     val style = Pairly.style
     Button(
         onClick = onClick, enabled = enabled,
-        // Glass: a compact, slightly rounded button. Clay: a tall, chunky pill.
-        modifier = modifier.fillMaxWidth().height(if (style.clay) 56.dp else Space.button),
-        shape = if (style.clay) CircleShape else RoundedCornerShape(10.dp),
+        // The main action of a screen carries the pair corner.
+        modifier = modifier.fillMaxWidth().height(Space.button),
+        shape = PairShapeSmall,
         colors = ButtonDefaults.buttonColors(containerColor = style.buttonColor, contentColor = style.onButton)
     ) {
         if (icon != null) { Icon(icon, null); Spacer(Modifier.width(Space.s)) }

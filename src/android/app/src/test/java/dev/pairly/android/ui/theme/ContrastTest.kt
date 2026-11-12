@@ -44,13 +44,11 @@ class ContrastTest {
     }
 
     @Test
-    fun everyStyleAndAccentMeetsAa() {
-        val failures = AppStyle.entries.flatMap { appStyle ->
-            pickableAccents.flatMap { accent ->
-                listOf(false, true).flatMap { dark ->
-                    val scheme = palette(appStyle, accent, dark)
-                    check("$appStyle $accent ${if (dark) "dark" else "light"}", scheme, style(appStyle, scheme, dark, reduceMotion = false))
-                }
+    fun everyAccentMeetsAa() {
+        val failures = pickableAccents.flatMap { accent ->
+            listOf(false, true).flatMap { dark ->
+                val scheme = palette(accent, dark)
+                check("$accent ${if (dark) "dark" else "light"}", scheme, style(scheme, dark, reduceMotion = false))
             }
         }
         assertTrue(failures.joinToString("\n"), failures.isEmpty())

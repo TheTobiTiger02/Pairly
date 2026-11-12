@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import dev.pairly.android.network.ConnectionSettings
 import dev.pairly.android.ui.onboarding.OnboardingStep
 import dev.pairly.android.ui.theme.Accent
-import dev.pairly.android.ui.theme.AppStyle
 import dev.pairly.android.ui.theme.ThemeMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +12,6 @@ import kotlinx.coroutines.flow.asStateFlow
 
 data class UiPrefs(
     val themeMode: ThemeMode = ThemeMode.System,
-    val appStyle: AppStyle = AppStyle.Glass,
     val accent: Accent = Accent.Violet,
     val onboardingDone: Boolean = false,
     val onboardingStep: OnboardingStep = OnboardingStep.Welcome,
@@ -35,7 +33,6 @@ class UiPreferences private constructor(context: Context) {
         val pairedBefore = ConnectionSettings(context).trustKey.isNotBlank()
         return UiPrefs(
             themeMode = enumOr(prefs.getString(KEY_THEME, null), ThemeMode.System),
-            appStyle = readStyle(prefs.getString(KEY_STYLE, null)),
             accent = readAccent(),
             onboardingDone = prefs.getBoolean(KEY_ONBOARDING_DONE, pairedBefore),
             onboardingStep = enumOr(prefs.getString(KEY_ONBOARDING_STEP, null), OnboardingStep.Welcome),
@@ -43,15 +40,9 @@ class UiPreferences private constructor(context: Context) {
         )
     }
 
-    /** Aurora and Daybreak (until 1.x) became Glass and Clay. */
-    private fun readStyle(stored: String?): AppStyle = when (stored) {
-        "Daybreak" -> AppStyle.Clay
-        else -> enumOr(stored, AppStyle.Glass)
-    }
-
     private fun readAccent(): Accent {
         prefs.getString(KEY_ACCENT, null)?.let { return enumOr(it, Accent.Violet) }
-        // Before accents existed: wallpaper colors were a switch; Daybreak was coral.
+        // Before accents existed: wallpaper colors were a switch, and the styles of that time carried a color.
         return when {
             prefs.getBoolean(KEY_DYNAMIC, false) -> Accent.System
             prefs.getString(KEY_STYLE, null) == "Daybreak" -> Accent.Coral
@@ -65,7 +56,6 @@ class UiPreferences private constructor(context: Context) {
         state.value = next
         prefs.edit()
             .putString(KEY_THEME, next.themeMode.name)
-            .putString(KEY_STYLE, next.appStyle.name)
             .putString(KEY_ACCENT, next.accent.name)
             .remove(KEY_DYNAMIC)
             .putBoolean(KEY_ONBOARDING_DONE, next.onboardingDone)

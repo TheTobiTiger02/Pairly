@@ -52,47 +52,6 @@ import dev.pairly.android.ui.onboarding.PairingCallbacks
 import dev.pairly.android.ui.onboarding.PairingContent
 import dev.pairly.android.ui.theme.Space
 
-@Composable
-fun FeaturesScreen(state: AppState, openFeature: (Feature) -> Unit) {
-    val all = Feature.setupOrder + Feature.Clipboard
-    val (on, off) = all.partition { state.permissions.isOn(it) }
-    ScreenList {
-        item { ScreenTitle(stringResource(R.string.features_title), stringResource(R.string.features_subtitle)) }
-        if (off.isNotEmpty()) {
-            item { SectionLabel(stringResource(R.string.features_section_off)) }
-            item { FeatureGroup(off, false, openFeature) }
-        }
-        if (on.isNotEmpty()) {
-            item { SectionLabel(stringResource(R.string.features_section_on)) }
-            item { FeatureGroup(on, true, openFeature) }
-        }
-    }
-}
-
-@Composable
-private fun FeatureGroup(features: List<Feature>, on: Boolean, openFeature: (Feature) -> Unit) {
-    PairlyCard(Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = Space.m, vertical = Space.s)) {
-        features.forEach { feature ->
-            Row(
-                Modifier.fillMaxWidth().heightIn(min = 72.dp).clip(MaterialTheme.shapes.medium)
-                    .clickable(role = Role.Button) { openFeature(feature) }
-                    .padding(vertical = Space.s, horizontal = Space.xs),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                FeatureIcon(feature.icon(), highlighted = on, modifier = Modifier.sharedElement("icon-${feature.key}"))
-                Spacer(Modifier.width(Space.m))
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(feature.title), style = MaterialTheme.typography.titleMedium)
-                    Text(stringResource(feature.summary), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                Spacer(Modifier.width(Space.s))
-                if (on) CheckBadge(22.dp)
-                else Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-    }
-}
-
 class FeatureDetailCallbacks(
     val back: () -> Unit,
     val openShizukuGuide: () -> Unit,
@@ -105,7 +64,7 @@ class FeatureDetailCallbacks(
 fun FeatureDetailScreen(feature: Feature, state: AppState, callbacks: FeatureDetailCallbacks) {
     val granted = state.permissions.isOn(feature)
     Column(Modifier.fillMaxSize()) {
-        DetailTopBar(stringResource(R.string.nav_features), callbacks.back)
+        DetailTopBar(stringResource(R.string.nav_home), callbacks.back)
         ScreenList {
             item { FeatureHeader(feature, granted) }
             if (feature == Feature.Clipboard) {

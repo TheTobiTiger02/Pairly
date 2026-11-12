@@ -104,7 +104,7 @@ class ShareRelayActivity : ComponentActivity() {
 
         val prefs = UiPreferences.get(this).current
         setContent {
-            PairlyTheme(prefs.themeMode, prefs.appStyle, prefs.accent) {
+            PairlyTheme(prefs.themeMode, prefs.accent) {
                 ShareSheet(onClose = ::finish)
             }
         }

@@ -1,5 +1,8 @@
 package dev.pairly.android.ui.navigation
 
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.Box
 import android.net.Uri
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
@@ -56,7 +59,6 @@ import dev.pairly.android.ui.components.AppIcon
 import dev.pairly.android.ui.features.Feature
 import dev.pairly.android.ui.features.FeatureDetailCallbacks
 import dev.pairly.android.ui.features.FeatureDetailScreen
-import dev.pairly.android.ui.features.FeaturesScreen
 import dev.pairly.android.ui.features.PairScreen
 import dev.pairly.android.ui.features.ShizukuGuideScreen
 import dev.pairly.android.ui.help.HelpCallbacks
@@ -70,7 +72,6 @@ import dev.pairly.android.ui.theme.Pairly
 
 object Routes {
     const val HOME = "home"
-    const val FEATURES = "features"
     const val HELP = "help"
     const val SETTINGS = "settings"
     const val FEATURE = "feature/{key}"
@@ -78,15 +79,13 @@ object Routes {
     const val PAIR = "pair"
 
     fun feature(feature: Feature) = "feature/${feature.key}"
-    val topLevel = setOf(HOME, FEATURES, HELP, SETTINGS)
+    val topLevel = setOf(HOME, SETTINGS)
 }
 
 private data class Tab(val route: String, val label: Int, val icon: ImageVector)
 
 private val tabs = listOf(
     Tab(Routes.HOME, R.string.nav_home, Icons.Rounded.Home),
-    Tab(Routes.FEATURES, R.string.nav_features, Icons.Rounded.Apps),
-    Tab(Routes.HELP, R.string.nav_help, Icons.AutoMirrored.Rounded.HelpOutline),
     Tab(Routes.SETTINGS, R.string.nav_settings, Icons.Rounded.Settings)
 )
 
@@ -108,7 +107,7 @@ class ShellCallbacks(
     val setTurnOffWirelessDebugging: (Boolean) -> Unit
 )
 
-/** The app after onboarding: Home, Features, Help and Settings in a bottom bar (a rail on wide screens). */
+/** The app after onboarding: Home and Settings in a floating tab bar (a rail on wide screens). */
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun MainShell(
@@ -166,9 +165,11 @@ fun MainShell(
                         }
                     }
                 }
-                SharedTransitionLayout(Modifier.weight(1f)) {
-                    CompositionLocalProvider(LocalSharedScope provides this) {
-                        PairlyNavHost(nav, state, prefs, language, callbacks)
+                Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.TopCenter) {
+                    SharedTransitionLayout(Modifier.widthIn(max = 600.dp).fillMaxHeight()) {
+                        CompositionLocalProvider(LocalSharedScope provides this) {
+                            PairlyNavHost(nav, state, prefs, language, callbacks)
+                        }
                     }
                 }
             }
@@ -213,7 +214,7 @@ private fun PairlyNavHost(
     val popExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = { Motion.slideOut(style, forward(pop = true)) }
 
     val openFeature: (Feature) -> Unit = { nav.navigate(Routes.feature(it)) }
-    val openHelp: () -> Unit = { nav.navigateTab(Routes.HELP) }
+    val openHelp: () -> Unit = { nav.navigate(Routes.HELP) }
 
     NavHost(
         navController = nav,
@@ -241,9 +242,6 @@ private fun PairlyNavHost(
                 )
             }
         }
-        composable(Routes.FEATURES) {
-            CompositionLocalProvider(LocalAnimatedScope provides this) { FeaturesScreen(state, openFeature) }
-        }
         composable(Routes.FEATURE) { backStack ->
             val feature = Feature.fromKey(backStack.arguments?.getString("key")) ?: Feature.Notifications
             CompositionLocalProvider(LocalAnimatedScope provides this) {
@@ -266,7 +264,7 @@ private fun PairlyNavHost(
                 HelpCallbacks(
                     replayOnboarding = callbacks.replayOnboarding,
                     openShizukuGuide = { nav.navigate(Routes.SHIZUKU) },
-                    back = null
+                    back = { nav.popBackStack() }
                 )
             )
         }

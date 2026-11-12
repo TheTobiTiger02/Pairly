@@ -18,7 +18,6 @@ import dev.pairly.android.ui.components.PairlyBackground
 import dev.pairly.android.ui.features.Feature
 import dev.pairly.android.ui.features.FeatureDetailCallbacks
 import dev.pairly.android.ui.features.FeatureDetailScreen
-import dev.pairly.android.ui.features.FeaturesScreen
 import dev.pairly.android.ui.features.PermissionSnapshot
 import dev.pairly.android.ui.features.ShizukuGuideScreen
 import dev.pairly.android.ui.help.HelpCallbacks
@@ -33,7 +32,6 @@ import dev.pairly.android.ui.settings.SettingsScreen
 import dev.pairly.android.ui.features.RestrictedSettings
 import dev.pairly.android.ui.features.RestrictedState
 import dev.pairly.android.ui.theme.Accent
-import dev.pairly.android.ui.theme.AppStyle
 import dev.pairly.android.ui.theme.PairlyTheme
 import dev.pairly.android.ui.theme.ThemeMode
 import dev.pairly.android.ui.whatsnew.WhatsNewContent
@@ -60,10 +58,9 @@ class ScreenshotTest(private val case: Case) {
         val mode: ThemeMode,
         val language: String,
         val fontScale: Float = 1f,
-        val style: AppStyle = AppStyle.Glass,
         val accent: Accent = Accent.Violet
     ) {
-        val folder = "${style.name.lowercase()}-${mode.name.lowercase()}-$language" + if (fontScale > 1f) "-large" else ""
+        val folder = "${mode.name.lowercase()}-$language" + (if (accent != Accent.Violet) "-${accent.name.lowercase()}" else "") + if (fontScale > 1f) "-large" else ""
         override fun toString() = folder
     }
 
@@ -73,10 +70,10 @@ class ScreenshotTest(private val case: Case) {
         fun cases(): List<Case> = listOf(
             Case(ThemeMode.Light, "en"),
             Case(ThemeMode.Dark, "en"),
-            Case(ThemeMode.Light, "en", style = AppStyle.Clay, accent = Accent.Pink),
-            Case(ThemeMode.Dark, "en", style = AppStyle.Clay, accent = Accent.Pink),
+            Case(ThemeMode.Light, "en", accent = Accent.Pink),
+            Case(ThemeMode.Dark, "en", accent = Accent.Amber),
             Case(ThemeMode.Light, "de"),
-            Case(ThemeMode.Light, "de", fontScale = 2f, style = AppStyle.Clay, accent = Accent.Teal)
+            Case(ThemeMode.Light, "de", fontScale = 2f, accent = Accent.Teal)
         )
     }
 
@@ -106,7 +103,7 @@ class ScreenshotTest(private val case: Case) {
         if (case.fontScale != 1f) RuntimeEnvironment.setFontScale(case.fontScale)
         compose.setContent {
             CompositionLocalProvider(LocalFeatureActions provides NoFeatureActions) {
-                PairlyTheme(case.mode, case.style, case.accent) {
+                PairlyTheme(case.mode, case.accent) {
                     PairlyBackground { content() }
                 }
             }
@@ -147,7 +144,6 @@ class ScreenshotTest(private val case: Case) {
             RestrictedSettings.attempted.clear()
         }
     }
-    @Test fun features() = capture("features") { Screen { FeaturesScreen(connected) {} } }
     @Test fun featureDetail() = capture("feature-detail") { Screen { FeatureDetailScreen(Feature.RemoteControl, connected, detailCallbacks) } }
     @Test fun mirroring() = capture("feature-mirroring") { Screen { FeatureDetailScreen(Feature.Mirroring, connected, detailCallbacks) } }
     @Test fun mirroringWithShizuku() = capture("feature-mirroring-shizuku") {
@@ -173,9 +169,8 @@ class ScreenshotTest(private val case: Case) {
     @Test fun appearance() = capture("appearance") {
         Screen {
             androidx.compose.foundation.layout.Column(Modifier.padding(20.dp)) {
-                dev.pairly.android.ui.settings.StylePicker(case.style, case.accent, onSelect = {})
                 androidx.compose.foundation.layout.Spacer(Modifier.padding(8.dp))
-                dev.pairly.android.ui.settings.AccentPicker(case.style, case.accent, onSelect = {})
+                dev.pairly.android.ui.settings.AccentPicker(case.accent, onSelect = {})
             }
         }
     }

@@ -28,7 +28,6 @@
     <string name="update_ready_text">Tap to install.</string>
     <string name="update_ready_text_version">Tap to install version %1$s.</string>
     <string name="nav_home">Home</string>
-    <string name="nav_features">Features</string>
     <string name="nav_help">Help</string>
     <string name="nav_settings">Settings</string>
     <string name="action_back">Back</string>
@@ -189,10 +188,6 @@
     <string name="feature_clipboard_description">Text and images you copy on your PC appear on your phone, and the other way round. While Pairly is open this just works. To sync in the background, set up Shizuku once.</string>
     <string name="feature_clipboard_why">Android only lets the app on screen read the clipboard. Shizuku, a free helper app, lets Pairly read it in the background.</string>
     <string name="feature_clipboard_action">Set up background sync</string>
-    <string name="features_title">Features</string>
-    <string name="features_subtitle">Turn on what you want to use. Tap one to learn more.</string>
-    <string name="features_section_off">Not set up yet</string>
-    <string name="features_section_on">Ready</string>
     <string name="clipboard_send_title">Send to your PC now</string>
     <string name="clipboard_send_detail">Goes to your PC and every other phone connected to it.</string>
     <string name="clipboard_text_label">Text to send</string>
@@ -225,9 +220,13 @@
     <string name="shizuku_done_title">Background sync is on</string>
     <string name="home_not_paired">No PC connected</string>
     <string name="home_not_paired_detail">Pair once, and Pairly reconnects on its own</string>
-    <string name="home_finish_setup">Finish setting up</string>
     <string name="home_finish_setup_detail">%1$d of %2$d features are on</string>
     <string name="home_action_clipboard">Clipboard</string>
+    <string name="home_send_to_pc">Send to your PC</string>
+    <string name="home_needs_you">Needs you</string>
+    <string name="home_shared_with_pc">Shared with your PC</string>
+    <string name="action_show_all">Show all</string>
+    <string name="action_show_less">Show less</string>
     <string name="home_synced">Sent your latest photos, messages and notifications to your PC.</string>
     <string name="settings_title">Settings</string>
     <string name="settings_connection">Connection</string>
@@ -324,11 +323,6 @@
         <item quantity="other">%d files couldn’t be sent</item>
     </plurals>
     <string name="home_link_from">%1$s, linked to</string>
-    <string name="home_clay_connected">Your phone and PC are talking.</string>
-    <string name="home_clay_offline">Your PC is out of reach right now.</string>
-    <string name="home_clay_connecting">Looking for your PC…</string>
-    <string name="home_clay_unpaired">Let’s link your PC.</string>
-    <string name="home_on_this_phone">On this phone</string>
     <string name="home_send_title">Send to your PC</string>
     <string name="home_send_clipboard">Clipboard</string>
     <string name="home_send_photos">Photos</string>
@@ -396,10 +390,6 @@
     <string name="power_benefit_mirror">Mirroring starts without a prompt</string>
     <string name="power_benefit_input">Real touch and keys from your PC</string>
     <string name="power_benefit_grants">All permissions in one tap</string>
-    <string name="style_glass">Glass</string>
-    <string name="style_glass_detail">Clear panes, crisp type</string>
-    <string name="style_clay">Clay</string>
-    <string name="style_clay_detail">Soft shapes, friendly</string>
     <string name="settings_accent">Accent color</string>
     <string name="accent_system">Wallpaper</string>
     <string name="accent_indigo">Indigo</string>
@@ -410,7 +400,6 @@
     <string name="accent_amber">Amber</string>
     <string name="accent_coral">Coral</string>
     <string name="accent_pink">Pink</string>
-    <string name="settings_style">Style</string>
     <plurals name="power_grant_all">
         <item quantity="one">Turn on %1$d feature in one tap</item>
         <item quantity="other">Turn on %1$d features in one tap</item>
