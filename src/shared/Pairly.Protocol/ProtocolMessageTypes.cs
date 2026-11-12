@@ -42,6 +42,9 @@ public static class ProtocolMessageTypes
     public const string CallIdle = "call.idle";
     public const string CallActive = "call.active";
     public const string CallAction = "call.action";
+    public const string CallLogRequest = "call.log.request";
+    public const string CallLogResponse = "call.log.response";
+    public const string CallDial = "call.dial";
     public const string StorageListRequest = "storage.list.request";
     public const string StorageListResponse = "storage.list.response";
     public const string StorageFileRequest = "storage.file.request";
@@ -122,6 +125,9 @@ public static class ProtocolMessageTypes
         CallIdle,
         CallActive,
         CallAction,
+        CallLogRequest,
+        CallLogResponse,
+        CallDial,
         StorageListRequest,
         StorageListResponse,
         StorageFileRequest,

@@ -650,6 +650,27 @@ class PairlyConnectionService : Service() {
                     "Processed remote control input."
                 }
                 "call.action" -> handleCallAction(envelope)
+                "call.log.request" -> {
+                    val requestId = envelope.optJSONObject("payload")?.optString("requestId").orEmpty()
+                    serviceScope.launch(Dispatchers.IO) {
+                        val log = dev.pairly.android.features.calls.CallLogReader.response(this@PairlyConnectionService, requestId)
+                        PairlyConnection.send(ProtocolJson.envelope("call.log.response", settings.deviceId, log))
+                    }
+                    "Reading the call history."
+                }
+                "call.dial" -> {
+                    val payload = envelope.optJSONObject("payload")
+                    val problem = dev.pairly.android.features.calls.CallLogReader.dial(this, payload?.optString("number").orEmpty())
+                    sendCommandResult(
+                        payload?.optString("requestId").orEmpty(), "calls", problem == null,
+                        when (problem) {
+                            null -> "Calling."
+                            "permission" -> "Pairly may not place calls on this phone. Turn on Calls in the Pairly app."
+                            else -> problem
+                        }
+                    )
+                    if (problem == null) "Placed a call for the PC." else "Call not placed: $problem"
+                }
                 "sms.thread.request" -> {
                     val threadId = envelope.optJSONObject("payload")?.optString("threadId").orEmpty()
                     if (threadId.isNotBlank()) FeatureSyncController.sendSmsThread(this, threadId)

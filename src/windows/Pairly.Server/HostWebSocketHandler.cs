@@ -34,6 +34,7 @@ public sealed class HostWebSocketHandler(
     FileShareReceiver fileShares,
     ResponseBroker<AppsListResponsePayload> appsList,
     ResponseBroker<AppsLaunchResultPayload> appsLaunch,
+    ResponseBroker<CallLogResponsePayload> callLog,
     ILogger<HostWebSocketHandler> logger)
 {
     private static readonly TimeSpan ChallengeLifetime = TimeSpan.FromMinutes(2);
@@ -294,6 +295,14 @@ public sealed class HostWebSocketHandler(
                             ?? throw new InvalidOperationException("Missing diagnostics snapshot payload.");
                         diagnosticsSnapshots.Complete(payload.RequestId, payload);
                     }
+                    break;
+                case ProtocolMessageTypes.CallLogResponse:
+                    {
+                        var payload = envelope.ReadPayload<CallLogResponsePayload>()
+                            ?? throw new InvalidOperationException("Missing call log payload.");
+                        callLog.Complete(payload.RequestId, payload);
+                    }
+
                     break;
                 case ProtocolMessageTypes.AppsListResponse:
                     {

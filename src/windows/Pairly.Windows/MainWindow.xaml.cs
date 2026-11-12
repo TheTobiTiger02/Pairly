@@ -366,6 +366,16 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>Clicking the phone that is already selected changes nothing, but still closes the list.</summary>
+    private void DevicesList_ItemClicked(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if ((e.OriginalSource as DependencyObject) is { } source
+            && ItemsControl.ContainerFromElement(DevicesList, source) is not null)
+        {
+            DevicePickerToggle.IsChecked = false;
+        }
+    }
+
     private async void DevicesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_settingDeviceSelection || !IsLoaded)
@@ -679,6 +689,11 @@ public partial class MainWindow : Window
             && SettingsTabs.SelectedIndex == DiagnosticsSettingsIndex)
         {
             RefreshDiagnostics();
+        }
+
+        if (ReferenceEquals(e.Source, MainTabs) && MainTabs.SelectedIndex == CallsTabIndex)
+        {
+            _ = LoadCallsAsync(force: false);
         }
 
         if (ReferenceEquals(e.Source, MainTabs) && MainTabs.SelectedIndex == AppsTabIndex)
@@ -1052,6 +1067,8 @@ public partial class MainWindow : Window
                 {
                     _activeCallOverlay?.Close();
                     _activeCallOverlay = null;
+                    // The phone writes a call to its history when the call ends.
+                    _ = RefreshCallsAfterCallAsync();
                 });
             }
             else if (type == ProtocolMessageTypes.MirrorState)

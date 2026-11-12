@@ -148,8 +148,8 @@ public partial class MainWindow
 
     // --- Keyboard -------------------------------------------------------------------------------
 
-    // Ctrl+1..7 in the order of the navigation.
-    private static readonly int[] PageShortcutOrder = [HomeTabIndex, 0, 6, 1, 2, 3, SettingsTabIndex];
+    // Ctrl+1..8 in the order of the navigation.
+    private static readonly int[] PageShortcutOrder = [HomeTabIndex, 0, 6, 1, 2, CallsTabIndex, 3, SettingsTabIndex];
 
     private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)
     {
@@ -198,7 +198,7 @@ public partial class MainWindow
             return;
         }
 
-        if (e.Key is >= Key.D1 and <= Key.D7)
+        if (e.Key is >= Key.D1 and <= Key.D8)
         {
             SelectPage(PageShortcutOrder[e.Key - Key.D1]);
             e.Handled = true;

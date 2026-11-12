@@ -346,6 +346,25 @@ public sealed record CallRingingPayload(
     string Number,
     string? CallerName);
 
+public sealed record CallLogRequestPayload(string RequestId);
+
+/// <summary>One call from the phone's history. Kind is "incoming", "outgoing" or "missed".</summary>
+public sealed record CallLogEntryPayload(
+    string Number,
+    string? Name,
+    string Kind,
+    DateTimeOffset StartedAt,
+    long DurationSeconds);
+
+/// <summary>Error is "permission" when the phone may not read its call log.</summary>
+public sealed record CallLogResponsePayload(
+    string RequestId,
+    IReadOnlyList<CallLogEntryPayload> Entries,
+    string? Error = null);
+
+/// <summary>PC to phone: place this call on the phone. Answered with a command result.</summary>
+public sealed record CallDialPayload(string Number, string? RequestId = null);
+
 /// <summary>PC to phone: start (or stop) ringing so the phone can be found.</summary>
 public sealed record DeviceRingPayload(bool Ring);
 

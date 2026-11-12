@@ -270,6 +270,7 @@ public sealed class PairlyServer
         services.AddSingleton<ResponseBroker<DiagnosticsSnapshotPayload>>();
         services.AddSingleton<ResponseBroker<AppsListResponsePayload>>();
         services.AddSingleton<ResponseBroker<AppsLaunchResultPayload>>();
+        services.AddSingleton<ResponseBroker<CallLogResponsePayload>>();
         services.AddSingleton<MediaSessionStore>();
         services.AddSingleton<Networking.EndpointEnumerator>();
         services.AddHostedService(provider => provider.GetRequiredService<Networking.EndpointEnumerator>());
@@ -975,6 +976,59 @@ public sealed class PairlyServer
                     payload),
                 cancellationToken);
             return sent ? Results.Accepted() : Results.NotFound(new { message = "Target device is not connected." });
+        });
+
+        app.MapGet("/v1/devices/{deviceId}/calls", async (
+            string deviceId,
+            WebSocketSessionHub sessions,
+            ResponseBroker<CallLogResponsePayload> callLog,
+            CancellationToken cancellationToken) =>
+        {
+            var requestId = Guid.NewGuid().ToString("N");
+            var waitForResponse = callLog.WaitForAsync(requestId, TimeSpan.FromSeconds(10), cancellationToken);
+            var sent = await sessions.SendAsync(
+                deviceId,
+                ProtocolEnvelope.Create(
+                    ProtocolMessageTypes.CallLogRequest,
+                    "pc-host",
+                    DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                    new CallLogRequestPayload(requestId)),
+                cancellationToken);
+            if (!sent)
+            {
+                return Results.NotFound(new { message = "Target device is not connected." });
+            }
+
+            var response = await waitForResponse;
+            return response is null
+                ? Results.Problem("The phone did not send its call history in time.", statusCode: StatusCodes.Status504GatewayTimeout)
+                : Results.Ok(response);
+        });
+
+        // The phone places the call itself; the PC only asks. The sound stays on the phone.
+        app.MapPost("/v1/devices/{deviceId}/calls/dial", async (
+            string deviceId,
+            CallDialPayload payload,
+            WebSocketSessionHub sessions,
+            CommandResultBroker commandResults,
+            CancellationToken cancellationToken) =>
+        {
+            if (!sessions.HasSession(deviceId))
+            {
+                return Results.NotFound(new { message = "Target device is not connected." });
+            }
+
+            var requestId = Guid.NewGuid().ToString("N");
+            var waitForResult = commandResults.WaitForAsync(requestId, TimeSpan.FromSeconds(8), cancellationToken);
+            await sessions.SendAsync(
+                deviceId,
+                ProtocolEnvelope.Create(
+                    ProtocolMessageTypes.CallDial,
+                    "pc-host",
+                    DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                    payload with { RequestId = requestId }),
+                cancellationToken);
+            return ToCommandResult(await waitForResult);
         });
 
         // Find my phone: the phone plays its alarm sound until stopped there, from here, or after a minute.
