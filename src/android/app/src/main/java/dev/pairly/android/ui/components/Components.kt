@@ -50,6 +50,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -86,7 +87,6 @@ import androidx.compose.ui.unit.dp
 import dev.pairly.android.R
 import dev.pairly.android.network.ConnectionPhase
 import dev.pairly.android.ui.theme.Pairly
-import dev.pairly.android.ui.theme.PairShapeSmall
 import dev.pairly.android.ui.theme.onSuccess
 import dev.pairly.android.ui.theme.Space
 
@@ -264,7 +264,13 @@ fun SwitchRow(title: String, subtitle: String?, checked: Boolean, onCheckedChang
         icon = icon,
         onClick = { haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove); onCheckedChange(!checked) },
         modifier = Modifier.semantics(mergeDescendants = true) {}
-    ) { Switch(checked = checked, onCheckedChange = null) }
+    ) {
+        val style = Pairly.style
+        Switch(
+            checked = checked, onCheckedChange = null,
+            colors = SwitchDefaults.colors(checkedTrackColor = style.buttonColor, checkedThumbColor = style.onButton)
+        )
+    }
 }
 
 /** Single-choice chips, e.g. theme or language. */
@@ -301,9 +307,8 @@ fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifi
     val style = Pairly.style
     Button(
         onClick = onClick, enabled = enabled,
-        // The main action of a screen carries the pair corner.
         modifier = modifier.fillMaxWidth().height(Space.button),
-        shape = PairShapeSmall,
+        shape = MaterialTheme.shapes.medium,
         colors = ButtonDefaults.buttonColors(containerColor = style.buttonColor, contentColor = style.onButton)
     ) {
         if (icon != null) { Icon(icon, null); Spacer(Modifier.width(Space.s)) }

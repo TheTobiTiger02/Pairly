@@ -48,7 +48,7 @@ class ContrastTest {
         val failures = pickableAccents.flatMap { accent ->
             listOf(false, true).flatMap { dark ->
                 val scheme = palette(accent, dark)
-                check("$accent ${if (dark) "dark" else "light"}", scheme, style(scheme, dark, reduceMotion = false))
+                check("$accent ${if (dark) "dark" else "light"}", scheme, style(scheme, dark, reduceMotion = false, accent))
             }
         }
         assertTrue(failures.joinToString("\n"), failures.isEmpty())

@@ -45,7 +45,8 @@ import dev.pairly.android.R
 /**
  * Pairly's look: one design in light or dark, with an accent color (Settings > Look). Neutral
  * grounds, white or graphite cards with hairline edges, no shadows; the accent only marks actions,
- * selection and state. Titles in Bricolage Grotesque, text in Manrope.
+ * selection and state. Dark mode is dark gray rather than black. Titles in Bricolage Grotesque,
+ * text in Manrope.
  * The Windows app uses the same names and colors (ThemeManager.cs).
  */
 
@@ -65,13 +66,6 @@ object Space {
     val touch = 48.dp
     val button = 48.dp
 }
-
-/**
- * The pair corner, from the logo: three soft corners and one tight one. Only for the link card on
- * Home, the selected tab and the main button.
- */
-val PairShape = RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp, bottomEnd = 18.dp, bottomStart = 5.dp)
-val PairShapeSmall = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp, bottomEnd = 12.dp, bottomStart = 3.dp)
 
 /** Details Material's theme has no slot for. */
 @Immutable
@@ -100,9 +94,9 @@ data class PairlyStyle(
     val accents: List<Color>,
     val reduceMotion: Boolean
 ) {
-    /** A short spring with a small overshoot: for things that move into place. */
+    /** Things move into place quickly and settle without overshoot. */
     fun <T> spring(): FiniteAnimationSpec<T> =
-        if (reduceMotion) tween(0) else spring(dampingRatio = 0.72f, stiffness = Spring.StiffnessMediumLow)
+        if (reduceMotion) tween(0) else spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow)
 
     fun offsetSpring(): FiniteAnimationSpec<IntOffset> = spring()
 }
@@ -152,13 +146,22 @@ private val Paper = Color(0xFFF4F5F7)
 private val Hairline = Color(0xFFDFE1E6)
 private val Ink = Color(0xFF17181B)
 private val InkSoft = Color(0xFF555962)
-private val Night = Color(0xFF111214)
-private val NightCard = Color(0xFF1A1B1E)
-private val NightElevated = Color(0xFF222327)
-private val NightHairline = Color(0xFF2C2E33)
+// Dark gray, not black: the ground, cards and raised surfaces are three clearly separate steps.
+private val Night = Color(0xFF1A1B1F)
+private val NightCard = Color(0xFF26282D)
+private val NightElevated = Color(0xFF2D2F35)
+private val NightHairline = Color(0xFF383A41)
 private val NightText = Color(0xFFEDEDF0)
 private val NightTextSoft = Color(0xFFA6A9B2)
 private val DarkInk = Color(0xFF14141A)
+
+/**
+ * What buttons, the selected tab and switches are filled with, and the color on top. Dark mode
+ * uses the deeper light-mode tone under white, so no pale surface sits on the dark ground; the
+ * pale tone ([ColorScheme.primary]) stays for text, icons and marks.
+ */
+internal fun accentFill(accent: Accent, dark: Boolean, scheme: ColorScheme): Pair<Color, Color> =
+    if (dark && accent != Accent.System) tones.getValue(accent).light to Color.White else scheme.primary to scheme.onPrimary
 
 private val errorLight = Color(0xFFB3261E)
 private val errorDark = Color(0xFFFFB4AB)
@@ -196,9 +199,9 @@ internal fun palette(accent: Accent, dark: Boolean, dynamic: ColorScheme? = null
         background = Night, onBackground = NightText,
         surface = Night, onSurface = NightText,
         surfaceVariant = NightElevated, onSurfaceVariant = NightTextSoft,
-        surfaceContainerLowest = Color(0xFF0C0D0E), surfaceContainerLow = Color(0xFF151618),
+        surfaceContainerLowest = Color(0xFF151619), surfaceContainerLow = Color(0xFF1F2024),
         surfaceContainer = NightCard, surfaceContainerHigh = NightElevated,
-        surfaceContainerHighest = Color(0xFF2A2C31),
+        surfaceContainerHighest = Color(0xFF34363D),
         inverseSurface = NightText, inverseOnSurface = Ink,
         outline = Color(0xFF8B8E97), outlineVariant = NightHairline,
         error = errorDark, errorContainer = Color(0xFF93000A), onErrorContainer = Color(0xFFFFDAD6)
@@ -251,7 +254,8 @@ private val PairlyTypography: Typography = run {
     )
 }
 
-internal fun style(scheme: ColorScheme, dark: Boolean, reduceMotion: Boolean): PairlyStyle {
+internal fun style(scheme: ColorScheme, dark: Boolean, reduceMotion: Boolean, accent: Accent = Accent.Violet): PairlyStyle {
+    val (fill, onFill) = accentFill(accent, dark, scheme)
     val success = if (dark) Color(0xFF86E0AE) else Color(0xFF157F4C)
     val successContainer = if (dark) Color(0xFF153325) else Color(0xFFE3F5EA)
     val warning = if (dark) Color(0xFFF2C46B) else Color(0xFF8A5300)
@@ -261,13 +265,13 @@ internal fun style(scheme: ColorScheme, dark: Boolean, reduceMotion: Boolean): P
         dark = dark, cardRadius = 14.dp,
         cardColor = if (dark) NightCard else Color.White,
         cardBorder = hairline,
-        heroBrush = SolidColor(scheme.primary), onHero = scheme.onPrimary,
-        buttonColor = scheme.primary, onButton = scheme.onPrimary,
+        heroBrush = SolidColor(fill), onHero = onFill,
+        buttonColor = fill, onButton = onFill,
         iconContainer = scheme.primaryContainer,
         onIconContainer = if (dark) scheme.primary else scheme.onPrimaryContainer,
         navContainer = if (dark) NightCard else Color.White,
         navBorder = hairline,
-        navActive = scheme.primary, onNavActive = scheme.onPrimary,
+        navActive = fill, onNavActive = onFill,
         navInactive = scheme.onSurfaceVariant,
         success = success, successContainer = successContainer, warning = warning, warningContainer = warningContainer,
         accents = listOf(scheme.primary, scheme.onSurfaceVariant, success, scheme.primaryContainer),
@@ -300,7 +304,7 @@ fun PairlyTheme(
         } else null
         palette(accent, dark, dynamic)
     }
-    val pairlyStyle = remember(scheme, dark, reduceMotion) { style(scheme, dark, reduceMotion) }
+    val pairlyStyle = remember(scheme, dark, reduceMotion, accent) { style(scheme, dark, reduceMotion, accent) }
     CompositionLocalProvider(LocalPairlyStyle provides pairlyStyle) {
         MaterialTheme(colorScheme = scheme, shapes = PairlyShapes, typography = PairlyTypography, content = content)
     }

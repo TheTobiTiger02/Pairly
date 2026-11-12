@@ -1,12 +1,10 @@
 package dev.pairly.android.ui.home
 
-import dev.pairly.android.ui.theme.PairShape
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.material3.LocalContentColor
@@ -20,11 +18,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.Canvas
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.animateColorAsState
 import android.net.Uri
 import android.os.Build
@@ -128,9 +121,9 @@ class HomeCallbacks(
 )
 
 /**
- * Home. The link between this phone and the PC is the picture: both devices with a line between
- * them that moves while connected, on the accent. Below it, what can be sent, a running transfer,
- * and what still needs the user. When the link is down the card loses its color and the line breaks.
+ * Home. The link between this phone and the PC comes first: both devices with a line between
+ * them. Below it, what can be sent, a running transfer, and what still needs the user. When the
+ * link is down the line turns dotted and the card says why.
  */
 @Composable
 fun HomeScreen(state: AppState, callbacks: HomeCallbacks) {
@@ -222,18 +215,23 @@ private fun ConnectionLine(state: AppState, onDark: Boolean = false) {
 private fun LinkCard(state: AppState, callbacks: HomeCallbacks) {
     val style = Pairly.style
     val live = state.hasPairing && state.connection.phase == ConnectionPhase.Ready
+    // Light mode fills the card with the accent while connected. Dark mode keeps it a card and
+    // shows the connection in the line and the icons, so no large bright surface sits on the dark ground.
+    val filled = live && !style.dark
     var synced by remember { mutableStateOf(false) }
     LaunchedEffect(synced) { if (synced) { delay(2_500); synced = false } }
-    val container by animateColorAsState(if (live) MaterialTheme.colorScheme.primary else style.cardColor, tween(280), label = "link-bg")
-    val content by animateColorAsState(if (live) style.onHero else MaterialTheme.colorScheme.onSurface, tween(280), label = "link-fg")
-    var card = Modifier.fillMaxWidth().clip(PairShape).background(container)
-    if (!live) style.cardBorder?.let { card = card.border(it, PairShape) }
+    val container by animateColorAsState(if (filled) MaterialTheme.colorScheme.primary else style.cardColor, tween(240), label = "link-bg")
+    val content by animateColorAsState(if (filled) style.onHero else MaterialTheme.colorScheme.onSurface, tween(240), label = "link-fg")
+    val mark = if (filled) content else if (live) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+    val shape = RoundedCornerShape(18.dp)
+    var card = Modifier.fillMaxWidth().clip(shape).background(container)
+    if (!filled) style.cardBorder?.let { card = card.border(it, shape) }
     CompositionLocalProvider(LocalContentColor provides content) {
         Column(card.padding(Space.l)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                DeviceMark(Icons.Rounded.Smartphone, content)
-                LinkLine(live, content, Modifier.weight(1f).padding(horizontal = Space.m))
-                DeviceMark(Icons.Rounded.Computer, content)
+                DeviceMark(Icons.Rounded.Smartphone, mark)
+                LinkLine(live, mark, Modifier.weight(1f).padding(horizontal = Space.m))
+                DeviceMark(Icons.Rounded.Computer, mark)
             }
             Spacer(Modifier.height(Space.m))
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -249,7 +247,7 @@ private fun LinkCard(state: AppState, callbacks: HomeCallbacks) {
                 SyncButton(state, callbacks) { synced = true }
             }
             Spacer(Modifier.height(Space.xs))
-            ConnectionLine(state, onDark = live)
+            ConnectionLine(state, onDark = filled)
             val detail = state.connection.detail
             if (state.hasPairing && detail.isNotBlank() && !live) {
                 Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = Space.xs))
@@ -258,47 +256,29 @@ private fun LinkCard(state: AppState, callbacks: HomeCallbacks) {
                 Spacer(Modifier.height(Space.m))
                 dev.pairly.android.ui.components.PrimaryButton(reconnectLabel(state), reconnectAction(state, callbacks))
             }
-            Feedback(synced, stringResource(R.string.home_synced), content)
+            Feedback(synced, stringResource(R.string.home_synced), if (filled) content else MaterialTheme.colorScheme.primary)
         }
     }
 }
 
 @Composable
-private fun DeviceMark(icon: ImageVector, content: Color) {
+private fun DeviceMark(icon: ImageVector, color: Color) {
     Box(
-        Modifier.size(32.dp).clip(RoundedCornerShape(9.dp)).background(content.copy(alpha = 0.14f)),
+        Modifier.size(32.dp).clip(RoundedCornerShape(9.dp)).background(color.copy(alpha = 0.14f)),
         contentAlignment = Alignment.Center
-    ) { Icon(icon, contentDescription = null, tint = content, modifier = Modifier.size(18.dp)) }
+    ) { Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(18.dp)) }
 }
 
-/**
- * The line between the two devices. Connected: a piece of it travels from the phone to the PC.
- * Not connected: a dotted line in the warning color. Still when animations are turned off.
- */
+/** The line between the two devices: solid while connected, dotted in the warning color while not. */
 @Composable
-private fun LinkLine(live: Boolean, content: Color, modifier: Modifier = Modifier) {
-    val style = Pairly.style
-    val travel = if (live && !style.reduceMotion) {
-        val transition = rememberInfiniteTransition(label = "link")
-        transition.animateFloat(
-            initialValue = -0.3f, targetValue = 1.6f,
-            animationSpec = infiniteRepeatable(tween(1_900, easing = FastOutSlowInEasing), RepeatMode.Restart),
-            label = "link-travel"
-        ).value
-    } else 0.37f
-    val broken = style.warning
-    Canvas(modifier.height(3.dp).clipToBounds()) {
+private fun LinkLine(live: Boolean, color: Color, modifier: Modifier = Modifier) {
+    val broken = Pairly.style.warning
+    Canvas(modifier.height(2.dp)) {
         val y = size.height / 2
-        if (live) {
-            drawLine(content.copy(alpha = 0.26f), Offset(0f, y), Offset(size.width, y), strokeWidth = size.height, cap = StrokeCap.Round)
-            val start = travel * size.width
-            drawLine(content, Offset(start, y), Offset(start + size.width * 0.26f, y), strokeWidth = size.height, cap = StrokeCap.Round)
-        } else {
-            drawLine(
-                broken, Offset(0f, y), Offset(size.width, y), strokeWidth = size.height, cap = StrokeCap.Round,
-                pathEffect = PathEffect.dashPathEffect(floatArrayOf(1f, size.height * 3f))
-            )
-        }
+        drawLine(
+            if (live) color else broken, Offset(0f, y), Offset(size.width, y), strokeWidth = size.height, cap = StrokeCap.Round,
+            pathEffect = if (live) null else PathEffect.dashPathEffect(floatArrayOf(1f, size.height * 4f))
+        )
     }
 }
 

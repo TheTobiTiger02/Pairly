@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -41,7 +40,7 @@ class NavItem(val label: String, val icon: ImageVector, val selected: Boolean, v
 
 /**
  * Floating tab bar. Every tab keeps its icon and label; a filled marker slides behind the selected
- * one and carries the pair corner, turned towards the side it sits on.
+ * one.
  */
 @Composable
 fun PairlyNavBar(items: List<NavItem>, modifier: Modifier = Modifier) {
@@ -53,14 +52,7 @@ fun PairlyNavBar(items: List<NavItem>, modifier: Modifier = Modifier) {
     BoxWithConstraints(bar.padding(4.dp)) {
         val slot = maxWidth / items.size
         val x by animateDpAsState(slot * selected, style.spring(), label = "nav-marker")
-        // The tight corner points away from the neighbouring tab.
-        val last = selected == items.lastIndex && items.size > 1
-        val marker = RoundedCornerShape(
-            topStart = 24.dp, topEnd = 24.dp,
-            bottomEnd = if (last) 7.dp else 24.dp,
-            bottomStart = if (last) 24.dp else 7.dp
-        )
-        Box(Modifier.offset(x = x).width(slot).fillMaxHeight().clip(marker).background(style.navActive))
+        Box(Modifier.offset(x = x).width(slot).fillMaxHeight().clip(CircleShape).background(style.navActive))
         Row(Modifier.fillMaxSize().selectableGroup()) {
             items.forEach { item ->
                 val content by animateColorAsState(if (item.selected) style.onNavActive else style.navInactive, label = "nav-fg")
