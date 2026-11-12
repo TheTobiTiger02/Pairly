@@ -2473,6 +2473,39 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>Download needs a file, Delete needs anything selected.</summary>
+    private void StorageItemsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        var item = StorageItemsList.SelectedItem as StorageItemViewModel;
+        StorageDownloadButton.IsEnabled = item is { Payload.IsDirectory: false };
+        StorageDeleteButton.IsEnabled = item is not null;
+    }
+
+    /// <summary>Enter opens, Backspace and Alt+Left go up, Delete deletes.</summary>
+    private void StorageItemsList_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        var key = e.Key == System.Windows.Input.Key.System ? e.SystemKey : e.Key;
+        if (key == System.Windows.Input.Key.Enter)
+        {
+            StorageItemsList_MouseDoubleClick(sender, null!);
+        }
+        else if (key == System.Windows.Input.Key.Back
+            || (key == System.Windows.Input.Key.Left && System.Windows.Input.Keyboard.Modifiers == System.Windows.Input.ModifierKeys.Alt))
+        {
+            if (StorageBackButton.IsEnabled) StorageGoBack_Click(sender, e);
+        }
+        else if (key == System.Windows.Input.Key.Delete)
+        {
+            if (StorageDeleteButton.IsEnabled) DeleteStorageItem_Click(sender, e);
+        }
+        else
+        {
+            return;
+        }
+
+        e.Handled = true;
+    }
+
     private async void StorageItemsList_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
         var selectedDevice = GetSelectedDevice();

@@ -28,7 +28,8 @@ public partial class CallOverlayWindow : Window
 
         var workingArea = SystemParameters.WorkArea;
         Left = workingArea.Right - Width - 8;
-        Top = workingArea.Bottom - Height - 4;
+        // Top right: the bottom right corner belongs to Windows notifications, which covered this card.
+        Top = workingArea.Top + 8;
     }
 
     public string DeviceId => _deviceId;
