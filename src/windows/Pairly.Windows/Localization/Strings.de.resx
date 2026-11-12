@@ -69,6 +69,9 @@
   <data name="ring_started" xml:space="preserve"><value>{0} klingelt. Nach einer Minute hört es auf.</value></data>
   <data name="ring_stopped" xml:space="preserve"><value>Klingeln gestoppt.</value></data>
   <data name="ring_phone_tooltip" xml:space="preserve"><value>Spielt einen lauten Ton auf dem Handy ab, damit du es findest, auch wenn es stumm ist.</value></data>
+  <data name="new_message" xml:space="preserve"><value>Neue Nachricht</value></data>
+  <data name="new_message_from" xml:space="preserve"><value>Wird als SMS von {0} gesendet.</value></data>
+  <data name="phone_number" xml:space="preserve"><value>Telefonnummer</value></data>
   <data name="clear_all" xml:space="preserve"><value>Alle löschen</value></data>
   <data name="clear_failed" xml:space="preserve"><value>Löschen fehlgeschlagen: {0}.</value></data>
   <data name="clear_notifications_from_this_pc" xml:space="preserve"><value>Benachrichtigungen von diesem PC löschen</value></data>

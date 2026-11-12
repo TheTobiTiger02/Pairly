@@ -427,8 +427,12 @@
                                         <TextBlock x:Name="SmsStatusText" Text="{l:Loc select_a_phone_to_view_messages}" Style="{StaticResource CaptionText}"
                                                    Margin="0,2,0,0" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" />
                                     </StackPanel>
-                                    <Button Grid.Column="1" Style="{StaticResource IconButton}" Content="&#xE72C;" VerticalAlignment="Top"
-                                            ToolTip="{l:Loc refresh_messages}" AutomationProperties.Name="{l:Loc refresh_messages}" Click="RefreshPhoneData_Click" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                                        <Button Style="{StaticResource IconButton}" Content="&#xE72C;"
+                                                ToolTip="{l:Loc refresh_messages}" AutomationProperties.Name="{l:Loc refresh_messages}" Click="RefreshPhoneData_Click" />
+                                        <Button x:Name="NewSmsButton" Style="{StaticResource IconButton}" Content="&#xE70F;" Margin="4,0,0,0"
+                                                ToolTip="{l:Loc new_message}" AutomationProperties.Name="{l:Loc new_message}" Click="NewSms_Click" />
+                                    </StackPanel>
                                 </Grid>
                                 <TextBox x:Name="SmsSearchBox" Grid.Row="1" Margin="0,14,0,8" controls:Fluent.Placeholder="{l:Loc search_conversations}"
                                          controls:Fluent.Icon="&#xE721;" AutomationProperties.Name="{l:Loc search_conversations}"
@@ -2346,6 +2350,27 @@
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button x:Name="ConfirmCancelButton" Content="{l:Loc cancel}" Style="{StaticResource SecondaryButton}" MinWidth="88" Click="ConfirmCancel_Click" />
                         <Button x:Name="ConfirmAcceptButton" MinWidth="88" Margin="8,0,0,0" Click="ConfirmAccept_Click" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- A text message to a number that has no conversation yet. -->
+        <Grid x:Name="NewSmsOverlay" Grid.RowSpan="2" Grid.ColumnSpan="3" Panel.ZIndex="35" Background="{DynamicResource SmokeBrush}"
+              Visibility="Collapsed" MouseDown="NewSmsOverlay_MouseDown">
+            <Border Width="420" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="20"
+                    Background="{DynamicResource SurfaceElevatedBrush}" BorderBrush="{DynamicResource CardStrokeBrush}" BorderThickness="1"
+                    CornerRadius="{DynamicResource OverlayRadius}" Effect="{StaticResource DialogShadow}" AutomationProperties.Name="{l:Loc new_message}">
+                <StackPanel>
+                    <TextBlock Text="{l:Loc new_message}" Style="{StaticResource PageTitle}" />
+                    <TextBlock x:Name="NewSmsFromText" Style="{StaticResource CaptionText}" Margin="0,4,0,14" />
+                    <TextBox x:Name="NewSmsNumber" controls:Fluent.Placeholder="{l:Loc phone_number}" AutomationProperties.Name="{l:Loc phone_number}" />
+                    <TextBox x:Name="NewSmsText" Margin="0,8,0,0" MinHeight="84" MaxHeight="180" TextWrapping="Wrap" AcceptsReturn="True"
+                             VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto"
+                             controls:Fluent.Placeholder="{l:Loc enter_a_message}" AutomationProperties.Name="{l:Loc message_text}" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                        <Button Content="{l:Loc cancel}" Style="{StaticResource SecondaryButton}" MinWidth="88" Click="NewSmsCancel_Click" />
+                        <Button x:Name="NewSmsSendButton" Content="{l:Loc send}" Style="{StaticResource MainActionButton}" MinWidth="88" Margin="8,0,0,0" Click="NewSmsSend_Click" />
                     </StackPanel>
                 </StackPanel>
             </Border>

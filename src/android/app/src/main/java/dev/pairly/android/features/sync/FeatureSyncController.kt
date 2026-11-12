@@ -246,13 +246,23 @@ object FeatureSyncController {
             if (!PairlyConnection.isReady) return@execute
             val repository = SmsRepository(appContext)
             val allowed = FeaturePermissionState.hasSmsAccess(appContext)
-            val threads = if (allowed) repository.recentThreads(100) else emptyList()
+            val threads = if (allowed) repository.recentThreads() else emptyList()
             PairlyConnection.send(ProtocolJson.smsThreadPage(deviceId(appContext), threads))
             if (allowed) {
                 repository.groupRecentMessagesByThread(200).forEach { (threadId, messages) ->
                     PairlyConnection.send(ProtocolJson.smsMessagePage(deviceId(appContext), threadId, messages))
                 }
             }
+        }
+    }
+
+    /** The PC opened a conversation: send its newest messages, which the snapshot may not hold. */
+    fun sendSmsThread(context: Context, threadId: String) {
+        val appContext = context.applicationContext
+        smsExecutor.execute {
+            if (!PairlyConnection.isReady || !FeaturePermissionState.hasSmsAccess(appContext)) return@execute
+            val messages = SmsRepository(appContext).threadMessages(threadId)
+            if (messages.isNotEmpty()) PairlyConnection.send(ProtocolJson.smsMessagePage(deviceId(appContext), threadId, messages))
         }
     }
 

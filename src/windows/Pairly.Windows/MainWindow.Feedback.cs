@@ -160,6 +160,11 @@ public partial class MainWindow
                 CloseConfirm(false);
                 e.Handled = true;
             }
+            else if (NewSmsOverlay.Visibility == Visibility.Visible)
+            {
+                CloseNewSms();
+                e.Handled = true;
+            }
             else if (WhatsNewOverlay.Visibility == Visibility.Visible)
             {
                 WhatsNewOverlay.Visibility = Visibility.Collapsed;
@@ -174,7 +179,8 @@ public partial class MainWindow
         }
 
         // Shortcuts belong to the pages, not to a dialog lying over them.
-        if (ConfirmOverlay.Visibility == Visibility.Visible || PairingOverlay.Visibility == Visibility.Visible
+        if (ConfirmOverlay.Visibility == Visibility.Visible || NewSmsOverlay.Visibility == Visibility.Visible
+            || PairingOverlay.Visibility == Visibility.Visible
             || PhotoViewerOverlay.Visibility == Visibility.Visible)
         {
             return;
@@ -195,6 +201,11 @@ public partial class MainWindow
         if (e.Key is >= Key.D1 and <= Key.D7)
         {
             SelectPage(PageShortcutOrder[e.Key - Key.D1]);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.N && MainTabs.SelectedIndex == 0)
+        {
+            NewSms_Click(this, new RoutedEventArgs());
             e.Handled = true;
         }
         else if (e.Key == Key.F && PageSearchBox() is { } search)

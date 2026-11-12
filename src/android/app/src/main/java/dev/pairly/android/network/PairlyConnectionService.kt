@@ -650,6 +650,11 @@ class PairlyConnectionService : Service() {
                     "Processed remote control input."
                 }
                 "call.action" -> handleCallAction(envelope)
+                "sms.thread.request" -> {
+                    val threadId = envelope.optJSONObject("payload")?.optString("threadId").orEmpty()
+                    if (threadId.isNotBlank()) FeatureSyncController.sendSmsThread(this, threadId)
+                    "Sent the conversation."
+                }
                 "device.ring" -> {
                     val ring = envelope.optJSONObject("payload")?.optBoolean("ring", true) ?: true
                     if (ring) dev.pairly.android.features.find.PhoneRinger.start(this)

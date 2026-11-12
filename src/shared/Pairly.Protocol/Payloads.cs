@@ -248,6 +248,9 @@ public sealed record SmsMessagePagePayload(
     string? NextPageToken,
     IReadOnlyList<SmsMessagePayload> Messages);
 
+/// <summary>PC to phone: send the newest messages of this conversation.</summary>
+public sealed record SmsThreadRequestPayload(string ThreadId);
+
 public sealed record SmsSendPayload(
     string Address,
     string Body,

@@ -1335,7 +1335,138 @@ public partial class MainWindow : Window
 
     private void SmsThreadsList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
-        _ = LoadSmsMessagesAsync(SmsThreadsList.SelectedItem as SmsThreadViewModel);
+        var thread = SmsThreadsList.SelectedItem as SmsThreadViewModel;
+        _ = LoadSmsMessagesAsync(thread);
+        if (thread is not null)
+        {
+            _ = LoadWholeConversationAsync(thread);
+        }
+    }
+
+    // Conversations the phone was already asked for, so opening one again costs nothing.
+    private readonly HashSet<string> _conversationsRequested = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// What is synced by itself is only the newest messages overall, so an older conversation
+    /// opens nearly empty. This asks the phone for the conversation's own messages and shows them.
+    /// </summary>
+    private async Task LoadWholeConversationAsync(SmsThreadViewModel thread)
+    {
+        if (App.DemoMode || !_conversationsRequested.Add(thread.ThreadKey))
+        {
+            return;
+        }
+
+        try
+        {
+            using var response = await _host.PostAsync(
+                $"v1/sms/{Uri.EscapeDataString(thread.DeviceId)}/threads/{Uri.EscapeDataString(thread.ThreadId)}/load", null);
+            if (!response.IsSuccessStatusCode)
+            {
+                _conversationsRequested.Remove(thread.ThreadKey);
+                return;
+            }
+
+            // The phone answers within a moment; the page is stored by the host before this reads it.
+            await Task.Delay(700);
+            if (ReferenceEquals(SmsThreadsList.SelectedItem, thread))
+            {
+                await LoadSmsMessagesAsync(thread);
+            }
+        }
+        catch (HttpRequestException)
+        {
+            _conversationsRequested.Remove(thread.ThreadKey);
+        }
+    }
+
+    // --- New message --------------------------------------------------------------------------
+
+    private void NewSms_Click(object sender, RoutedEventArgs e)
+    {
+        var device = GetSelectedDevice();
+        if (device is null || !device.Connected)
+        {
+            ShowToast(device is null ? L.T("select_the_phone_that_should_send_the_sms") : L.F("is_paired_but_offline", device.DisplayName), success: false);
+            return;
+        }
+
+        NewSmsFromText.Text = L.F("new_message_from", device.DisplayName);
+        NewSmsOverlay.Visibility = Visibility.Visible;
+        Dispatcher.BeginInvoke(() => NewSmsNumber.Focus(), DispatcherPriority.Input);
+    }
+
+    private void CloseNewSms() => NewSmsOverlay.Visibility = Visibility.Collapsed;
+
+    private void NewSmsCancel_Click(object sender, RoutedEventArgs e) => CloseNewSms();
+
+    private void NewSmsOverlay_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (ReferenceEquals(e.OriginalSource, NewSmsOverlay))
+        {
+            CloseNewSms();
+        }
+    }
+
+    private async void NewSmsSend_Click(object sender, RoutedEventArgs e)
+    {
+        var device = GetSelectedDevice();
+        var number = NewSmsNumber.Text.Trim();
+        var text = NewSmsText.Text.Trim();
+        if (device is null || number.Length == 0 || text.Length == 0)
+        {
+            (number.Length == 0 ? NewSmsNumber : NewSmsText).Focus();
+            return;
+        }
+
+        // Both boxes keep their text until the phone has taken the message.
+        NewSmsSendButton.IsEnabled = false;
+        try
+        {
+            using var response = await _host.PostAsJsonAsync(
+                $"v1/sms/{Uri.EscapeDataString(device.DeviceId)}/send", new SmsSendPayload(number, text, null), JsonOptions);
+            if (!response.IsSuccessStatusCode)
+            {
+                AppLog.Write($"SMS send failed: {(int)response.StatusCode} {await response.Content.ReadAsStringAsync()}");
+                ShowToast(L.T("the_message_could_not_be_sent_check_the_phon"), success: false);
+                return;
+            }
+
+            NewSmsNumber.Clear();
+            NewSmsText.Clear();
+            CloseNewSms();
+            ShowToast(L.F("sms_sent_by", device.DisplayName));
+            // The phone reports the new conversation a moment later; open it once it is listed.
+            await Task.Delay(1200);
+            await RefreshFromHostAsync(showErrors: false);
+            var created = _smsThreads.FirstOrDefault(thread => SameNumber(thread.Address, number));
+            if (created is not null)
+            {
+                SmsThreadsList.SelectedItem = created;
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            ShowToast(UserFacingError(L.T("the_message_could_not_be_sent_check_the_phon"), ex), success: false);
+        }
+        finally
+        {
+            NewSmsSendButton.IsEnabled = true;
+        }
+    }
+
+    /// <summary>Two ways of writing one number: compared by their digits, ignoring a country prefix.</summary>
+    private static bool SameNumber(string first, string second)
+    {
+        static string Digits(string value) => new(value.Where(char.IsDigit).ToArray());
+        var (a, b) = (Digits(first), Digits(second));
+        if (a.Length == 0 || b.Length == 0)
+        {
+            return false;
+        }
+
+        var tail = Math.Min(Math.Min(a.Length, b.Length), 8);
+        return a[^tail..] == b[^tail..];
     }
 
     private async Task LoadSmsMessagesAsync(SmsThreadViewModel? thread)

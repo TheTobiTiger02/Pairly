@@ -747,6 +747,30 @@ public sealed class PairlyServer
             return Results.Ok(sms.GetMessages(deviceId, threadId));
         });
 
+        // The synced snapshot holds only the most recent messages overall. Opening a conversation asks
+        // the phone for that conversation's own newest messages; they arrive as a normal message page.
+        app.MapPost("/v1/sms/{deviceId}/threads/{threadId}/load", async (
+            string deviceId,
+            string threadId,
+            WebSocketSessionHub sessions,
+            CancellationToken cancellationToken) =>
+        {
+            if (!sessions.HasSession(deviceId))
+            {
+                return Results.NotFound(new { message = "Target device is not connected." });
+            }
+
+            await sessions.SendAsync(
+                deviceId,
+                ProtocolEnvelope.Create(
+                    ProtocolMessageTypes.SmsThreadRequest,
+                    "pc-host",
+                    DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                    new SmsThreadRequestPayload(threadId)),
+                cancellationToken);
+            return Results.Accepted();
+        });
+
         app.MapPost("/v1/sms/{deviceId}/send", async (
             string deviceId,
             SmsSendPayload payload,
