@@ -126,8 +126,10 @@ internal static class ThemeManager
         currentTheme = replacement;
 
         var font = new FontFamily(new Uri("pack://application:,,,/"), "./Fonts/#Manrope, Segoe UI");
+        // Titles only; everything else is Manrope.
+        var display = new FontFamily(new Uri("pack://application:,,,/"), "./Fonts/#Bricolage Grotesque, ./Fonts/#Manrope, Segoe UI");
         resources["AppFontFamily"] = font;
-        resources["DisplayFontFamily"] = font;
+        resources["DisplayFontFamily"] = display;
         resources["CardShadow"] = null;
 
         if (!IsHighContrast)

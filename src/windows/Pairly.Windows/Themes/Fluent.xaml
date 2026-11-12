@@ -47,24 +47,37 @@
         <Setter Property="TextTrimming" Value="CharacterEllipsis" />
     </Style>
 
-    <Style x:Key="PageTitle" TargetType="TextBlock">
+    <!-- Type ramp, six sizes: 20 dialog title, 18 page title, 14 item title, 13 text (the window
+         default), 12 caption, 11 overline. Titles use the display face. -->
+    <Style x:Key="DialogTitle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{DynamicResource DisplayFontFamily}" />
-        <Setter Property="FontSize" Value="28" />
-        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontSize" Value="20" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="TextWrapping" Value="Wrap" />
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
     </Style>
 
-    <Style x:Key="SubtitleText" TargetType="TextBlock">
+    <Style x:Key="PageTitle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{DynamicResource DisplayFontFamily}" />
-        <Setter Property="FontSize" Value="20" />
-        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="FontWeight" Value="Bold" />
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
     </Style>
+
+    <Style x:Key="SubtitleText" TargetType="TextBlock" BasedOn="{StaticResource PageTitle}" />
 
     <Style x:Key="SectionTitle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    </Style>
+
+    <!-- A label above a group. Sentence case in the strings; the tracking and weight set it apart. -->
+    <Style x:Key="Overline" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
+        <Setter Property="Margin" Value="2,0,0,6" />
     </Style>
 
     <Style x:Key="BodyText" TargetType="TextBlock">
@@ -97,7 +110,7 @@
 
     <!-- Buttons -->
     <Style TargetType="Button">
-        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="MinHeight" Value="30" />
         <Setter Property="Padding" Value="12,5,12,6" />
         <Setter Property="Background" Value="{DynamicResource ControlFillBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />

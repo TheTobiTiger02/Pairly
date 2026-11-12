@@ -37,7 +37,7 @@
     <None Update="Assets\PairlyMark.svg" CopyToOutputDirectory="PreserveNewest" />
     <None Remove="Assets\Pairly.ico" />
     <Resource Include="Assets\Pairly.ico" />
-    <!-- Manrope, SIL Open Font License. -->
+    <!-- Manrope (text) and Bricolage Grotesque (titles), SIL Open Font License. -->
     <Resource Include="Fonts\*.ttf" />
     <None Include="Fonts\*-OFL.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
