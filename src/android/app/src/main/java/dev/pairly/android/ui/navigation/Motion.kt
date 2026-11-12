@@ -13,23 +13,14 @@ import androidx.compose.animation.slideOutHorizontally
 import dev.pairly.android.ui.theme.PairlyStyle
 
 /**
- * Screen changes follow the style. Glass: the new screen fades in and lifts slightly, the old one
- * fades out. Clay: screens slide from the side they lie on with a springy settle and a small
- * squash. "Forward" means to the right: a tab further right, a deeper screen, the next setup step.
- * With "Remove animations" turned on, both become a quick fade.
+ * Screen changes: the new screen fades in and rises a little, the old one fades out. With "Remove
+ * animations" turned on, both become a quick fade.
  */
 object Motion {
-    fun slideIn(style: PairlyStyle, forward: Boolean): EnterTransition = when {
-        style.reduceMotion -> fadeIn(tween(120))
-        style.clay -> slideInHorizontally(style.offsetSpring()) { width -> if (forward) width / 4 else -width / 4 } +
-            scaleIn(style.spring(), initialScale = 0.94f) + fadeIn()
-        else -> slideInVertically(style.offsetSpring()) { height -> height / 28 } + fadeIn(tween(220, delayMillis = 60))
-    }
+    fun slideIn(style: PairlyStyle, @Suppress("UNUSED_PARAMETER") forward: Boolean): EnterTransition =
+        if (style.reduceMotion) fadeIn(tween(120))
+        else slideInVertically(style.offsetSpring()) { height -> height / 28 } + fadeIn(tween(220, delayMillis = 60))
 
-    fun slideOut(style: PairlyStyle, forward: Boolean): ExitTransition = when {
-        style.reduceMotion -> fadeOut(tween(120))
-        style.clay -> slideOutHorizontally(style.offsetSpring()) { width -> if (forward) -width / 4 else width / 4 } +
-            scaleOut(targetScale = 0.96f) + fadeOut()
-        else -> fadeOut(tween(140))
-    }
+    fun slideOut(style: PairlyStyle, @Suppress("UNUSED_PARAMETER") forward: Boolean): ExitTransition =
+        fadeOut(tween(if (style.reduceMotion) 120 else 140))
 }

@@ -168,14 +168,14 @@ private fun Pulses(icon: ImageVector, t: Float) {
     val style = Pairly.style
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         // A hairline frame that slowly turns around the mark; calmer than glowing pulses.
-        val frame = if (style.clay) RoundedCornerShape(44.dp) else RoundedCornerShape(36.dp)
+        val frame = RoundedCornerShape(36.dp)
         Box(
             Modifier.size(140.dp).graphicsLayer { rotationZ = t * 90f }
                 .border(1.5.dp, MaterialTheme.colorScheme.outlineVariant, frame)
         )
         Box(
             Modifier.size(104.dp).graphicsLayer { val breathe = 1f + sin(t * 2 * PI).toFloat() * 0.03f; scaleX = breathe; scaleY = breathe }
-                .clip(RoundedCornerShape(if (style.clay) 36.dp else 30.dp)).background(style.heroBrush),
+                .clip(RoundedCornerShape(30.dp)).background(style.heroBrush),
             contentAlignment = Alignment.Center
         ) { Icon(icon, contentDescription = null, tint = style.onHero, modifier = Modifier.size(52.dp)) }
     }

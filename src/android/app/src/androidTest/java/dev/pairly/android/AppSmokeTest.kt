@@ -117,36 +117,36 @@ class AppSmokeTest {
         screenshot("done")
         click(R.string.action_start_using)
 
-        // Home, Features, a feature page, Help and Settings.
+        // Home, a feature page, Settings and Help.
         waitFor(R.string.home_not_paired)
         screenshot("home")
-        tab(R.string.nav_features)
-        waitFor(R.string.features_title)
-        screenshot("features")
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText(text(R.string.feature_calls)))
         click(R.string.feature_calls)
         waitFor(R.string.feature_why_title)
         screenshot("feature-calls")
         compose.onNodeWithContentDescription(text(R.string.action_back)).performClick()
-        waitFor(R.string.features_title)
-        tab(R.string.nav_help)
-        waitFor(R.string.help_title)
-        screenshot("help")
+        waitFor(R.string.home_not_paired)
         tab(R.string.nav_settings)
         waitFor(R.string.settings_title)
         screenshot("settings")
-
-        // Dark mode (Navy) through the real theme choice.
         val list = compose.onNode(hasScrollToNodeAction())
-        list.performScrollToNode(hasText(text(R.string.theme_dark)))
+        list.performScrollToNode(hasText(text(R.string.nav_help)))
+        click(R.string.nav_help)
+        waitFor(R.string.help_title)
+        screenshot("help")
+        compose.onNodeWithContentDescription(text(R.string.action_back)).performClick()
+        waitFor(R.string.settings_title)
+
+        // Dark mode through the real theme choice.
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText(text(R.string.theme_dark)))
         click(R.string.theme_dark)
         screenshot("settings-dark")
 
-        // Tabs in both directions, including back to Home.
+        // Back to Home through the tab bar.
         tab(R.string.nav_home)
         waitFor(R.string.home_not_paired)
         screenshot("home-dark")
-        tab(R.string.nav_features)
-        waitFor(R.string.features_title)
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText(text(R.string.feature_control)))
 
         // "Control your phone" opens Android's settings as close to Pairly's switch as the phone allows.
         click(R.string.feature_control)
@@ -182,7 +182,7 @@ class AppSmokeTest {
         check((1..3).any { device.pressBack(); device.wait(Until.hasObject(pairly), 15_000) }) { "Pairly did not come back from Settings." }
         waitFor(R.string.feature_why_title)
         compose.onNodeWithContentDescription(text(R.string.action_back)).performClick()
-        waitFor(R.string.features_title)
+        waitFor(R.string.home_not_paired)
 
         // Switch the app to German (recreates the activity on older Android versions).
         tab(R.string.nav_settings)

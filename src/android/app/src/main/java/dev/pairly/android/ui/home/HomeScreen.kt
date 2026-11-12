@@ -1,5 +1,24 @@
 package dev.pairly.android.ui.home
 
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material.icons.rounded.Smartphone
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.Computer
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.border
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.Canvas
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.animateColorAsState
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -102,22 +121,16 @@ class HomeCallbacks(
 )
 
 /**
- * Home. Glass leads with the link itself ("Galaxy S25 → Desktop") in big type over a segmented
- * send bar; Clay wraps the same things in one soft card with a friendly line. Both then show the
- * running transfer, Power mode and what's set up on this phone.
+ * Home. The link between this phone and the PC comes first: both devices with a line between
+ * them. Below it, what can be sent, a running transfer, and what still needs the user. When the
+ * link is down the line turns dotted and the card says why.
  */
 @Composable
 fun HomeScreen(state: AppState, callbacks: HomeCallbacks) {
-    val clay = Pairly.style.clay
     val send = rememberSendActions(state, callbacks)
-    ScreenList(contentPadding = PaddingValues(start = Space.xl, end = Space.xl, top = Space.s, bottom = Space.xxxl)) {
-        if (clay) {
-            item { ClayTopBar(state, callbacks) }
-            item { ClayHero(state, callbacks, send) }
-        } else {
-            item { GlassHeader(state, callbacks) }
-            if (state.hasPairing) item { GlassSendBar(send) }
-        }
+    ScreenList(contentPadding = PaddingValues(start = Space.l, end = Space.l, top = Space.s, bottom = Space.xxxl)) {
+        item { LinkCard(state, callbacks) }
+        if (state.hasPairing) item { SendTiles(send) }
         item { SendFeedback(send) }
         if (state.hasPairing) item {
             val actions = LocalFeatureActions.current
@@ -196,118 +209,122 @@ private fun ConnectionLine(state: AppState, onDark: Boolean = false) {
     }
 }
 
-// --- Glass ----------------------------------------------------------------------------------------
+// --- The link ------------------------------------------------------------------------------------
 
 @Composable
-private fun GlassHeader(state: AppState, callbacks: HomeCallbacks) {
+private fun LinkCard(state: AppState, callbacks: HomeCallbacks) {
+    val style = Pairly.style
+    val live = state.hasPairing && state.connection.phase == ConnectionPhase.Ready
+    // Light mode fills the card with the accent while connected. Dark mode keeps it a card and
+    // shows the connection in the line and the icons, so no large bright surface sits on the dark ground.
+    val filled = live && !style.dark
     var synced by remember { mutableStateOf(false) }
     LaunchedEffect(synced) { if (synced) { delay(2_500); synced = false } }
-    Column(Modifier.fillMaxWidth().sharedElement("pc-card").padding(top = Space.s, bottom = Space.s)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                if (state.hasPairing) stringResource(R.string.home_link_from, phoneName()) else stringResource(R.string.app_name),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1, overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
-            )
-            SyncButton(state, callbacks) { synced = true }
-        }
-        Text(
-            pcLabel(state),
-            style = MaterialTheme.typography.displaySmall,
-            modifier = Modifier.semantics { heading() }
-        )
-        Spacer(Modifier.height(Space.s))
-        ConnectionLine(state)
-        val detail = state.connection.detail
-        if (state.hasPairing && detail.isNotBlank() && state.connection.phase != ConnectionPhase.Ready) {
-            Text(detail, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = Space.xs))
-        }
-        if (needsReconnect(state)) {
-            Spacer(Modifier.height(Space.m))
-            dev.pairly.android.ui.components.PrimaryButton(reconnectLabel(state), reconnectAction(state, callbacks))
-        }
-        Feedback(synced, stringResource(R.string.home_synced))
-    }
-}
-
-/** Clipboard as the main action, photos and files beside it, in one bar. */
-@Composable
-private fun GlassSendBar(send: SendActions) {
-    val style = Pairly.style
-    val stacked = LocalDensity.current.fontScale > 1.3f
-    PairlyCard(Modifier.fillMaxWidth(), contentPadding = PaddingValues(6.dp)) {
-        val content: @Composable (Modifier, Modifier) -> Unit = { main, side ->
-            SendPill(Icons.Rounded.ContentPaste, stringResource(R.string.home_send_clipboard), send.ready, style.buttonColor, style.onButton, main, send.clipboard)
-            SendPill(Icons.Rounded.PhotoLibrary, stringResource(R.string.home_send_photos), send.ready, Color.Transparent, MaterialTheme.colorScheme.onSurface, side, send.photos)
-            SendPill(Icons.Rounded.Folder, stringResource(R.string.home_send_files), send.ready, Color.Transparent, MaterialTheme.colorScheme.onSurface, side, send.files)
-        }
-        if (stacked) Column { content(Modifier.fillMaxWidth(), Modifier.fillMaxWidth()) }
-        else Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) { content(Modifier.weight(1.4f), Modifier.weight(1f)) }
-    }
-}
-
-// --- Clay -----------------------------------------------------------------------------------------
-
-@Composable
-private fun ClayTopBar(state: AppState, callbacks: HomeCallbacks) {
-    var synced by remember { mutableStateOf(false) }
-    LaunchedEffect(synced) { if (synced) { delay(2_500); synced = false } }
-    Column {
-        Row(Modifier.fillMaxWidth().padding(top = Space.m), verticalAlignment = Alignment.CenterVertically) {
-            AppIcon(Modifier.size(36.dp))
-            Spacer(Modifier.width(Space.m))
-            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
-            SyncButton(state, callbacks) { synced = true }
-        }
-        Feedback(synced, stringResource(R.string.home_synced))
-    }
-}
-
-@Composable
-private fun ClayHero(state: AppState, callbacks: HomeCallbacks, send: SendActions) {
-    val style = Pairly.style
-    val phase = state.connection.phase
-    val line = when {
-        !state.hasPairing -> R.string.home_clay_unpaired
-        phase == ConnectionPhase.Ready -> R.string.home_clay_connected
-        phase == ConnectionPhase.Disconnected || phase == ConnectionPhase.Rejected -> R.string.home_clay_offline
-        else -> R.string.home_clay_connecting
-    }
-    Column(
-        Modifier.fillMaxWidth().sharedElement("pc-card").clip(RoundedCornerShape(34.dp)).background(style.heroBrush).padding(Space.xxl)
-    ) {
-        AnimatedContent(line, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "clay-line") { text ->
-            Text(stringResource(text), style = MaterialTheme.typography.headlineMedium, color = style.onHero, modifier = Modifier.semantics { heading() })
-        }
-        Spacer(Modifier.height(Space.s))
-        Text(pcLabel(state), style = MaterialTheme.typography.titleMedium, color = style.onHero)
-        Spacer(Modifier.height(Space.xs))
-        ConnectionLine(state, onDark = true)
-        val detail = state.connection.detail
-        if (state.hasPairing && detail.isNotBlank() && phase != ConnectionPhase.Ready) {
-            Text(detail, style = MaterialTheme.typography.bodyMedium, color = style.onHero, modifier = Modifier.padding(top = Space.xs))
-        }
-        Spacer(Modifier.height(Space.l))
-        val pillColor = if (style.dark) MaterialTheme.colorScheme.surfaceContainer else Color.White
-        // White pills with deep accent text on the deep-toned light hero; charcoal pills on the pastel dark one.
-        val pillText = if (style.dark) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary
-        if (needsReconnect(state)) {
-            SendPill(null, reconnectLabel(state), true, pillColor, pillText, Modifier.fillMaxWidth(), reconnectAction(state, callbacks))
-        } else {
-            // Clipboard gets its own row so long words ("Zwischenablage") never get cut.
-            Column(verticalArrangement = Arrangement.spacedBy(Space.s)) {
-                SendPill(Icons.Rounded.ContentPaste, stringResource(R.string.home_send_clipboard), send.ready, pillColor, pillText, Modifier.fillMaxWidth(), send.clipboard)
-                val stacked = LocalDensity.current.fontScale > 1.3f
-                val content: @Composable (Modifier) -> Unit = { item ->
-                    SendPill(Icons.Rounded.PhotoLibrary, stringResource(R.string.home_send_photos), send.ready, pillColor, pillText, item, send.photos)
-                    SendPill(Icons.Rounded.Folder, stringResource(R.string.home_send_files), send.ready, pillColor, pillText, item, send.files)
-                }
-                if (stacked) content(Modifier.fillMaxWidth())
-                else Row(horizontalArrangement = Arrangement.spacedBy(Space.s)) { content(Modifier.weight(1f)) }
+    val container by animateColorAsState(if (filled) MaterialTheme.colorScheme.primary else style.cardColor, tween(240), label = "link-bg")
+    val content by animateColorAsState(if (filled) style.onHero else MaterialTheme.colorScheme.onSurface, tween(240), label = "link-fg")
+    val mark = if (filled) content else if (live) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+    val shape = RoundedCornerShape(18.dp)
+    var card = Modifier.fillMaxWidth().clip(shape).background(container)
+    if (!filled) style.cardBorder?.let { card = card.border(it, shape) }
+    CompositionLocalProvider(LocalContentColor provides content) {
+        Column(card.padding(Space.l)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                DeviceMark(Icons.Rounded.Smartphone, mark)
+                LinkLine(live, mark, Modifier.weight(1f).padding(horizontal = Space.m))
+                DeviceMark(Icons.Rounded.Computer, mark)
             }
+            Spacer(Modifier.height(Space.m))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        if (state.hasPairing) stringResource(R.string.home_link_from, phoneName()) else stringResource(R.string.app_name),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = content.copy(alpha = 0.78f),
+                        maxLines = 2, overflow = TextOverflow.Ellipsis
+                    )
+                    Text(pcLabel(state), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.semantics { heading() })
+                }
+                SyncButton(state, callbacks) { synced = true }
+            }
+            Spacer(Modifier.height(Space.xs))
+            ConnectionLine(state, onDark = filled)
+            val detail = state.connection.detail
+            if (state.hasPairing && detail.isNotBlank() && !live) {
+                Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = Space.xs))
+            }
+            if (needsReconnect(state)) {
+                Spacer(Modifier.height(Space.m))
+                dev.pairly.android.ui.components.PrimaryButton(reconnectLabel(state), reconnectAction(state, callbacks))
+            }
+            Feedback(synced, stringResource(R.string.home_synced), if (filled) content else MaterialTheme.colorScheme.primary)
         }
+    }
+}
+
+@Composable
+private fun DeviceMark(icon: ImageVector, color: Color) {
+    Box(
+        Modifier.size(32.dp).clip(RoundedCornerShape(9.dp)).background(color.copy(alpha = 0.14f)),
+        contentAlignment = Alignment.Center
+    ) { Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(18.dp)) }
+}
+
+/** The line between the two devices: solid while connected, dotted in the warning color while not. */
+@Composable
+private fun LinkLine(live: Boolean, color: Color, modifier: Modifier = Modifier) {
+    val broken = Pairly.style.warning
+    Canvas(modifier.height(2.dp)) {
+        val y = size.height / 2
+        drawLine(
+            if (live) color else broken, Offset(0f, y), Offset(size.width, y), strokeWidth = size.height, cap = StrokeCap.Round,
+            pathEffect = if (live) null else PathEffect.dashPathEffect(floatArrayOf(1f, size.height * 4f))
+        )
+    }
+}
+
+// --- Send ----------------------------------------------------------------------------------------
+
+/** Three equal tiles; the clipboard, used most, carries the accent tint. They stack at large font sizes. */
+@Composable
+private fun SendTiles(send: SendActions) {
+    val stacked = LocalDensity.current.fontScale > 1.3f
+    Column {
+        Text(
+            stringResource(R.string.home_send_to_pc),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = Space.xs, top = Space.xs, bottom = Space.s).semantics { heading() }
+        )
+        val content: @Composable (Modifier) -> Unit = { tile ->
+            SendTile(Icons.Rounded.ContentPaste, stringResource(R.string.home_send_clipboard), send.ready, true, tile, send.clipboard)
+            SendTile(Icons.Rounded.PhotoLibrary, stringResource(R.string.home_send_photos), send.ready, false, tile, send.photos)
+            SendTile(Icons.Rounded.Folder, stringResource(R.string.home_send_files), send.ready, false, tile, send.files)
+        }
+        if (stacked) Column(verticalArrangement = Arrangement.spacedBy(Space.s)) { content(Modifier.fillMaxWidth()) }
+        else Row(horizontalArrangement = Arrangement.spacedBy(Space.s)) { content(Modifier.weight(1f)) }
+    }
+}
+
+@Composable
+private fun SendTile(icon: ImageVector, label: String, enabled: Boolean, tinted: Boolean, modifier: Modifier, onClick: () -> Unit) {
+    val style = Pairly.style
+    val shape = MaterialTheme.shapes.medium
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val scale by animateFloatAsState(if (pressed) 0.95f else 1f, style.spring(), label = "tile-press")
+    var tile = modifier.graphicsLayer { scaleX = scale; scaleY = scale; alpha = if (enabled) 1f else 0.45f }
+        .heightIn(min = 60.dp).clip(shape)
+        .background(if (tinted) MaterialTheme.colorScheme.primaryContainer else style.cardColor)
+    if (!tinted) style.cardBorder?.let { tile = tile.border(it, shape) }
+    Column(
+        tile.clickable(interaction, LocalIndication.current, enabled = enabled, onClickLabel = label, role = Role.Button, onClick = onClick)
+            .padding(horizontal = Space.s, vertical = Space.s),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.height(Space.xs))
+        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -343,35 +360,6 @@ private fun rememberSendActions(state: AppState, callbacks: HomeCallbacks): Send
         files = { files.launch(arrayOf("*/*")) },
         clipboardResult = clipboardResult
     )
-}
-
-@Composable
-private fun SendPill(
-    icon: ImageVector?,
-    label: String,
-    enabled: Boolean,
-    container: Color,
-    content: Color,
-    modifier: Modifier,
-    onClick: () -> Unit
-) {
-    val alpha = if (enabled) 1f else 0.45f
-    Row(
-        modifier
-            .heightIn(min = 52.dp)
-            .clip(CircleShape)
-            .background(container.copy(alpha = container.alpha * alpha))
-            .then(if (enabled) Modifier.clickable(onClickLabel = label, role = Role.Button, onClick = onClick) else Modifier)
-            .padding(horizontal = Space.m),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
-    ) {
-        if (icon != null) {
-            Icon(icon, contentDescription = null, tint = content.copy(alpha = alpha), modifier = Modifier.size(20.dp))
-            Spacer(Modifier.width(Space.s))
-        }
-        Text(label, style = MaterialTheme.typography.labelLarge, color = content.copy(alpha = alpha), maxLines = 1, overflow = TextOverflow.Ellipsis)
-    }
 }
 
 /** Clipboard result, "available when connected" and the running file transfer. */
@@ -414,50 +402,100 @@ private fun SendFeedback(send: SendActions) {
 }
 
 @Composable
-private fun Feedback(visible: Boolean, text: String) {
+private fun Feedback(visible: Boolean, text: String, color: Color = MaterialTheme.colorScheme.primary) {
     AnimatedVisibility(visible, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
         Text(
             text,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary,
+            color = color,
             modifier = Modifier.padding(top = Space.s, start = Space.xs).semantics { liveRegion = LiveRegionMode.Polite }
         )
     }
 }
 
-/** Every feature with its state; ones not set up yet come first so the next step is on top. */
+/**
+ * What still needs the user comes first, one row and one action each. Everything already on is a
+ * single quiet row of icons that opens into the full list.
+ */
 @Composable
 private fun PhoneFeatures(state: AppState, openFeature: (Feature) -> Unit) {
-    val features = (Feature.setupOrder + Feature.Clipboard).sortedBy { state.permissions.isOn(it) }
-    val on = features.count { state.permissions.isOn(it) }
+    val all = Feature.setupOrder + Feature.Clipboard
+    val missing = all.filterNot { state.permissions.isOn(it) }
+    val on = all.filter { state.permissions.isOn(it) }
+    var expanded by rememberSaveable { mutableStateOf(false) }
     Column {
-        Row(Modifier.padding(top = Space.m, bottom = Space.s, start = Space.xs), verticalAlignment = Alignment.Bottom) {
-            Text(
-                stringResource(if (on < features.size) R.string.home_finish_setup else R.string.home_on_this_phone),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.weight(1f).semantics { heading() }
-            )
-            Text(stringResource(R.string.home_features_count, on, features.size), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (missing.isNotEmpty()) {
+            SectionRow(stringResource(R.string.home_needs_you), missing.size.toString())
+            PairlyCard(Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = Space.m, vertical = Space.xs)) {
+                missing.forEachIndexed { index, feature ->
+                    if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
+                    FeatureRow(feature, on = false, openFeature)
+                }
+            }
+            Spacer(Modifier.height(Space.s))
         }
-        PairlyCard(Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = Space.l, vertical = Space.xs)) {
-            features.forEachIndexed { index, feature ->
-                val enabled = state.permissions.isOn(feature)
-                if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+        if (on.isNotEmpty()) {
+            SectionRow(stringResource(R.string.home_shared_with_pc), stringResource(R.string.home_features_count, on.size, all.size))
+            PairlyCard(Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = Space.m, vertical = Space.xs)) {
+                val label = stringResource(if (expanded) R.string.action_show_less else R.string.action_show_all)
                 Row(
-                    Modifier.fillMaxWidth().heightIn(min = 56.dp).clickable(role = Role.Button) { openFeature(feature) },
+                    Modifier.fillMaxWidth().heightIn(min = Space.touch)
+                        .clickable(onClickLabel = label, role = Role.Button) { expanded = !expanded }
+                        .semantics { stateDescription = label },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    FeatureIcon(feature.icon(), size = 36.dp)
-                    Spacer(Modifier.width(Space.m))
-                    Text(stringResource(feature.title), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-                    Text(
-                        stringResource(if (enabled) R.string.permission_on else R.string.action_turn_on),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary
-                    )
+                    Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(Space.m)) {
+                        on.take(8).forEach { feature ->
+                            Icon(feature.icon(), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+                        }
+                    }
+                    val turn by animateFloatAsState(if (expanded) 180f else 0f, Pairly.style.spring(), label = "expand")
+                    Icon(Icons.Rounded.ExpandMore, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.graphicsLayer { rotationZ = turn })
+                }
+                AnimatedVisibility(expanded, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
+                    Column {
+                        on.forEach { feature ->
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
+                            FeatureRow(feature, on = true, openFeature)
+                        }
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SectionRow(title: String, trailing: String) {
+    Row(Modifier.padding(top = Space.s, bottom = Space.s, start = Space.xs, end = Space.xs), verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            title,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f).semantics { heading() }
+        )
+        Text(trailing, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+@Composable
+private fun FeatureRow(feature: Feature, on: Boolean, openFeature: (Feature) -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 52.dp).clickable(role = Role.Button) { openFeature(feature) },
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            feature.icon(), contentDescription = null,
+            tint = if (on) MaterialTheme.colorScheme.onSurfaceVariant else Pairly.style.warning,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(Modifier.width(Space.m))
+        Text(stringResource(feature.title), style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+        Text(
+            stringResource(if (on) R.string.permission_on else R.string.action_turn_on),
+            style = MaterialTheme.typography.labelLarge,
+            color = if (on) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary
+        )
     }
 }
 
