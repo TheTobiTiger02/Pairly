@@ -15,6 +15,33 @@ public partial class MainWindow
     private DispatcherTimer? _toastTimer;
     private TaskCompletionSource<bool>? _confirm;
 
+    // --- Search ---------------------------------------------------------------------------------
+
+    private readonly Dictionary<string, DispatcherTimer> _searchTimers = new();
+
+    /// <summary>
+    /// Filters once typing pauses. Filtering on every key press re-laid-out the whole list per letter.
+    /// </summary>
+    private void FilterSoon(string list, Action filter)
+    {
+        if (!_searchTimers.TryGetValue(list, out var timer))
+        {
+            timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(160) };
+            _searchTimers[list] = timer;
+        }
+
+        timer.Stop();
+        EventHandler? tick = null;
+        tick = (_, _) =>
+        {
+            timer.Stop();
+            timer.Tick -= tick;
+            filter();
+        };
+        timer.Tick += tick;
+        timer.Start();
+    }
+
     // --- Toast ----------------------------------------------------------------------------------
 
     /// <summary>A short confirmation at the bottom of the page that leaves on its own.</summary>

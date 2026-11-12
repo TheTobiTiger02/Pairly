@@ -13,6 +13,29 @@ public sealed class MediaCatalog
     private readonly ConcurrentDictionary<string, string> _snapshotIds = new(StringComparer.Ordinal);
     // Media ids seen in the snapshot that is still arriving, per device.
     private readonly ConcurrentDictionary<string, HashSet<string>> _arriving = new(StringComparer.Ordinal);
+    // Counts every change to a device's library, so a reader can tell "nothing new" without reading it.
+    private readonly ConcurrentDictionary<string, long> _versions = new(StringComparer.Ordinal);
+    // The library newest first, sorted once per version instead of once per page read.
+    private readonly ConcurrentDictionary<string, (long Version, MediaItemPayload[] Items)> _ordered = new(StringComparer.Ordinal);
+
+    /// <summary>Changes whenever the phone sends photos for this device; 0 before the first page.</summary>
+    public long GetVersion(string deviceId) => _versions.TryGetValue(deviceId, out var version) ? version : 0;
+
+    private MediaItemPayload[] Ordered(string deviceId, ConcurrentDictionary<string, MediaItemPayload> items)
+    {
+        var version = GetVersion(deviceId);
+        if (_ordered.TryGetValue(deviceId, out var cached) && cached.Version == version)
+        {
+            return cached.Items;
+        }
+
+        var ordered = items.Values
+            .OrderByDescending(item => item.TakenAt)
+            .ThenBy(item => item.MediaId, StringComparer.Ordinal)
+            .ToArray();
+        _ordered[deviceId] = (version, ordered);
+        return ordered;
+    }
 
     public void UpsertPage(MediaIndexPagePayload page)
     {
@@ -60,6 +83,7 @@ public sealed class MediaCatalog
         }
 
         _nextPageTokens[page.DeviceId] = page.NextPageToken;
+        _versions.AddOrUpdate(page.DeviceId, 1, (_, version) => version + 1);
     }
 
     public MediaIndexPagePayload GetPage(
@@ -105,7 +129,7 @@ public sealed class MediaCatalog
             }
         }
 
-        var query = items.Values
+        IEnumerable<MediaItemPayload> query = Ordered(deviceId, items)
             .Where(item => string.IsNullOrWhiteSpace(albumId)
                 || string.Equals(item.AlbumId, albumId, StringComparison.Ordinal))
             .Where(item => string.IsNullOrWhiteSpace(search)
@@ -122,14 +146,11 @@ public sealed class MediaCatalog
             });
         }
 
-        var ordered = query
-            .OrderByDescending(item => item.TakenAt)
-            .ThenBy(item => item.MediaId, StringComparer.Ordinal)
-            .ToArray();
-
+        // One item more than the page, only to learn whether another page follows.
         var normalizedPageSize = Math.Clamp(pageSize, 1, 250);
-        var page = ordered.Take(normalizedPageSize).ToArray();
-        var nextCursor = page.Length < ordered.Length && page.Length > 0
+        var taken = query.Take(normalizedPageSize + 1).ToArray();
+        var page = taken.Length > normalizedPageSize ? taken[..normalizedPageSize] : taken;
+        var nextCursor = taken.Length > normalizedPageSize && page.Length > 0
             ? EncodeCursor(new MediaCursor(
                 snapshotId ?? string.Empty,
                 scopeHash,

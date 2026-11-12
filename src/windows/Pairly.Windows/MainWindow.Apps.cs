@@ -75,7 +75,7 @@ public partial class MainWindow
         }
     }
 
-    private void AppsSearchBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) => ApplyAppsFilter();
+    private void AppsSearchBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) => FilterSoon("apps", ApplyAppsFilter);
 
     private void ApplyAppsFilter()
     {

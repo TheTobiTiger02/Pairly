@@ -46,7 +46,9 @@ object ClipboardSyncController {
         }.also { manager.addPrimaryClipChangedListener(it) }
         ShizukuHelper.start(app, ShizukuHelper.HOLDER_CLIPBOARD)
         poll = worker.scheduleWithFixedDelay({
-            if (running) {
+            // Nothing can be sent while the PC is away, so the phone is not woken to look. The first
+            // look after reconnecting picks up whatever is on the clipboard then.
+            if (running && PairlyConnection.isReady) {
                 val helper = ShizukuHelper.shell
                 if (helper != null) captureShizuku(app, helper)
                 else if (foregroundSyncActive) captureFocused(app, true)
