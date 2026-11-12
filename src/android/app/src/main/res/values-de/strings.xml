@@ -8,6 +8,10 @@
     <string name="connection_channel_name">PC-Verbindung</string>
     <string name="notification_action_send_clipboard">Zwischenablage senden</string>
     <string name="notification_action_disconnect">Trennen</string>
+    <string name="find_phone_channel_name">Mein Handy finden</string>
+    <string name="find_phone_notification_title">Dein PC sucht dieses Handy</string>
+    <string name="find_phone_notification_text">Tippe, um den Ton zu stoppen.</string>
+    <string name="find_phone_stop">Stoppen</string>
     <string name="mirror_request_channel_name">Anfragen zur Bildschirmspiegelung</string>
     <string name="mirror_request_channel_description">Hinweise, wenn dein PC deinen Bildschirm spiegeln möchte</string>
     <string name="mirror_request_notification_title">Bildschirm spiegeln?</string>

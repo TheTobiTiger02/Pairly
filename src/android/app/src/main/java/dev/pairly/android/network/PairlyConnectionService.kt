@@ -247,6 +247,7 @@ class PairlyConnectionService : Service() {
 
         when (intent?.action) {
             ACTION_DISCONNECT -> disconnect()
+            ACTION_STOP_RING -> dev.pairly.android.features.find.PhoneRinger.stop(this)
             ACTION_FORGET -> forgetTrustedHost()
             ACTION_PAIR -> {
                 pendingPairingCode = intent.getStringExtra(EXTRA_PAIRING_CODE).orEmpty()
@@ -649,6 +650,12 @@ class PairlyConnectionService : Service() {
                     "Processed remote control input."
                 }
                 "call.action" -> handleCallAction(envelope)
+                "device.ring" -> {
+                    val ring = envelope.optJSONObject("payload")?.optBoolean("ring", true) ?: true
+                    if (ring) dev.pairly.android.features.find.PhoneRinger.start(this)
+                    else dev.pairly.android.features.find.PhoneRinger.stop(this)
+                    if (ring) "Ringing so the phone can be found." else "Stopped ringing."
+                }
                 "storage.list.request" -> {
                     handleStorageList(envelope)
                     "Processed storage list request."
@@ -2429,6 +2436,7 @@ class PairlyConnectionService : Service() {
         private const val EXTRA_USER_RETRY = "dev.pairly.android.extra.USER_RETRY"
         const val ACTION_DISCONNECT = "dev.pairly.android.DISCONNECT"
         const val ACTION_FORGET = "dev.pairly.android.FORGET"
+        const val ACTION_STOP_RING = "dev.pairly.android.STOP_RING"
         const val ACTION_PAIR = "dev.pairly.android.PAIR"
         const val ACTION_SEND_CLIPBOARD = "dev.pairly.android.SEND_CLIPBOARD"
         const val ACTION_SEND_CLIPBOARD_IMAGE = "dev.pairly.android.SEND_CLIPBOARD_IMAGE"

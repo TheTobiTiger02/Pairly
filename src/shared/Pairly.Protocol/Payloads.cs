@@ -343,6 +343,9 @@ public sealed record CallRingingPayload(
     string Number,
     string? CallerName);
 
+/// <summary>PC to phone: start (or stop) ringing so the phone can be found.</summary>
+public sealed record DeviceRingPayload(bool Ring);
+
 public sealed record CallActionPayload(
     string SessionId,
     string Action);

@@ -8,6 +8,10 @@
     <string name="connection_channel_name">PC connection</string>
     <string name="notification_action_send_clipboard">Send clipboard</string>
     <string name="notification_action_disconnect">Disconnect</string>
+    <string name="find_phone_channel_name">Find my phone</string>
+    <string name="find_phone_notification_title">Your PC is looking for this phone</string>
+    <string name="find_phone_notification_text">Tap to stop the sound.</string>
+    <string name="find_phone_stop">Stop</string>
     <string name="mirror_request_channel_name">Screen mirroring requests</string>
     <string name="mirror_request_channel_description">Alerts when your PC wants to mirror your screen</string>
     <string name="mirror_request_notification_title">Mirror your screen?</string>

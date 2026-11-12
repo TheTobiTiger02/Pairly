@@ -11,6 +11,7 @@ public static class ProtocolMessageTypes
     public const string DeviceState = "device.state";
     public const string DeviceSyncRequest = "device.sync.request";
     public const string DeviceForget = "device.forget";
+    public const string DeviceRing = "device.ring";
     public const string DeviceForgetConfirm = "device.forget.confirm";
     public const string ClipboardItem = "clipboard.item";
     public const string ClipboardAck = "clipboard.ack";
@@ -84,6 +85,7 @@ public static class ProtocolMessageTypes
         DeviceState,
         DeviceSyncRequest,
         DeviceForget,
+        DeviceRing,
         DeviceForgetConfirm,
         ClipboardItem,
         ClipboardAck,

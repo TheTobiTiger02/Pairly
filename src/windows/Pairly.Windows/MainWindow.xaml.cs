@@ -455,6 +455,7 @@ public partial class MainWindow : Window
 
             var contextMenu = new System.Windows.Forms.ContextMenuStrip();
             contextMenu.Items.Add(L.T("open_dashboard"), null, (s, e) => ShowDashboard());
+            contextMenu.Items.Add(L.T("ring_phone"), null, (s, e) => RingPhone_Click(this, new RoutedEventArgs()));
             contextMenu.Items.Add(L.T("exit"), null, (s, e) => ExitFully());
 
             _notifyIcon.ContextMenuStrip = contextMenu;
@@ -1148,6 +1149,51 @@ public partial class MainWindow : Window
                 ex);
             StatusText.Text = L.T("trust_storage_repair_failed_open_settings_tr");
         }
+    }
+
+    private string? _ringingDeviceId;
+    private DispatcherTimer? _ringTimer;
+
+    /// <summary>Find my phone: rings the selected phone, or stops it when it is already ringing.</summary>
+    private async void RingPhone_Click(object sender, RoutedEventArgs e)
+    {
+        var device = GetSelectedDevice();
+        if (device is null || !device.Connected)
+        {
+            ShowToast(device is null ? L.T("select_a_connected_phone_before_refreshing_p") : L.F("is_paired_but_offline", device.DisplayName), success: false);
+            return;
+        }
+
+        var stop = _ringingDeviceId == device.DeviceId;
+        try
+        {
+            using var response = await _host.PostAsync($"v1/devices/{Uri.EscapeDataString(device.DeviceId)}/ring?stop={(stop ? "true" : "false")}", null);
+            response.EnsureSuccessStatusCode();
+        }
+        catch (HttpRequestException)
+        {
+            ShowToast(L.F("is_paired_but_offline", device.DisplayName), success: false);
+            return;
+        }
+
+        SetRinging(stop ? null : device.DeviceId);
+        ShowToast(stop ? L.T("ring_stopped") : L.F("ring_started", device.DisplayName));
+    }
+
+    /// <summary>The button offers to stop for as long as the phone rings by itself (a minute).</summary>
+    private void SetRinging(string? deviceId)
+    {
+        _ringingDeviceId = deviceId;
+        RingPhoneText.Text = L.T(deviceId is null ? "ring_phone" : "ring_stop");
+        _ringTimer?.Stop();
+        if (deviceId is null)
+        {
+            return;
+        }
+
+        _ringTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(60) };
+        _ringTimer.Tick += (_, _) => SetRinging(null);
+        _ringTimer.Start();
     }
 
     private async void RefreshPhoneData_Click(object sender, RoutedEventArgs e)

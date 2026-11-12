@@ -1572,6 +1572,13 @@
                                                         <TextBlock Text="{l:Loc send_files}" />
                                                     </StackPanel>
                                                 </Button>
+                                                <Button x:Name="RingPhoneButton" Style="{StaticResource SecondaryButton}" Click="RingPhone_Click" Margin="0,0,6,6"
+                                                        ToolTip="{l:Loc ring_phone_tooltip}" AutomationProperties.Name="{Binding Text, ElementName=RingPhoneText}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="&#xEA8F;" Style="{StaticResource IconGlyph}" FontSize="13" Margin="0,0,7,0" />
+                                                        <TextBlock x:Name="RingPhoneText" Text="{l:Loc ring_phone}" />
+                                                    </StackPanel>
+                                                </Button>
                                                 <Button Style="{StaticResource SecondaryButton}" Click="RefreshPhoneData_Click" Margin="0,0,6,6"
                                                         AutomationProperties.Name="{l:Loc sync_phone_data}" ToolTip="{l:Loc fetch_the_latest_from_your_phone}">
                                                     <StackPanel Orientation="Horizontal">

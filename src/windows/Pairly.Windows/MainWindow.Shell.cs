@@ -54,6 +54,7 @@ public partial class MainWindow
     /// <summary>Texts set from code rather than bound in XAML, refreshed after a language switch.</summary>
     private void RefreshLocalizedCodeText()
     {
+        RingPhoneText.Text = L.T(_ringingDeviceId is null ? "ring_phone" : "ring_stop");
         if (PairingOverlay.Visibility == Visibility.Visible)
         {
             PairingTitleText.Text = L.T(_onboardingMode ? "onboarding_title" : "pairing_title");

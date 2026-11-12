@@ -64,6 +64,11 @@
   <data name="photo_copy_failed" xml:space="preserve"><value>The photo could not be copied. Check that the phone is connected.</value></data>
   <data name="drop_to_send" xml:space="preserve"><value>Drop to send to {0}</value></data>
   <data name="drop_to_send_detail" xml:space="preserve"><value>The files land in the phone's Downloads folder.</value></data>
+  <data name="ring_phone" xml:space="preserve"><value>Ring phone</value></data>
+  <data name="ring_stop" xml:space="preserve"><value>Stop ringing</value></data>
+  <data name="ring_started" xml:space="preserve"><value>{0} is ringing. It stops after a minute.</value></data>
+  <data name="ring_stopped" xml:space="preserve"><value>Stopped ringing.</value></data>
+  <data name="ring_phone_tooltip" xml:space="preserve"><value>Plays a loud sound on the phone so you can find it, even when it is muted.</value></data>
   <data name="clear_all" xml:space="preserve"><value>Clear all</value></data>
   <data name="clear_failed" xml:space="preserve"><value>Clear failed: {0}.</value></data>
   <data name="clear_notifications_from_this_pc" xml:space="preserve"><value>Clear notifications from this PC</value></data>

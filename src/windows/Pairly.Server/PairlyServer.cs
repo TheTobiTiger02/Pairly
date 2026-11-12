@@ -953,6 +953,29 @@ public sealed class PairlyServer
             return sent ? Results.Accepted() : Results.NotFound(new { message = "Target device is not connected." });
         });
 
+        // Find my phone: the phone plays its alarm sound until stopped there, from here, or after a minute.
+        app.MapPost("/v1/devices/{deviceId}/ring", async (
+            string deviceId,
+            bool? stop,
+            WebSocketSessionHub sessions,
+            CancellationToken cancellationToken) =>
+        {
+            if (!sessions.HasSession(deviceId))
+            {
+                return Results.NotFound(new { message = "Target device is not connected." });
+            }
+
+            await sessions.SendAsync(
+                deviceId,
+                ProtocolEnvelope.Create(
+                    ProtocolMessageTypes.DeviceRing,
+                    "pc-host",
+                    DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                    new DeviceRingPayload(stop != true)),
+                cancellationToken);
+            return Results.Accepted();
+        });
+
         app.MapPost("/v1/devices/{deviceId}/call/action", async (
             string deviceId,
             CallActionPayload payload,
