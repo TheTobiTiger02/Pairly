@@ -471,6 +471,7 @@ public partial class MainWindow : Window
             _notifyIcon.ContextMenuStrip = contextMenu;
             _notifyIcon.DoubleClick += (s, e) => ShowDashboard();
             _notifyIcon.BalloonTipClicked += (_, _) => _balloonClick?.Invoke();
+            _toasts.Activated += OnToastActivated;
         }
         catch (Exception ex)
         {
@@ -581,27 +582,40 @@ public partial class MainWindow : Window
         _preferences.Save();
     }
 
-    // Notifications already seen for the phone the toasts are tracking, so only new ones pop up.
-    private string? _toastDeviceId;
-    private readonly HashSet<string> _toastSeenNotifications = new(StringComparer.Ordinal);
+    // Notifications already seen per connected phone, with the text they had, so only new ones pop up.
+    private readonly Dictionary<string, Dictionary<string, string>> _toastSeenNotifications = new(StringComparer.Ordinal);
+    private readonly PhoneToasts _toasts = new();
     private Action? _balloonClick;
 
     /// <summary>
     /// A Windows notification for each phone notification that is new since the last look. What is
-    /// already on the phone when it connects or is chosen never pops up, and muted apps stay quiet.
+    /// already on the phone when it connects never pops up, and muted apps stay quiet.
     /// </summary>
-    private void ShowToastsForNewNotifications(string? deviceId, IReadOnlyList<NotificationPayload> notifications)
+    private void ShowToastsForNewNotifications(LinkedDevice device, IReadOnlyList<NotificationPayload> notifications, bool namePhone)
     {
-        var firstLook = !string.Equals(deviceId, _toastDeviceId, StringComparison.Ordinal);
-        if (firstLook)
+        var firstLook = !_toastSeenNotifications.TryGetValue(device.DeviceId, out var seen);
+        seen ??= _toastSeenNotifications[device.DeviceId] = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        // A chat app keeps one notification per conversation and changes its text for each message.
+        var fresh = notifications.Where(notification =>
         {
-            _toastDeviceId = deviceId;
-            _toastSeenNotifications.Clear();
+            var shownText = notification.Title + " | " + notification.Text;
+            var isNew = !seen.TryGetValue(notification.NotificationId, out var before) || before != shownText;
+            seen[notification.NotificationId] = shownText;
+            return isNew;
+        }).ToArray();
+        var current = notifications.Select(notification => notification.NotificationId).ToHashSet(StringComparer.Ordinal);
+        var group = PhoneToasts.Key(device.DeviceId);
+        foreach (var gone in seen.Keys.Where(id => !current.Contains(id)).ToArray())
+        {
+            // Read or cleared on the phone: it should not stay on the PC either.
+            _toasts.Remove(PhoneToasts.Key(gone), group);
+            seen.Remove(gone);
         }
 
-        var fresh = notifications.Where(notification => _toastSeenNotifications.Add(notification.NotificationId)).ToArray();
-        _toastSeenNotifications.IntersectWith(notifications.Select(notification => notification.NotificationId));
-        if (firstLook || !_preferences.ShowPhoneNotifications || (IsActive && MainTabs.SelectedIndex == 6))
+        var lookingAtThem = IsActive && MainTabs.SelectedIndex == 6
+            && string.Equals(GetSelectedDevice()?.DeviceId, device.DeviceId, StringComparison.Ordinal);
+        if (firstLook || !_preferences.ShowPhoneNotifications || lookingAtThem)
         {
             return;
         }
@@ -611,26 +625,141 @@ public partial class MainWindow : Window
                 && !_mutedNotificationPackages.Contains(notification.PackageName)
                 && DateTimeOffset.UtcNow - notification.PostedAt < TimeSpan.FromMinutes(2)
                 && (notification.Title.Length > 0 || notification.Text.Length > 0))
+            .OrderByDescending(notification => notification.PostedAt)
             .ToArray();
         if (toShow.Length == 0)
         {
             return;
         }
 
-        // Windows shows one at a time from the notification area, so a burst becomes one summary.
-        var latest = toShow.OrderByDescending(notification => notification.PostedAt).First();
+        if (_toasts.Available)
+        {
+            // The newest few pop up; the rest of a burst go straight to the notification center.
+            var shown = 0;
+            var allShown = true;
+            foreach (var notification in toShow)
+            {
+                allShown &= _toasts.Show(PhoneToast(device, notification, namePhone, quiet: shown++ >= 3));
+            }
+
+            if (allShown)
+            {
+                return;
+            }
+        }
+
+        // Windows shows one balloon at a time from the notification area, so a burst becomes one summary.
+        var latest = toShow[0];
         var title = toShow.Length == 1
             ? (latest.Title.Length > 0 ? $"{latest.AppName}: {latest.Title}" : latest.AppName)
             : L.F("n_new_phone_notifications", toShow.Length);
         var text = toShow.Length == 1
             ? (latest.Text.Length > 0 ? latest.Text : latest.Title)
             : string.Join(", ", toShow.Select(notification => notification.AppName).Distinct().Take(4));
-        _balloonClick = () =>
-        {
-            ShowDashboard();
-            NavNotifications.IsChecked = true;
-        };
+        _balloonClick = () => OpenNotificationsFor(device.DeviceId);
         _notifyIcon?.ShowBalloonTip(5000, Truncate(title, 60), Truncate(text, 200), System.Windows.Forms.ToolTipIcon.None);
+    }
+
+    private static ToastContent PhoneToast(LinkedDevice device, NotificationPayload notification, bool namePhone, bool quiet)
+    {
+        var deviceId = device.DeviceId;
+        var hasTitle = notification.Title.Length > 0;
+        return new ToastContent(
+            Tag: PhoneToasts.Key(notification.NotificationId),
+            Group: PhoneToasts.Key(deviceId),
+            Title: Truncate(hasTitle ? notification.Title : notification.AppName, 120),
+            Body: Truncate(hasTitle ? notification.Text : (notification.Text.Length > 0 ? notification.Text : string.Empty), 400),
+            LaunchArguments: ToastArguments("open", deviceId, notification.NotificationId),
+            Attribution: namePhone ? $"{notification.AppName} · {device.DisplayName}" : notification.AppName,
+            IconPath: PhoneToasts.PictureFile(notification.LargeIconBase64 ?? notification.AppIconBase64),
+            PicturePath: PhoneToasts.PictureFile(notification.PictureBase64),
+            ReplyPlaceholder: notification.CanReply ? L.T("reply") : null,
+            ReplyLabel: notification.CanReply ? L.T("send") : null,
+            ReplyArguments: notification.CanReply ? ToastArguments("reply", deviceId, notification.NotificationId) : null,
+            ButtonLabel: notification.Clearable ? L.T("dismiss") : null,
+            ButtonArguments: notification.Clearable ? ToastArguments("dismiss", deviceId, notification.NotificationId) : null,
+            Quiet: quiet);
+    }
+
+    private static string ToastArguments(params string[] parts) => string.Join('|', parts.Select(Uri.EscapeDataString));
+
+    /// <summary>A plain Windows notification from Pairly itself, or a balloon when Windows refuses.</summary>
+    private void ShowPcNotification(string title, string text, string[] launch, string? buttonLabel = null, string[]? button = null)
+    {
+        var shown = _toasts.Show(new ToastContent(
+            Tag: PhoneToasts.Key(title + text),
+            Group: "pairly",
+            Title: title,
+            Body: text,
+            LaunchArguments: ToastArguments(launch),
+            ButtonLabel: button is null ? null : buttonLabel,
+            ButtonArguments: button is null ? null : ToastArguments(button)));
+        if (!shown)
+        {
+            _balloonClick = () => OnToastActivated(ToastArguments(button ?? launch), null);
+            _notifyIcon?.ShowBalloonTip(5000, Truncate(title, 60), Truncate(text, 200), System.Windows.Forms.ToolTipIcon.None);
+        }
+    }
+
+    /// <summary>Windows calls this from its own thread when a notification, its button or its reply box is used.</summary>
+    private void OnToastActivated(string arguments, string? typed) => Dispatcher.BeginInvoke(async () =>
+    {
+        var parts = arguments.Split('|').Select(Uri.UnescapeDataString).ToArray();
+        switch (parts)
+        {
+            case ["open", var deviceId, ..]:
+                OpenNotificationsFor(deviceId);
+                break;
+            case ["reply", var deviceId, var notificationId] when !string.IsNullOrWhiteSpace(typed):
+                if (!await SendNotificationActionAsync(deviceId, notificationId, "reply", typed.Trim()))
+                {
+                    ShowPcNotification(L.T("reply_not_sent"), L.T("reply_not_sent_detail"), ["open", deviceId]);
+                }
+
+                break;
+            case ["dismiss", var deviceId, var notificationId]:
+                await SendNotificationActionAsync(deviceId, notificationId, "dismiss", null);
+                break;
+            case ["folder", var folder] when Directory.Exists(folder):
+                StartShell(folder);
+                break;
+            case ["dashboard", ..]:
+                ShowDashboard();
+                break;
+        }
+    });
+
+    private void OpenNotificationsFor(string deviceId)
+    {
+        ShowDashboard();
+        if (_devices.FirstOrDefault(device => string.Equals(device.DeviceId, deviceId, StringComparison.Ordinal)) is { } phone
+            && !ReferenceEquals(DevicesList.SelectedItem, phone))
+        {
+            DevicesList.SelectedItem = phone;
+        }
+
+        NavNotifications.IsChecked = true;
+    }
+
+    private async Task<bool> SendNotificationActionAsync(string deviceId, string notificationId, string action, string? text)
+    {
+        try
+        {
+            using var response = await _host.PostAsJsonAsync(
+                $"v1/notifications/{Uri.EscapeDataString(deviceId)}/action",
+                new NotificationActionPayload(notificationId, action, text),
+                JsonOptions);
+            if (response.IsSuccessStatusCode)
+            {
+                _ = RefreshFromHostAsync(showErrors: false);
+            }
+
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            return false;
+        }
     }
 
     private static string Truncate(string text, int length) =>
@@ -2169,11 +2298,10 @@ public partial class MainWindow : Window
                         if (!_notifiedLowBatteryDevices.Contains(device.DeviceId))
                         {
                             _notifiedLowBatteryDevices.Add(device.DeviceId);
-                            _notifyIcon?.ShowBalloonTip(
-                                5000,
+                            ShowPcNotification(
                                 L.T("low_battery_warning"),
                                 L.F("battery_is_at_please_plug_in_a_charger", device.DisplayName, device.BatteryLevel),
-                                System.Windows.Forms.ToolTipIcon.Warning);
+                                ["dashboard"]);
                         }
                     }
                     else if (device.IsCharging == true || device.BatteryLevel > 20)
@@ -2225,7 +2353,21 @@ public partial class MainWindow : Window
                 : await _host.GetFromJsonAsync<NotificationPayload[]>(
                     $"v1/notifications/{Uri.EscapeDataString(selectedDevice.DeviceId)}",
                     JsonOptions) ?? Array.Empty<NotificationPayload>();
-            ShowToastsForNewNotifications(selectedDevice?.DeviceId, notifications);
+            // Every connected phone gets Windows notifications, not only the one that is open.
+            foreach (var gone in _toastSeenNotifications.Keys.Where(id => !devicesData.Any(device => device.Connected && device.DeviceId == id)).ToArray())
+            {
+                _toastSeenNotifications.Remove(gone);
+            }
+
+            foreach (var device in devicesData.Where(device => device.Connected))
+            {
+                var theirs = ReferenceEquals(device, selectedDevice) || device.DeviceId == selectedDevice?.DeviceId
+                    ? notifications
+                    : await _host.GetFromJsonAsync<NotificationPayload[]>(
+                        $"v1/notifications/{Uri.EscapeDataString(device.DeviceId)}", JsonOptions) ?? Array.Empty<NotificationPayload>();
+                ShowToastsForNewNotifications(device, theirs, namePhone: devicesData.Length > 1);
+            }
+
             ReconcileNotifications(notifications);
             ApplyNotificationFilters(updateAppFilter: true);
             NotificationStatusText.Text = selectedDevice is null

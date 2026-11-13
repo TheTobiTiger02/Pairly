@@ -99,6 +99,8 @@
   <data name="drop_into_folder_detail" xml:space="preserve"><value>The files go into {0}.</value></data>
   <data name="file_uploaded_to" xml:space="preserve"><value>{0} uploaded to {1}.</value></data>
   <data name="files_uploaded_to" xml:space="preserve"><value>{0} files uploaded to {1}.</value></data>
+  <data name="reply_not_sent" xml:space="preserve"><value>Reply not sent</value></data>
+  <data name="reply_not_sent_detail" xml:space="preserve"><value>The phone did not take the reply. Open Pairly to try again.</value></data>
   <data name="clear_all" xml:space="preserve"><value>Clear all</value></data>
   <data name="clear_failed" xml:space="preserve"><value>Clear failed: {0}.</value></data>
   <data name="clear_notifications_from_this_pc" xml:space="preserve"><value>Clear notifications from this PC</value></data>

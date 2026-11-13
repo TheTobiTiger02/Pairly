@@ -274,6 +274,34 @@ static void ProtocolRoundTripsReleaseReadyPayloads()
     AssertTrue(ProtocolMessageTypes.IsKnown(ProtocolMessageTypes.SessionChallenge), "Expected session challenge to be known.");
     AssertTrue(ProtocolMessageTypes.IsKnown(ProtocolMessageTypes.ContentTransferChunk), "Expected transfer chunk to be known.");
     AssertTrue(ProtocolMessageTypes.IsKnown(ProtocolMessageTypes.NotificationSnapshotEnd), "Expected snapshot end to be known.");
+
+    // Messages added with ring, calls, older conversations and the file manager. The phone reads
+    // these keys by name, so the wire names must not drift.
+    foreach (var type in new[]
+    {
+        ProtocolMessageTypes.DeviceRing, ProtocolMessageTypes.SmsThreadRequest, ProtocolMessageTypes.CallLogRequest,
+        ProtocolMessageTypes.CallLogResponse, ProtocolMessageTypes.CallDial, ProtocolMessageTypes.StorageCreateFolderRequest,
+        ProtocolMessageTypes.StorageRenameRequest
+    })
+    {
+        AssertTrue(ProtocolMessageTypes.IsKnown(type), $"Expected {type} to be known.");
+    }
+
+    static string Wire<T>(string type, T payload) =>
+        JsonProtocolSerializer.Serialize(ProtocolEnvelope.Create(type, "pc-host", 1, payload));
+    AssertTrue(Wire(ProtocolMessageTypes.DeviceRing, new DeviceRingPayload(true)).Contains("\"ring\":true"), "Expected ring flag on the wire.");
+    AssertTrue(Wire(ProtocolMessageTypes.SmsThreadRequest, new SmsThreadRequestPayload("7")).Contains("\"threadId\":\"7\""), "Expected threadId on the wire.");
+    AssertTrue(Wire(ProtocolMessageTypes.CallDial, new CallDialPayload("5551234", "r1")).Contains("\"number\":\"5551234\""), "Expected number on the wire.");
+    var mkdir = Wire(ProtocolMessageTypes.StorageCreateFolderRequest, new StorageCreateFolderRequestPayload("r2", "/Download", "New"));
+    AssertTrue(mkdir.Contains("\"path\":\"/Download\"") && mkdir.Contains("\"name\":\"New\""), "Expected folder path and name on the wire.");
+    var rename = Wire(ProtocolMessageTypes.StorageRenameRequest, new StorageRenameRequestPayload("r3", "/Download/a.txt", "b.txt"));
+    AssertTrue(rename.Contains("\"filePath\":\"/Download/a.txt\"") && rename.Contains("\"newName\":\"b.txt\""), "Expected rename fields on the wire.");
+    var push = Wire(ProtocolMessageTypes.FilePushStart, new FilePushStartPayload("t1", 9, "a.txt", "text/plain", 3, "192.168.0.2", 7819, "dGlja2V0", true, "/Download"));
+    AssertTrue(push.Contains("\"targetPath\":\"/Download\""), "Expected the chosen folder on the wire.");
+    var callLog = JsonProtocolSerializer.Deserialize(Wire(ProtocolMessageTypes.CallLogResponse, new CallLogResponsePayload(
+        "r4", [new CallLogEntryPayload("5551234", "Ada", "missed", DateTimeOffset.UnixEpoch, 0)]))).ReadPayload<CallLogResponsePayload>();
+    AssertEqual("missed", callLog?.Entries[0].Kind);
+    AssertEqual("Ada", callLog?.Entries[0].Name);
 }
 
 static void PairingTicketCarriesActiveHostIdentity()
