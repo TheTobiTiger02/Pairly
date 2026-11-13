@@ -1,5 +1,6 @@
 package dev.pairly.android.ui
 
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.togetherWith
 import androidx.compose.material3.AlertDialog
@@ -94,8 +95,15 @@ fun PairlyApp(
         }
     }
 
-    PairlyTheme(prefs.themeMode, prefs.appStyle, prefs.accent) {
+    PairlyTheme(prefs.themeMode, prefs.accent) {
         val style = Pairly.style
+        // Status and navigation bar icons follow the app's own light or dark choice, which can
+        // differ from the system's.
+        val activity = androidx.compose.ui.platform.LocalContext.current as? androidx.activity.ComponentActivity
+        androidx.compose.runtime.LaunchedEffect(style.dark, activity) {
+            val bars = androidx.activity.SystemBarStyle.auto(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT) { style.dark }
+            activity?.enableEdgeToEdge(statusBarStyle = bars, navigationBarStyle = bars)
+        }
         PairlyBackground {
             AnimatedContent(
                 targetState = prefs.onboardingDone,

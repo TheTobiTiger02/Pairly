@@ -28,7 +28,6 @@
     <string name="update_ready_text">Zum Installieren tippen.</string>
     <string name="update_ready_text_version">Tippe, um Version %1$s zu installieren.</string>
     <string name="nav_home">Start</string>
-    <string name="nav_features">Funktionen</string>
     <string name="nav_help">Hilfe</string>
     <string name="nav_settings">Einstellungen</string>
     <string name="action_back">Zurück</string>
@@ -189,10 +188,6 @@
     <string name="feature_clipboard_description">Text und Bilder, die du am PC kopierst, erscheinen auf deinem Handy, und umgekehrt. Solange Pairly geöffnet ist, klappt das sofort. Für die Synchronisierung im Hintergrund richtest du einmal Shizuku ein.</string>
     <string name="feature_clipboard_why">Android lässt nur die App im Vordergrund die Zwischenablage lesen. Shizuku, eine kostenlose Hilfs-App, erlaubt es Pairly im Hintergrund.</string>
     <string name="feature_clipboard_action">Hintergrund-Synchronisierung einrichten</string>
-    <string name="features_title">Funktionen</string>
-    <string name="features_subtitle">Schalte ein, was du nutzen möchtest. Tippe auf eine Funktion für Details.</string>
-    <string name="features_section_off">Noch nicht eingerichtet</string>
-    <string name="features_section_on">Bereit</string>
     <string name="clipboard_send_title">Jetzt an deinen PC senden</string>
     <string name="clipboard_send_detail">Geht an deinen PC und alle anderen damit verbundenen Handys.</string>
     <string name="clipboard_text_label">Zu sendender Text</string>
@@ -225,9 +220,13 @@
     <string name="shizuku_done_title">Hintergrund-Synchronisierung ist an</string>
     <string name="home_not_paired">Kein PC verbunden</string>
     <string name="home_not_paired_detail">Einmal koppeln, danach verbindet sich Pairly von selbst</string>
-    <string name="home_finish_setup">Einrichtung abschließen</string>
     <string name="home_finish_setup_detail">%1$d von %2$d Funktionen sind an</string>
     <string name="home_action_clipboard">Zwischen­ablage</string>
+    <string name="home_send_to_pc">An deinen PC senden</string>
+    <string name="home_needs_you">Braucht dich</string>
+    <string name="home_shared_with_pc">Mit deinem PC geteilt</string>
+    <string name="action_show_all">Alle anzeigen</string>
+    <string name="action_show_less">Weniger anzeigen</string>
     <string name="home_synced">Neueste Fotos, Nachrichten und Benachrichtigungen an deinen PC gesendet.</string>
     <string name="settings_title">Einstellungen</string>
     <string name="settings_connection">Verbindung</string>
@@ -324,11 +323,6 @@
         <item quantity="other">%d Dateien konnten nicht gesendet werden</item>
     </plurals>
     <string name="home_link_from">%1$s, verbunden mit</string>
-    <string name="home_clay_connected">Dein Handy und dein PC verstehen sich.</string>
-    <string name="home_clay_offline">Dein PC ist gerade nicht erreichbar.</string>
-    <string name="home_clay_connecting">Suche deinen PC …</string>
-    <string name="home_clay_unpaired">Verbinde deinen PC.</string>
-    <string name="home_on_this_phone">Auf diesem Handy</string>
     <string name="home_send_title">An deinen PC senden</string>
     <string name="home_send_clipboard">Zwischen­ablage</string>
     <string name="home_send_photos">Fotos</string>
@@ -396,10 +390,6 @@
     <string name="power_benefit_mirror">Spiegeln startet ohne Nachfrage</string>
     <string name="power_benefit_input">Echte Touch- und Tasteneingaben vom PC</string>
     <string name="power_benefit_grants">Alle Berechtigungen mit einem Tipp</string>
-    <string name="style_glass">Glass</string>
-    <string name="style_glass_detail">Klare Flächen, klare Schrift</string>
-    <string name="style_clay">Clay</string>
-    <string name="style_clay_detail">Weiche Formen, freundlich</string>
     <string name="settings_accent">Akzentfarbe</string>
     <string name="accent_system">Hintergrundbild</string>
     <string name="accent_indigo">Indigo</string>
@@ -410,7 +400,6 @@
     <string name="accent_amber">Bernstein</string>
     <string name="accent_coral">Koralle</string>
     <string name="accent_pink">Pink</string>
-    <string name="settings_style">Stil</string>
     <plurals name="power_grant_all">
         <item quantity="one">%1$d Funktion mit einem Tipp einschalten</item>
         <item quantity="other">%1$d Funktionen mit einem Tipp einschalten</item>

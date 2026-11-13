@@ -143,11 +143,8 @@ fun SettingsScreen(state: AppState, prefs: UiPrefs, language: LocaleText.Languag
         item { SectionLabel(stringResource(R.string.settings_appearance)) }
         item {
             PairlyCard(Modifier.fillMaxWidth()) {
-                ListRow(stringResource(R.string.settings_style), icon = Icons.Rounded.Palette)
-                StylePicker(prefs.appStyle, prefs.accent, onSelect = { chosen -> callbacks.updatePrefs { it.copy(appStyle = chosen) } })
-                Spacer(Modifier.height(Space.m))
                 ListRow(stringResource(R.string.settings_accent), icon = Icons.Rounded.ColorLens)
-                AccentPicker(prefs.appStyle, prefs.accent, onSelect = { chosen -> callbacks.updatePrefs { it.copy(accent = chosen) } })
+                AccentPicker(prefs.accent, onSelect = { chosen -> callbacks.updatePrefs { it.copy(accent = chosen) } })
                 Spacer(Modifier.height(Space.m))
                 ListRow(stringResource(R.string.settings_theme), icon = Icons.Rounded.DarkMode)
                 ChoiceRow(

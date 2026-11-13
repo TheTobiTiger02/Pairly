@@ -50,6 +50,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -98,7 +99,7 @@ fun PairlyBackground(modifier: Modifier = Modifier, content: @Composable BoxScop
     }
 }
 
-/** The style's card: Glass is a pale pane with a hairline edge, Clay a soft white pillow. */
+/** A card: white or graphite with a hairline edge, no shadow. */
 @Composable
 fun PairlyCard(
     modifier: Modifier = Modifier,
@@ -109,10 +110,7 @@ fun PairlyCard(
 ) {
     val style = Pairly.style
     val shape = RoundedCornerShape(style.cardRadius)
-    var box = if (style.cardShadow > 0.dp && brush == null) {
-        modifier.shadow(style.cardShadow, shape, clip = false, ambientColor = style.shadowColor, spotColor = style.shadowColor)
-    } else modifier
-    box = box.clip(shape)
+    var box = modifier.clip(shape)
     box = if (brush != null) box.background(brush) else box.background(style.cardColor)
     style.cardBorder?.let { box = box.border(it, shape) }
     if (onClick != null) box = box.clickable(role = Role.Button, onClick = onClick)
@@ -266,7 +264,13 @@ fun SwitchRow(title: String, subtitle: String?, checked: Boolean, onCheckedChang
         icon = icon,
         onClick = { haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove); onCheckedChange(!checked) },
         modifier = Modifier.semantics(mergeDescendants = true) {}
-    ) { Switch(checked = checked, onCheckedChange = null) }
+    ) {
+        val style = Pairly.style
+        Switch(
+            checked = checked, onCheckedChange = null,
+            colors = SwitchDefaults.colors(checkedTrackColor = style.buttonColor, checkedThumbColor = style.onButton)
+        )
+    }
 }
 
 /** Single-choice chips, e.g. theme or language. */
@@ -303,9 +307,8 @@ fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifi
     val style = Pairly.style
     Button(
         onClick = onClick, enabled = enabled,
-        // Glass: a compact, slightly rounded button. Clay: a tall, chunky pill.
-        modifier = modifier.fillMaxWidth().height(if (style.clay) 56.dp else Space.button),
-        shape = if (style.clay) CircleShape else RoundedCornerShape(10.dp),
+        modifier = modifier.fillMaxWidth().height(Space.button),
+        shape = MaterialTheme.shapes.medium,
         colors = ButtonDefaults.buttonColors(containerColor = style.buttonColor, contentColor = style.onButton)
     ) {
         if (icon != null) { Icon(icon, null); Spacer(Modifier.width(Space.s)) }
