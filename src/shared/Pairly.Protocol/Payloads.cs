@@ -403,6 +403,18 @@ public sealed record StorageDeleteRequestPayload(
     string RequestId,
     string FilePath);
 
+/// <summary>A new folder called Name inside the folder at Path. Answered with a command result.</summary>
+public sealed record StorageCreateFolderRequestPayload(
+    string RequestId,
+    string Path,
+    string Name);
+
+/// <summary>Gives the file or folder at FilePath a new name in the same folder. Answered with a command result.</summary>
+public sealed record StorageRenameRequestPayload(
+    string RequestId,
+    string FilePath,
+    string NewName);
+
 public sealed record HeartbeatPayload(
     string SessionId,
     DateTimeOffset SentAt);
@@ -454,7 +466,10 @@ public sealed record FilePushStartPayload(
     string Host,
     int Port,
     string Ticket,
-    bool UseTls);
+    bool UseTls,
+    // The folder in shared storage to save into; null or empty means Downloads/Pairly. Needs the
+    // phone's "All files access", which the storage browser needs anyway.
+    string? TargetPath = null);
 
 /// <summary>Status is saved, failed or rejected.</summary>
 public sealed record FilePushResultPayload(

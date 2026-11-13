@@ -694,6 +694,38 @@ class PairlyConnectionService : Service() {
                     handleStorageDelete(envelope)
                     "Processed storage delete request."
                 }
+                "storage.mkdir.request" -> {
+                    handleStorageChange(envelope, "storage.mkdir") { payload ->
+                        val parent = resolveFile(payload.optString("path"))
+                        val name = payload.optString("name").trim()
+                        when {
+                            parent == null || !parent.isDirectory -> "The folder no longer exists."
+                            !validFileName(name) -> "That name cannot be used."
+                            java.io.File(parent, name).exists() -> "Something with this name already exists here."
+                            java.io.File(parent, name).mkdir() -> null
+                            else -> "The folder could not be created."
+                        }
+                    }
+                    "Processed new folder request."
+                }
+                "storage.rename.request" -> {
+                    handleStorageChange(envelope, "storage.rename") { payload ->
+                        val file = resolveFile(payload.optString("filePath"))
+                        val name = payload.optString("newName").trim()
+                        val target = file?.parentFile?.let { java.io.File(it, name) }
+                        when {
+                            file == null || !file.exists() || target == null -> "The file no longer exists."
+                            !validFileName(name) -> "That name cannot be used."
+                            target.exists() -> "Something with this name already exists here."
+                            file.renameTo(target) -> {
+                                android.media.MediaScannerConnection.scanFile(this, arrayOf(file.path, target.path), null, null)
+                                null
+                            }
+                            else -> "The name could not be changed."
+                        }
+                    }
+                    "Processed rename request."
+                }
                 "error" -> {
                     val payload = envelope.optJSONObject("payload")
                     val errorMessage = payload?.optString("message").orEmpty()
@@ -2344,6 +2376,32 @@ class PairlyConnectionService : Service() {
             .put("base64", base64 ?: JSONObject.NULL)
             .put("error", error ?: JSONObject.NULL)
         PairlyConnection.send(ProtocolJson.envelope("storage.file.response", settings.deviceId, payload))
+    }
+
+    /** A single name inside a folder: nothing that could point somewhere else. */
+    private fun validFileName(name: String): Boolean =
+        name.isNotBlank() && name != "." && name != ".." && name.none { it == '/' || it == '\\' || it.code < 32 } && name.length <= 200
+
+    /**
+     * Runs a change to shared storage off the message thread and answers with a command result.
+     * [change] returns null when it worked, otherwise what to tell the user.
+     */
+    private fun handleStorageChange(envelope: JSONObject, feature: String, change: (JSONObject) -> String?) {
+        val payload = envelope.optJSONObject("payload") ?: return
+        val requestId = payload.optString("requestId")
+        if (!hasAllFilesAccess()) {
+            PairlyConnection.send(ProtocolJson.commandResult(settings.deviceId, requestId, feature, false, "Storage access has not been granted."))
+            return
+        }
+
+        serviceScope.launch(Dispatchers.IO) {
+            val problem = try {
+                change(payload)
+            } catch (e: Exception) {
+                e.message ?: "The change could not be made."
+            }
+            PairlyConnection.send(ProtocolJson.commandResult(settings.deviceId, requestId, feature, problem == null, problem ?: "Done."))
+        }
     }
 
     private fun handleStorageDelete(envelope: JSONObject) {

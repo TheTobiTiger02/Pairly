@@ -50,6 +50,8 @@ public static class ProtocolMessageTypes
     public const string StorageFileRequest = "storage.file.request";
     public const string StorageFileResponse = "storage.file.response";
     public const string StorageDeleteRequest = "storage.delete.request";
+    public const string StorageCreateFolderRequest = "storage.mkdir.request";
+    public const string StorageRenameRequest = "storage.rename.request";
     public const string HeartbeatPing = "heartbeat.ping";
     public const string HeartbeatPong = "heartbeat.pong";
     public const string CommandResult = "command.result";
@@ -133,6 +135,8 @@ public static class ProtocolMessageTypes
         StorageFileRequest,
         StorageFileResponse,
         StorageDeleteRequest,
+        StorageCreateFolderRequest,
+        StorageRenameRequest,
         HeartbeatPing,
         HeartbeatPong,
         CommandResult,

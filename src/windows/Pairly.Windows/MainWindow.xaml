@@ -847,6 +847,15 @@
                             <TextBox x:Name="StorageSearchBox" Grid.Column="2" controls:Fluent.Placeholder="{l:Loc search_this_folder}"
                                      controls:Fluent.Icon="&#xE721;" AutomationProperties.Name="{l:Loc search_files}" TextChanged="StorageSearchBox_TextChanged" />
                             <StackPanel Grid.Column="3" Orientation="Horizontal" Margin="8,0,0,0">
+                                <Button Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Click="UploadToFolder_Click" ToolTip="{l:Loc upload_here_tooltip}"
+                                        AutomationProperties.Name="{l:Loc upload_here}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE898;" Style="{StaticResource IconGlyph}" FontSize="14" Margin="0,0,8,0" />
+                                        <TextBlock Text="{l:Loc upload_here}" />
+                                    </StackPanel>
+                                </Button>
+                                <Button Style="{StaticResource IconButton}" Content="&#xE8F4;" Margin="0,0,8,0" Click="NewStorageFolder_Click"
+                                        ToolTip="{l:Loc new_folder}" AutomationProperties.Name="{l:Loc new_folder}" />
                                 <Button x:Name="StorageDownloadButton" IsEnabled="False" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Click="DownloadStorageFile_Click">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="&#xE896;" Style="{StaticResource IconGlyph}" FontSize="14" Margin="0,0,8,0" />
@@ -887,6 +896,9 @@
                                                     <MenuItem Header="{l:Loc download_to}" Click="StorageDownloadMenuItem_Click"
                                                               Visibility="{Binding IsFile, Converter={StaticResource BoolToVisConverter}}">
                                                         <MenuItem.Icon><TextBlock Text="&#xE896;" /></MenuItem.Icon>
+                                                    </MenuItem>
+                                                    <MenuItem Header="{l:Loc rename}" InputGestureText="F2" Click="RenameStorageItem_Click">
+                                                        <MenuItem.Icon><TextBlock Text="&#xE8AC;" /></MenuItem.Icon>
                                                     </MenuItem>
                                                     <Separator />
                                                     <MenuItem Header="{l:Loc delete}" Click="StorageDeleteMenuItem_Click" Foreground="{DynamicResource DangerBrush}">
@@ -2424,7 +2436,7 @@
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                 <TextBlock Text="&#xE898;" Style="{StaticResource IconGlyph}" FontSize="28" Foreground="{DynamicResource AccentBrush}" />
                 <TextBlock x:Name="DropOverlayText" Style="{StaticResource PageTitle}" Margin="0,12,0,4" HorizontalAlignment="Center" />
-                <TextBlock Text="{l:Loc drop_to_send_detail}" Style="{StaticResource CaptionText}" HorizontalAlignment="Center" />
+                <TextBlock x:Name="DropOverlayDetail" Text="{l:Loc drop_to_send_detail}" Style="{StaticResource CaptionText}" HorizontalAlignment="Center" />
             </StackPanel>
         </Border>
 
@@ -2458,6 +2470,24 @@
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button x:Name="ConfirmCancelButton" Content="{l:Loc cancel}" Style="{StaticResource SecondaryButton}" MinWidth="88" Click="ConfirmCancel_Click" />
                         <Button x:Name="ConfirmAcceptButton" MinWidth="88" Margin="8,0,0,0" Click="ConfirmAccept_Click" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Asks for one line of text, such as a folder name; see PromptAsync. -->
+        <Grid x:Name="PromptOverlay" Grid.RowSpan="2" Grid.ColumnSpan="3" Panel.ZIndex="38" Background="{DynamicResource SmokeBrush}"
+              Visibility="Collapsed" MouseDown="PromptOverlay_MouseDown">
+            <Border Width="400" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="20"
+                    Background="{DynamicResource SurfaceElevatedBrush}" BorderBrush="{DynamicResource CardStrokeBrush}" BorderThickness="1"
+                    CornerRadius="{DynamicResource OverlayRadius}" Effect="{StaticResource DialogShadow}"
+                    AutomationProperties.Name="{Binding Text, ElementName=PromptTitle}">
+                <StackPanel>
+                    <TextBlock x:Name="PromptTitle" Style="{StaticResource PageTitle}" TextWrapping="Wrap" />
+                    <TextBox x:Name="PromptText" Margin="0,14,0,0" KeyDown="PromptText_KeyDown" AutomationProperties.Name="{Binding Text, ElementName=PromptTitle}" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                        <Button Content="{l:Loc cancel}" Style="{StaticResource SecondaryButton}" MinWidth="88" Click="PromptCancel_Click" />
+                        <Button x:Name="PromptAcceptButton" Style="{StaticResource MainActionButton}" MinWidth="88" Margin="8,0,0,0" Click="PromptAccept_Click" />
                     </StackPanel>
                 </StackPanel>
             </Border>

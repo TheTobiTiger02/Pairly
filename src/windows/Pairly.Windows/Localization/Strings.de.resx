@@ -86,6 +86,19 @@
   <data name="call_unknown_number" xml:space="preserve"><value>Unbekannte Nummer</value></data>
   <data name="calls_audio_note" xml:space="preserve"><value>Anrufe starten auf deinem Handy, und der Ton bleibt dort. Android lässt andere Apps keinen Anrufton an einen PC übertragen.</value></data>
   <data name="loading" xml:space="preserve"><value>Wird geladen …</value></data>
+  <data name="upload_here" xml:space="preserve"><value>Hochladen</value></data>
+  <data name="upload_here_tooltip" xml:space="preserve"><value>Legt Dateien von diesem PC in den geöffneten Ordner. Du kannst sie auch hier ablegen.</value></data>
+  <data name="new_folder" xml:space="preserve"><value>Neuer Ordner</value></data>
+  <data name="new_folder_default_name" xml:space="preserve"><value>Neuer Ordner</value></data>
+  <data name="create" xml:space="preserve"><value>Erstellen</value></data>
+  <data name="folder_created" xml:space="preserve"><value>Ordner „{0}“ erstellt.</value></data>
+  <data name="rename" xml:space="preserve"><value>Umbenennen</value></data>
+  <data name="rename_item" xml:space="preserve"><value>„{0}“ umbenennen</value></data>
+  <data name="renamed_to" xml:space="preserve"><value>In „{0}“ umbenannt.</value></data>
+  <data name="storage_change_failed" xml:space="preserve"><value>Das hat nicht geklappt. Prüfe, ob das Handy verbunden und „Dateien“ in der Pairly-App eingeschaltet ist.</value></data>
+  <data name="drop_into_folder_detail" xml:space="preserve"><value>Die Dateien landen in {0}.</value></data>
+  <data name="file_uploaded_to" xml:space="preserve"><value>{0} nach {1} hochgeladen.</value></data>
+  <data name="files_uploaded_to" xml:space="preserve"><value>{0} Dateien nach {1} hochgeladen.</value></data>
   <data name="clear_all" xml:space="preserve"><value>Alle löschen</value></data>
   <data name="clear_failed" xml:space="preserve"><value>Löschen fehlgeschlagen: {0}.</value></data>
   <data name="clear_notifications_from_this_pc" xml:space="preserve"><value>Benachrichtigungen von diesem PC löschen</value></data>

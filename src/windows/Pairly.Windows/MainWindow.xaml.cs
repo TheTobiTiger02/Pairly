@@ -2691,6 +2691,10 @@ public partial class MainWindow : Window
         {
             if (StorageDeleteButton.IsEnabled) DeleteStorageItem_Click(sender, e);
         }
+        else if (key == System.Windows.Input.Key.F2)
+        {
+            RenameStorageItem_Click(sender, e);
+        }
         else
         {
             return;
@@ -2858,6 +2862,79 @@ public partial class MainWindow : Window
     {
         DeleteStorageItem_Click(sender, e);
     }
+
+    /// <summary>A change to the phone's storage: sends it, says what went wrong, and reloads the folder.</summary>
+    private async Task ChangeStorageAsync(string route, object payload, string doneText)
+    {
+        var device = GetSelectedDevice();
+        if (device is null)
+        {
+            return;
+        }
+
+        try
+        {
+            using var response = await _host.PostAsJsonAsync($"v1/devices/{Uri.EscapeDataString(device.DeviceId)}/storage/{route}", payload, JsonOptions);
+            if (!response.IsSuccessStatusCode)
+            {
+                // The phone says why in plain words, e.g. that the name is taken.
+                var problem = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>(JsonOptions);
+                ShowToast(problem.TryGetProperty("message", out var message) && message.GetString() is { Length: > 0 } text
+                    ? text : L.T("storage_change_failed"), success: false);
+                return;
+            }
+
+            ShowToast(doneText);
+            await LoadStorageDirectoryAsync(device.DeviceId, _currentStoragePath);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or System.Text.Json.JsonException)
+        {
+            ShowToast(L.T("storage_change_failed"), success: false);
+        }
+    }
+
+    private async void NewStorageFolder_Click(object sender, RoutedEventArgs e)
+    {
+        if (await PromptAsync(L.T("new_folder"), L.T("new_folder_default_name"), L.T("create")) is { } name)
+        {
+            await ChangeStorageAsync("folder", new StorageCreateFolderRequestPayload(string.Empty, _currentStoragePath, name), L.F("folder_created", name));
+        }
+    }
+
+    private async void RenameStorageItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (StorageItemsList.SelectedItem is StorageItemViewModel item
+            && await PromptAsync(L.F("rename_item", item.Name), item.Name, L.T("rename")) is { } name
+            && name != item.Name)
+        {
+            await ChangeStorageAsync("rename", new StorageRenameRequestPayload(string.Empty, item.Payload.Path, name), L.F("renamed_to", name));
+        }
+    }
+
+    /// <summary>Picks files on the PC and puts them into the folder that is open.</summary>
+    private async void UploadToFolder_Click(object sender, RoutedEventArgs e)
+    {
+        var device = GetSelectedDevice();
+        if (device is null || !device.Connected)
+        {
+            return;
+        }
+
+        var dialog = new Microsoft.Win32.OpenFileDialog { Multiselect = true, Title = L.T("upload_here") };
+        if (dialog.ShowDialog(this) == true)
+        {
+            await UploadToOpenFolderAsync(device.DeviceId, device.DisplayName, dialog.FileNames);
+        }
+    }
+
+    private async Task UploadToOpenFolderAsync(string deviceId, string deviceName, IReadOnlyList<string> paths)
+    {
+        await SendFilesAsync(deviceId, deviceName, paths, _currentStoragePath);
+        await LoadStorageDirectoryAsync(deviceId, _currentStoragePath);
+    }
+
+    /// <summary>The Files page with a folder showing: dropped files go into that folder.</summary>
+    private bool DropsIntoOpenFolder => MainTabs.SelectedIndex == FilesTabIndex && _storageLoaded;
 
 
 
@@ -3346,6 +3423,9 @@ public sealed class StorageItemViewModel
         
     public bool IsDirectory => Payload.IsDirectory;
     public bool IsFile => !Payload.IsDirectory;
+
+    /// <summary>What a screen reader says for the row.</summary>
+    public override string ToString() => $"{Name}, {Details}";
 
     /// <summary>What the icon is chosen by. Not shown, so it is the same in every language.</summary>
     public string IconKind

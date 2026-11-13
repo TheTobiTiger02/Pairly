@@ -115,6 +115,58 @@ public partial class MainWindow
         _confirm = null;
     }
 
+    // --- One line of text ---------------------------------------------------------------------
+
+    private TaskCompletionSource<string?>? _prompt;
+
+    /// <summary>Asks for a name. Null when cancelled or left empty.</summary>
+    private Task<string?> PromptAsync(string title, string initial, string acceptLabel)
+    {
+        _prompt?.TrySetResult(null);
+        _prompt = new TaskCompletionSource<string?>();
+        PromptTitle.Text = title;
+        PromptText.Text = initial;
+        PromptAcceptButton.Content = acceptLabel;
+        PromptOverlay.Visibility = Visibility.Visible;
+        Dispatcher.BeginInvoke(() =>
+        {
+            PromptText.Focus();
+            // A file name is usually changed, not its extension.
+            var dot = initial.LastIndexOf('.');
+            PromptText.Select(0, dot > 0 ? dot : initial.Length);
+        }, DispatcherPriority.Input);
+        return _prompt.Task;
+    }
+
+    private void ClosePrompt(bool accepted)
+    {
+        var text = PromptText.Text.Trim();
+        PromptOverlay.Visibility = Visibility.Collapsed;
+        _prompt?.TrySetResult(accepted && text.Length > 0 ? text : null);
+        _prompt = null;
+    }
+
+    private void PromptAccept_Click(object sender, RoutedEventArgs e) => ClosePrompt(true);
+
+    private void PromptCancel_Click(object sender, RoutedEventArgs e) => ClosePrompt(false);
+
+    private void PromptText_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            ClosePrompt(true);
+            e.Handled = true;
+        }
+    }
+
+    private void PromptOverlay_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (ReferenceEquals(e.OriginalSource, PromptOverlay))
+        {
+            ClosePrompt(false);
+        }
+    }
+
     private void ConfirmAccept_Click(object sender, RoutedEventArgs e) => CloseConfirm(true);
 
     private void ConfirmCancel_Click(object sender, RoutedEventArgs e) => CloseConfirm(false);
@@ -160,6 +212,11 @@ public partial class MainWindow
                 CloseConfirm(false);
                 e.Handled = true;
             }
+            else if (PromptOverlay.Visibility == Visibility.Visible)
+            {
+                ClosePrompt(false);
+                e.Handled = true;
+            }
             else if (NewSmsOverlay.Visibility == Visibility.Visible)
             {
                 CloseNewSms();
@@ -180,6 +237,7 @@ public partial class MainWindow
 
         // Shortcuts belong to the pages, not to a dialog lying over them.
         if (ConfirmOverlay.Visibility == Visibility.Visible || NewSmsOverlay.Visibility == Visibility.Visible
+            || PromptOverlay.Visibility == Visibility.Visible
             || PairingOverlay.Visibility == Visibility.Visible
             || PhotoViewerOverlay.Visibility == Visibility.Visible)
         {

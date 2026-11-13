@@ -54,7 +54,8 @@ public sealed class FilePushService(
         string deviceId,
         string path,
         IProgress<double>? progress = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string? targetPath = null)
     {
         var file = new FileInfo(path);
         if (!file.Exists)
@@ -94,7 +95,8 @@ public sealed class FilePushService(
                         string.Empty,
                         StreamListener.Port,
                         Convert.ToBase64String(ticket.Value),
-                        UseTls: true)),
+                        UseTls: true,
+                        TargetPath: targetPath)),
                 cancellationToken);
             if (!offered)
             {

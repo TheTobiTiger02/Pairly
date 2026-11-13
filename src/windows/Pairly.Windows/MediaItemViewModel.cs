@@ -86,6 +86,9 @@ internal sealed class MediaItemViewModel : INotifyPropertyChanged, ITileSectionH
     public int PixelWidth { get; private set; }
     public int PixelHeight { get; private set; }
     public int OrientationDegrees { get; private set; }
+    /// <summary>What a screen reader says for the tile.</summary>
+    public override string ToString() => FileName;
+
     public string FileName { get => _fileName; set => SetField(ref _fileName, value, nameof(FileName)); }
     public string Details { get => _details; private set => SetField(ref _details, value, nameof(Details)); }
     public DateTimeOffset TakenAt { get => _takenAt; private set => SetField(ref _takenAt, value, nameof(TakenAt)); }
