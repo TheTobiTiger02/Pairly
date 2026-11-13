@@ -56,6 +56,14 @@
   <data name="checking_trusted_devices" xml:space="preserve"><value>Checking trusted devices...</value></data>
   <data name="choose_phone" xml:space="preserve"><value>Choose phone</value></data>
   <data name="choose_which_phone_to_use" xml:space="preserve"><value>Choose which phone to use</value></data>
+  <data name="cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="copy" xml:space="preserve"><value>Copy</value></data>
+  <data name="copy_photo" xml:space="preserve"><value>Copy photo (Ctrl+C)</value></data>
+  <data name="copying_photo" xml:space="preserve"><value>Copying photo…</value></data>
+  <data name="photo_copied" xml:space="preserve"><value>Photo copied. Paste it anywhere.</value></data>
+  <data name="photo_copy_failed" xml:space="preserve"><value>The photo could not be copied. Check that the phone is connected.</value></data>
+  <data name="drop_to_send" xml:space="preserve"><value>Drop to send to {0}</value></data>
+  <data name="drop_to_send_detail" xml:space="preserve"><value>The files land in the phone's Downloads folder.</value></data>
   <data name="clear_all" xml:space="preserve"><value>Clear all</value></data>
   <data name="clear_failed" xml:space="preserve"><value>Clear failed: {0}.</value></data>
   <data name="clear_notifications_from_this_pc" xml:space="preserve"><value>Clear notifications from this PC</value></data>
@@ -71,7 +79,7 @@
   <data name="close" xml:space="preserve"><value>Close</value></data>
   <data name="closing_the_window_keeps_your_phone_connecte" xml:space="preserve"><value>Closing the window keeps your phone connected.</value></data>
   <data name="collecting" xml:space="preserve"><value>Collecting...</value></data>
-  <data name="confirm_delete" xml:space="preserve"><value>Confirm Delete</value></data>
+  <data name="confirm_delete" xml:space="preserve"><value>Delete from the phone?</value></data>
   <data name="connect_your_android_phone" xml:space="preserve"><value>Connect your Android phone</value></data>
   <data name="connected" xml:space="preserve"><value>Connected</value></data>
   <data name="connected_for" xml:space="preserve"><value>{0}: connected for {1}, </value></data>
@@ -540,7 +548,6 @@
   <data name="file_received_detail" xml:space="preserve"><value>{0} is in Downloads\Pairly.</value></data>
   <data name="files_phone_storage" xml:space="preserve"><value>Phone storage</value></data>
   <data name="files_need_access" xml:space="preserve"><value>Your phone hasn't allowed file access yet. In Pairly on the phone, turn on Files, or turn on Power mode to allow everything at once.</value></data>
-  <data name="style" xml:space="preserve"><value>Style</value></data>
   <data name="permission_allowed" xml:space="preserve"><value>allowed</value></data>
   <data name="permission_denied" xml:space="preserve"><value>not allowed</value></data>
   <data name="permission_off" xml:space="preserve"><value>off</value></data>
@@ -563,11 +570,7 @@
   <data name="deleted_item" xml:space="preserve"><value>Deleted {0}.</value></data>
   <data name="opening_app" xml:space="preserve"><value>Opening {0}…</value></data>
   <data name="file_sent_to_downloads" xml:space="preserve"><value>{0} is in the Downloads folder on {1}.</value></data>
-  <data name="style_glass" xml:space="preserve"><value>Glass</value></data>
-  <data name="style_clay" xml:space="preserve"><value>Clay</value></data>
-  <data name="style_glass_detail" xml:space="preserve"><value>Clear panes, crisp type</value></data>
-  <data name="style_clay_detail" xml:space="preserve"><value>Soft shapes, friendly</value></data>
-  <data name="style_description" xml:space="preserve"><value>Shapes, type and motion. Matches the phone app.</value></data>
+  <data name="accent_color_description" xml:space="preserve"><value>Used for buttons, selection and state.</value></data>
   <data name="accent_color" xml:space="preserve"><value>Accent color</value></data>
   <data name="accent_system" xml:space="preserve"><value>Windows accent</value></data>
   <data name="accent_indigo" xml:space="preserve"><value>Indigo</value></data>

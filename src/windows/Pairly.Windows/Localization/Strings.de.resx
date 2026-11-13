@@ -56,6 +56,14 @@
   <data name="checking_trusted_devices" xml:space="preserve"><value>Vertrauenswürdige Geräte werden geprüft …</value></data>
   <data name="choose_phone" xml:space="preserve"><value>Handy auswählen</value></data>
   <data name="choose_which_phone_to_use" xml:space="preserve"><value>Wähle, welches Handy du nutzen willst</value></data>
+  <data name="cancel" xml:space="preserve"><value>Abbrechen</value></data>
+  <data name="copy" xml:space="preserve"><value>Kopieren</value></data>
+  <data name="copy_photo" xml:space="preserve"><value>Foto kopieren (Strg+C)</value></data>
+  <data name="copying_photo" xml:space="preserve"><value>Foto wird kopiert …</value></data>
+  <data name="photo_copied" xml:space="preserve"><value>Foto kopiert. Füge es irgendwo ein.</value></data>
+  <data name="photo_copy_failed" xml:space="preserve"><value>Das Foto konnte nicht kopiert werden. Prüfe, ob das Handy verbunden ist.</value></data>
+  <data name="drop_to_send" xml:space="preserve"><value>Loslassen, um an {0} zu senden</value></data>
+  <data name="drop_to_send_detail" xml:space="preserve"><value>Die Dateien landen im Download-Ordner des Handys.</value></data>
   <data name="clear_all" xml:space="preserve"><value>Alle löschen</value></data>
   <data name="clear_failed" xml:space="preserve"><value>Löschen fehlgeschlagen: {0}.</value></data>
   <data name="clear_notifications_from_this_pc" xml:space="preserve"><value>Benachrichtigungen von diesem PC löschen</value></data>
@@ -71,7 +79,7 @@
   <data name="close" xml:space="preserve"><value>Schließen</value></data>
   <data name="closing_the_window_keeps_your_phone_connecte" xml:space="preserve"><value>Nach dem Schließen des Fensters bleibt dein Handy verbunden.</value></data>
   <data name="collecting" xml:space="preserve"><value>Wird gesammelt …</value></data>
-  <data name="confirm_delete" xml:space="preserve"><value>Löschen bestätigen</value></data>
+  <data name="confirm_delete" xml:space="preserve"><value>Vom Handy löschen?</value></data>
   <data name="connect_your_android_phone" xml:space="preserve"><value>Verbinde dein Android-Handy</value></data>
   <data name="connected" xml:space="preserve"><value>Verbunden</value></data>
   <data name="connected_for" xml:space="preserve"><value>{0}: verbunden seit {1}, </value></data>
@@ -540,7 +548,6 @@
   <data name="file_received_detail" xml:space="preserve"><value>{0} liegt unter Downloads\Pairly.</value></data>
   <data name="files_phone_storage" xml:space="preserve"><value>Handyspeicher</value></data>
   <data name="files_need_access" xml:space="preserve"><value>Dein Handy hat den Dateizugriff noch nicht erlaubt. Schalte in Pairly auf dem Handy Dateien ein oder aktiviere den Power-Modus, um alles auf einmal zu erlauben.</value></data>
-  <data name="style" xml:space="preserve"><value>Stil</value></data>
   <data name="permission_allowed" xml:space="preserve"><value>erlaubt</value></data>
   <data name="permission_denied" xml:space="preserve"><value>nicht erlaubt</value></data>
   <data name="permission_off" xml:space="preserve"><value>aus</value></data>
@@ -563,11 +570,7 @@
   <data name="deleted_item" xml:space="preserve"><value>{0} gelöscht.</value></data>
   <data name="opening_app" xml:space="preserve"><value>{0} wird geöffnet …</value></data>
   <data name="file_sent_to_downloads" xml:space="preserve"><value>{0} liegt jetzt im Download-Ordner von {1}.</value></data>
-  <data name="style_glass" xml:space="preserve"><value>Glass</value></data>
-  <data name="style_clay" xml:space="preserve"><value>Clay</value></data>
-  <data name="style_glass_detail" xml:space="preserve"><value>Klare Flächen, klare Schrift</value></data>
-  <data name="style_clay_detail" xml:space="preserve"><value>Weiche Formen, freundlich</value></data>
-  <data name="style_description" xml:space="preserve"><value>Formen, Schrift und Bewegung. Wie in der Handy-App.</value></data>
+  <data name="accent_color_description" xml:space="preserve"><value>Für Schaltflächen, Auswahl und Status.</value></data>
   <data name="accent_color" xml:space="preserve"><value>Akzentfarbe</value></data>
   <data name="accent_system" xml:space="preserve"><value>Windows-Akzentfarbe</value></data>
   <data name="accent_indigo" xml:space="preserve"><value>Indigo</value></data>

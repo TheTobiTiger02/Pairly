@@ -38,14 +38,22 @@ public partial class MainWindow
 
     private void MainWindow_DragOver(object sender, DragEventArgs e)
     {
-        e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop) && DevicesList.SelectedItem is DeviceViewModel
-            ? DragDropEffects.Copy
-            : DragDropEffects.None;
+        var accepts = e.Data.GetDataPresent(DataFormats.FileDrop) && DevicesList.SelectedItem is DeviceViewModel;
+        e.Effects = accepts ? DragDropEffects.Copy : DragDropEffects.None;
+        // Says where the files will go before they are let go.
+        DropOverlay.Visibility = accepts ? Visibility.Visible : Visibility.Collapsed;
+        if (accepts && DevicesList.SelectedItem is DeviceViewModel target)
+        {
+            DropOverlayText.Text = L.F("drop_to_send", target.DisplayName);
+        }
         e.Handled = true;
     }
 
+    private void MainWindow_DragLeave(object sender, DragEventArgs e) => DropOverlay.Visibility = Visibility.Collapsed;
+
     private void MainWindow_Drop(object sender, DragEventArgs e)
     {
+        DropOverlay.Visibility = Visibility.Collapsed;
         if (e.Data.GetData(DataFormats.FileDrop) is string[] { Length: > 0 } files
             && DevicesList.SelectedItem is DeviceViewModel device)
         {

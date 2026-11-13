@@ -22,8 +22,9 @@ internal sealed class DesktopPreferences
     /// <summary>"System", "Light" or "Dark".</summary>
     public string Theme { get; set; } = "System";
 
-    /// <summary>"Glass" or "Clay", the same looks as the phone app.</summary>
-    public string Style { get; set; } = "Glass";
+    /// <summary>Read from files written before the single design; never written again.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? Style { get; set; }
 
     /// <summary>"System" (the Windows accent) or one of the named accents in ThemeManager.Accents.</summary>
     public string? Accent { get; set; }
@@ -54,18 +55,15 @@ internal sealed class DesktopPreferences
                 return new DesktopPreferences();
             }
 
-            // Aurora and Daybreak (until 1.x) became Glass and Clay, with the accent each one had.
+            // Styles (Aurora and Daybreak, then Glass and Clay) are gone; the first two carried
+            // their own accent, which a file from that time has no other record of.
             preferences.Accent ??= preferences.Style switch
             {
                 "Aurora" => "Indigo",
                 "Daybreak" => "Coral",
                 _ => "Violet"
             };
-            preferences.Style = preferences.Style switch
-            {
-                "Daybreak" or "Clay" => "Clay",
-                _ => "Glass"
-            };
+            preferences.Style = null;
             if (!ThemeManager.Accents.Contains(preferences.Accent, StringComparer.OrdinalIgnoreCase))
             {
                 preferences.Accent = "Violet";

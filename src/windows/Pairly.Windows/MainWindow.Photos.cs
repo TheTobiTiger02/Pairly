@@ -379,6 +379,91 @@ public partial class MainWindow
             OpenPhotoViewer(photo);
             e.Handled = true;
         }
+        else if (e.Key == Key.C && Keyboard.Modifiers == ModifierKeys.Control && SelectedPhotos().FirstOrDefault() is { } selected)
+        {
+            _ = CopyPhotoAsync(selected);
+            e.Handled = true;
+        }
+    }
+
+    private async void CopyPhotoInline_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: MediaItemViewModel photo })
+        {
+            await CopyPhotoAsync(photo);
+        }
+    }
+
+    private async void CopySelectedPhoto_Click(object sender, RoutedEventArgs e)
+    {
+        if (SelectedPhotos().FirstOrDefault() is { } photo)
+        {
+            await CopyPhotoAsync(photo);
+        }
+    }
+
+    /// <summary>
+    /// Puts the original on the Windows clipboard, as a picture and as a file, so it pastes into a
+    /// chat or an editor as well as into a folder.
+    /// </summary>
+    private async Task CopyPhotoAsync(MediaItemViewModel photo)
+    {
+        try
+        {
+            ShowToast(L.T("copying_photo"));
+            var bytes = await DownloadPhotoAsync(photo);
+            if (bytes is null)
+            {
+                ShowToast(L.T("photo_copy_failed"), success: false);
+                return;
+            }
+
+            var directory = Path.Combine(Path.GetTempPath(), "Pairly", "photos");
+            Directory.CreateDirectory(directory);
+            var path = Path.Combine(directory, SanitizeFileName(photo.FileName));
+            await File.WriteAllBytesAsync(path, bytes);
+
+            var data = new System.Windows.DataObject();
+            data.SetFileDropList(new System.Collections.Specialized.StringCollection { path });
+            if (DecodeForClipboard(bytes, photo.OrientationDegrees) is { } picture)
+            {
+                data.SetImage(picture);
+            }
+
+            System.Windows.Clipboard.SetDataObject(data, copy: true);
+            ShowToast(L.T("photo_copied"));
+        }
+        catch (Exception ex) when (ex is IOException or HttpRequestException or TaskCanceledException or System.Runtime.InteropServices.ExternalException)
+        {
+            ShowToast(L.T("photo_copy_failed"), success: false);
+            AppLog.Write("Photo copy failed", ex);
+        }
+    }
+
+    /// <summary>The picture upright, or null for a format Windows cannot decode (the file is still copied).</summary>
+    private static BitmapSource? DecodeForClipboard(byte[] bytes, int orientationDegrees)
+    {
+        try
+        {
+            var bitmap = new BitmapImage();
+            bitmap.BeginInit();
+            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.StreamSource = new MemoryStream(bytes);
+            bitmap.Rotation = orientationDegrees switch
+            {
+                90 => Rotation.Rotate90,
+                180 => Rotation.Rotate180,
+                270 => Rotation.Rotate270,
+                _ => Rotation.Rotate0
+            };
+            bitmap.EndInit();
+            bitmap.Freeze();
+            return bitmap;
+        }
+        catch (Exception ex) when (ex is NotSupportedException or System.Runtime.InteropServices.COMException or IOException)
+        {
+            return null;
+        }
     }
 
     private void OpenPhotoInline_Click(object sender, RoutedEventArgs e)
@@ -851,6 +936,9 @@ public partial class MainWindow
             case Key.S when Keyboard.Modifiers == ModifierKeys.Control:
                 PhotoViewerSave_Click(sender, e);
                 break;
+            case Key.C when Keyboard.Modifiers == ModifierKeys.Control:
+                PhotoViewerCopy_Click(sender, e);
+                break;
             default:
                 return;
         }
@@ -861,6 +949,14 @@ public partial class MainWindow
     private void PhotoViewerClose_Click(object sender, RoutedEventArgs e) => ClosePhotoViewer();
     private void PhotoViewerPrevious_Click(object sender, RoutedEventArgs e) => StepPhotoViewer(-1);
     private void PhotoViewerNext_Click(object sender, RoutedEventArgs e) => StepPhotoViewer(1);
+
+    private async void PhotoViewerCopy_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewerIndex < _viewerPhotos.Count)
+        {
+            await CopyPhotoAsync(_viewerPhotos[_viewerIndex]);
+        }
+    }
 
     private async void PhotoViewerSave_Click(object sender, RoutedEventArgs e)
     {

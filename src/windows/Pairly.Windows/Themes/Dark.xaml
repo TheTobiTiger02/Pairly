@@ -1,4 +1,4 @@
-<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <sys:String xmlns:sys="clr-namespace:System;assembly=System.Runtime" x:Key="Theme.Name">Dark</sys:String>
     <!-- Fluent 2 (WinUI) palette. Translucent fills are meant to sit on the Mica backdrop; the
@@ -52,6 +52,7 @@
     <SolidColorBrush x:Key="WindowBrush" Color="{StaticResource WindowColor}" />
     <SolidColorBrush x:Key="NavigationBrush" Color="{StaticResource NavigationColor}" />
     <SolidColorBrush x:Key="LayerBrush" Color="{StaticResource LayerColor}" />
+    <SolidColorBrush x:Key="SheetBrush" Color="#FF1D1E22" />
     <SolidColorBrush x:Key="LayerStrokeBrush" Color="{StaticResource LayerStrokeColor}" />
     <SolidColorBrush x:Key="CardFillBrush" Color="{StaticResource CardFillColor}" />
     <SolidColorBrush x:Key="CardFillSecondaryBrush" Color="{StaticResource CardFillSecondaryColor}" />
@@ -79,6 +80,7 @@
     <SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource AccentHoverColor}" />
     <SolidColorBrush x:Key="AccentPressedBrush" Color="{StaticResource AccentPressedColor}" />
     <SolidColorBrush x:Key="AccentTextBrush" Color="{StaticResource AccentTextColor}" />
+    <SolidColorBrush x:Key="AccentFillBrush" Color="#FF6D3FD9" />
     <SolidColorBrush x:Key="AccentSubtleBrush" Color="{StaticResource AccentSubtleColor}" />
     <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
     <SolidColorBrush x:Key="SuccessFillBrush" Color="{StaticResource SuccessFillColor}" />

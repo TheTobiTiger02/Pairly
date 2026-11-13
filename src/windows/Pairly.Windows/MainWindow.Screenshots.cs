@@ -209,28 +209,23 @@ public partial class MainWindow
 
             // Dark-mode candidate, theme and language through the real controls in Settings.
             // The user's own look, put back once the checks are done.
-            var savedStyle = _preferences.Style;
             var savedAccent = _preferences.Accent ?? "Violet";
             var contrastFailures = ThemeManager.ContrastFailures();
-            Expect(contrastFailures.Count == 0, "every style and accent to meet 4.5:1 text contrast " + string.Join("; ", contrastFailures));
-            ApplyAppearance("Glass", "Violet");
+            Expect(contrastFailures.Count == 0, "every accent to meet 4.5:1 text contrast " + string.Join("; ", contrastFailures));
+            ApplyAccent("Violet");
             // From Light, so choosing Dark is a change even on a PC whose saved theme is already Dark.
             ThemeCombo.SelectedIndex = 1;
             await settle(100);
             ThemeCombo.SelectedIndex = 2; // Dark
             await settle(150);
             Expect(ThemeManager.IsDark || ThemeManager.IsHighContrast, "Dark to switch the theme");
-            Expect(ThemeManager.IsHighContrast || (TryFindResource("WindowBrush") as SolidColorBrush)?.Color == Color.FromRgb(0x0E, 0x0E, 0x10), "dark mode to use Glass's graphite background");
+            Expect(ThemeManager.IsHighContrast || (TryFindResource("WindowBrush") as SolidColorBrush)?.Color == Color.FromRgb(0x17, 0x18, 0x1B), "dark mode to use the dark ground");
 
-            // The style and accent pickers apply live, and back.
-            ((System.Windows.Controls.RadioButton)StylePickerPanel.Children[1]).IsChecked = true; // Clay
-            await settle(200);
-            Expect(ThemeManager.IsHighContrast || (TryFindResource("WindowBrush") as SolidColorBrush)?.Color == Color.FromRgb(0x1A, 0x17, 0x14), "Clay to switch the palette");
-            Expect(ThemeManager.IsHighContrast || TryFindResource("CardRadius") is CornerRadius { TopLeft: 28 }, "Clay to round the cards more");
+            // The accent picker applies live, and back.
             ((System.Windows.Controls.RadioButton)AccentPickerPanel.Children[8]).IsChecked = true; // Pink
             await settle(200);
             Expect(_preferences.Accent == "Pink" && AccentNameText.Text == L.T("accent_pink"), "an accent swatch to switch the accent");
-            ApplyAppearance(savedStyle, savedAccent);
+            ApplyAccent(savedAccent);
             await settle(200);
             ThemeCombo.SelectedIndex = 1; // Light
             await settle(150);
