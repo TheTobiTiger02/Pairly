@@ -4,12 +4,14 @@ import android.content.Context
 import android.graphics.Bitmap
 import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
-import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -75,10 +77,11 @@ class AppSmokeTest {
         compose.waitForIdle()
     }
 
-    /** Tabs show their label only when selected; the content description is always there. */
+    /** A tab of the bottom bar. Its label can also be a page title, so the tab role is part of the match. */
     private fun tab(@StringRes id: Int) {
-        compose.waitUntil(30_000) { runCatching { compose.onAllNodesWithContentDescription(text(id)).fetchSemanticsNodes().isNotEmpty() }.getOrDefault(false) }
-        compose.onAllNodesWithContentDescription(text(id)).onFirst().performClick()
+        val matcher = hasText(text(id)) and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)
+        compose.waitUntil(30_000) { runCatching { compose.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty() }.getOrDefault(false) }
+        compose.onAllNodes(matcher).onFirst().performClick()
         compose.waitForIdle()
     }
 
