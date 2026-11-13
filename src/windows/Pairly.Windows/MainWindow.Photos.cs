@@ -372,12 +372,66 @@ public partial class MainWindow
         }
     }
 
-    private void PhotosList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+    // A plain click opens the photo. Ctrl and Shift select as usual, and a press that turns into a
+    // drag carries the photo out of the window instead.
+    private MediaItemViewModel? _pressedPhoto;
+    private System.Windows.Point _pressedPhotoAt;
+
+    /// <summary>The photo under the mouse, or null over a button, a heading or empty space.</summary>
+    private MediaItemViewModel? PhotoAt(System.Windows.Input.MouseEventArgs e)
     {
-        if ((e.OriginalSource as FrameworkElement)?.DataContext is MediaItemViewModel { IsSectionHeader: false } photo)
+        // The list captures the mouse while a button is down, so the event's own source is the
+        // list; what is under the pointer has to be looked up.
+        for (var element = PhotosList.InputHitTest(e.GetPosition(PhotosList)) as DependencyObject; element is not null;
+             element = element is Visual ? VisualTreeHelper.GetParent(element) : LogicalTreeHelper.GetParent(element))
         {
-            OpenPhotoViewer(photo);
+            if (element is System.Windows.Controls.Primitives.ButtonBase or System.Windows.Controls.Primitives.ScrollBar)
+            {
+                return null;
+            }
+
+            if (element is System.Windows.Controls.ListViewItem { DataContext: MediaItemViewModel { IsSectionHeader: false } photo })
+            {
+                return photo;
+            }
         }
+
+        return null;
+    }
+
+    private void PhotosList_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        _pressedPhoto = Keyboard.Modifiers == ModifierKeys.None ? PhotoAt(e) : null;
+        _pressedPhotoAt = e.GetPosition(PhotosList);
+    }
+
+    private void PhotosList_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        var pressed = _pressedPhoto;
+        _pressedPhoto = null;
+        if (pressed is not null && ReferenceEquals(pressed, PhotoAt(e)) && Keyboard.Modifiers == ModifierKeys.None)
+        {
+            OpenPhotoViewer(pressed);
+        }
+    }
+
+    private void PhotosList_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        if (_pressedPhoto is null || e.LeftButton != MouseButtonState.Pressed)
+        {
+            return;
+        }
+
+        var moved = e.GetPosition(PhotosList) - _pressedPhotoAt;
+        if (Math.Abs(moved.X) < SystemParameters.MinimumHorizontalDragDistance
+            && Math.Abs(moved.Y) < SystemParameters.MinimumVerticalDragDistance)
+        {
+            return;
+        }
+
+        var dragged = _pressedPhoto;
+        _pressedPhoto = null;
+        DragPhotosOut(dragged);
     }
 
     private void PhotosList_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)

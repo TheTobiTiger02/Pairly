@@ -18,8 +18,10 @@ public interface ITileSectionHeader
 /// A virtualizing grid of square tiles. Columns are as many <see cref="ItemSize"/> tiles as fit, then
 /// stretched to fill the width, so the grid always reaches both edges. Items that are an
 /// <see cref="ITileSectionHeader"/> start a new row and span it (month headings in the photo grid).
-/// Only the rows in view (plus one either side) have containers, which keeps a photo library of
+/// Only the rows in view (plus a few either side) have containers, which keeps a photo library of
 /// thousands of thumbnails cheap. Use with VirtualizingPanel.VirtualizationMode="Standard".
+/// The mouse wheel glides to its target instead of jumping, and a scroll step that needs no new
+/// tiles only moves the ones that are there.
 /// </summary>
 public sealed class VirtualizingWrapPanel : VirtualizingPanel, IScrollInfo
 {
@@ -30,6 +32,16 @@ public sealed class VirtualizingWrapPanel : VirtualizingPanel, IScrollInfo
     private const double LineStep = 48;
     private const double HeaderHeight = 44;
     private const int HeaderColumn = -1;
+    // Rows kept ready beyond the viewport, so a scroll step rarely has to build tiles.
+    private const double BufferRows = 2;
+    // How quickly a wheel scroll closes the distance to its target (seconds to cover about 63 %).
+    private const double GlideSeconds = 0.07;
+
+    private double _glideTarget;
+    private bool _gliding;
+    private TimeSpan _lastFrame;
+    private int _realizedFirst = -1;
+    private int _realizedLast = -1;
 
     private Size _extent;
     private Size _viewport;
@@ -70,13 +82,14 @@ public sealed class VirtualizingWrapPanel : VirtualizingPanel, IScrollInfo
         var generator = ItemContainerGenerator;
         if (itemCount == 0 || generator is null)
         {
+            _realizedFirst = _realizedLast = -1;
             CleanUpItems(0, -1);
             return new Size(width, height);
         }
 
-        // One row of tiles either side of the viewport stays realized.
-        var firstIndex = FirstIndexEndingAfter(_offset.Y - _tileSize);
-        var lastIndex = Math.Max(firstIndex, LastIndexStartingBefore(_offset.Y + height + _tileSize));
+        var (firstIndex, lastIndex) = RangeFor(_offset.Y, height);
+        _realizedFirst = firstIndex;
+        _realizedLast = lastIndex;
 
         var startPosition = generator.GeneratorPositionFromIndex(firstIndex);
         var childIndex = startPosition.Offset == 0 ? startPosition.Index : startPosition.Index + 1;
@@ -223,6 +236,14 @@ public sealed class VirtualizingWrapPanel : VirtualizingPanel, IScrollInfo
         return y;
     }
 
+    /// <summary>The items that need a container when the viewport starts at <paramref name="offset"/>.</summary>
+    private (int First, int Last) RangeFor(double offset, double viewportHeight)
+    {
+        var buffer = _tileSize * BufferRows;
+        var first = FirstIndexEndingAfter(offset - buffer);
+        return (first, Math.Max(first, LastIndexStartingBefore(offset + viewportHeight + buffer)));
+    }
+
     private double HeightOf(int index) => _itemColumns[index] == HeaderColumn ? HeaderHeight : _tileSize;
 
     private Size SizeOf(int index, double width) => index < _layoutCount && _itemColumns[index] == HeaderColumn
@@ -322,8 +343,8 @@ public sealed class VirtualizingWrapPanel : VirtualizingPanel, IScrollInfo
     public void LineDown() => SetVerticalOffset(_offset.Y + LineStep);
     public void PageUp() => SetVerticalOffset(_offset.Y - _viewport.Height);
     public void PageDown() => SetVerticalOffset(_offset.Y + _viewport.Height);
-    public void MouseWheelUp() => SetVerticalOffset(_offset.Y - LineStep * SystemParameters.WheelScrollLines / 1.5);
-    public void MouseWheelDown() => SetVerticalOffset(_offset.Y + LineStep * SystemParameters.WheelScrollLines / 1.5);
+    public void MouseWheelUp() => GlideBy(-LineStep * SystemParameters.WheelScrollLines / 1.5);
+    public void MouseWheelDown() => GlideBy(LineStep * SystemParameters.WheelScrollLines / 1.5);
     public void LineLeft() { }
     public void LineRight() { }
     public void PageLeft() { }
@@ -332,7 +353,14 @@ public sealed class VirtualizingWrapPanel : VirtualizingPanel, IScrollInfo
     public void MouseWheelRight() { }
     public void SetHorizontalOffset(double offset) { }
 
+    /// <summary>Jumps to the offset. Anything but the wheel (scroll bar, keys, bring into view) ends a glide.</summary>
     public void SetVerticalOffset(double offset)
+    {
+        StopGlide();
+        MoveTo(offset);
+    }
+
+    private void MoveTo(double offset)
     {
         offset = Math.Clamp(offset, 0, Math.Max(0, _extent.Height - _viewport.Height));
         if (Math.Abs(offset - _offset.Y) < 0.1)
@@ -342,7 +370,72 @@ public sealed class VirtualizingWrapPanel : VirtualizingPanel, IScrollInfo
 
         _offset.Y = offset;
         ScrollOwner?.InvalidateScrollInfo();
-        InvalidateMeasure();
+        // Building tiles is the expensive part; moving the ones that exist is cheap.
+        if (_layoutCount > 0 && !_layoutDirty && RangeFor(offset, _viewport.Height) == (_realizedFirst, _realizedLast))
+        {
+            InvalidateArrange();
+        }
+        else
+        {
+            InvalidateMeasure();
+        }
+    }
+
+    private void GlideBy(double distance)
+    {
+        var max = Math.Max(0, _extent.Height - _viewport.Height);
+        _glideTarget = Math.Clamp((_gliding ? _glideTarget : _offset.Y) + distance, 0, max);
+        if (!SystemParameters.ClientAreaAnimation)
+        {
+            // Animations are off in Windows: jump as before.
+            SetVerticalOffset(_glideTarget);
+            return;
+        }
+
+        if (!_gliding)
+        {
+            _gliding = true;
+            _lastFrame = TimeSpan.Zero;
+            CompositionTarget.Rendering += OnGlideFrame;
+        }
+    }
+
+    private void OnGlideFrame(object? sender, EventArgs e)
+    {
+        var now = ((RenderingEventArgs)e).RenderingTime;
+        if (_lastFrame == TimeSpan.Zero)
+        {
+            _lastFrame = now;
+            return;
+        }
+
+        // WPF can raise Rendering more than once per frame.
+        var elapsed = (now - _lastFrame).TotalSeconds;
+        if (elapsed <= 0)
+        {
+            return;
+        }
+
+        _lastFrame = now;
+        var target = Math.Clamp(_glideTarget, 0, Math.Max(0, _extent.Height - _viewport.Height));
+        var remaining = target - _offset.Y;
+        if (Math.Abs(remaining) < 0.5 || !IsVisible)
+        {
+            StopGlide();
+            MoveTo(target);
+            return;
+        }
+
+        MoveTo(_offset.Y + remaining * (1 - Math.Exp(-elapsed / GlideSeconds)));
+    }
+
+    private void StopGlide()
+    {
+        if (_gliding)
+        {
+            _gliding = false;
+            CompositionTarget.Rendering -= OnGlideFrame;
+        }
     }
 
     public Rect MakeVisible(Visual visual, Rect rectangle)

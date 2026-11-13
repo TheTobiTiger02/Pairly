@@ -38,7 +38,8 @@ public partial class MainWindow
 
     private void MainWindow_DragOver(object sender, DragEventArgs e)
     {
-        var accepts = e.Data.GetDataPresent(DataFormats.FileDrop) && DevicesList.SelectedItem is DeviceViewModel;
+        // Files dragged out of this window come from the phone; they are not sent back to it.
+        var accepts = !_draggingOut && e.Data.GetDataPresent(DataFormats.FileDrop) && DevicesList.SelectedItem is DeviceViewModel;
         e.Effects = accepts ? DragDropEffects.Copy : DragDropEffects.None;
         // Says where the files will go before they are let go.
         DropOverlay.Visibility = accepts ? Visibility.Visible : Visibility.Collapsed;
@@ -55,7 +56,7 @@ public partial class MainWindow
     private void MainWindow_Drop(object sender, DragEventArgs e)
     {
         DropOverlay.Visibility = Visibility.Collapsed;
-        if (e.Data.GetData(DataFormats.FileDrop) is string[] { Length: > 0 } files
+        if (!_draggingOut && e.Data.GetData(DataFormats.FileDrop) is string[] { Length: > 0 } files
             && DevicesList.SelectedItem is DeviceViewModel device)
         {
             _ = DropsIntoOpenFolder ? UploadToOpenFolderAsync(device.DeviceId, device.DisplayName, files) : SendFilesAsync(device.DeviceId, device.DisplayName, files);

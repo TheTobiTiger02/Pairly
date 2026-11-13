@@ -8,7 +8,7 @@ namespace Pairly.Server.Streaming;
 public sealed record FilePushOutcome(bool Succeeded, string Message);
 
 /// <summary>
-/// Sends PC files to a phone over the stream port.
+/// Sends PC files to a phone over the stream port, and fetches phone files the same way.
 ///
 /// The offer travels over the authenticated control socket with a single-use ticket; the phone
 /// dials back and receives raw bytes. That keeps multi-gigabyte files out of the JSON channel
@@ -26,6 +26,8 @@ public sealed class FilePushService(
 
     private readonly ConcurrentDictionary<ulong, TaskCompletionSource<StreamConnection>> _pendingStreams = new();
     private readonly ConcurrentDictionary<string, TaskCompletionSource<FilePushResultPayload>> _pendingResults =
+        new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, TaskCompletionSource<FilePullResultPayload>> _pendingPulls =
         new(StringComparer.Ordinal);
     private readonly FileExtensionContentTypeProvider _contentTypes = new();
     private long _lastStreamId;
@@ -164,6 +166,151 @@ public sealed class FilePushService(
             {
                 await connection.DisposeAsync();
             }
+        }
+    }
+
+    /// <summary>Called for each <c>file.pull.result</c> from a phone.</summary>
+    public void CompletePull(string deviceId, FilePullResultPayload result)
+    {
+        if (_pendingPulls.TryGetValue(Key(deviceId, result.TransferId), out var pending))
+        {
+            pending.TrySetResult(result);
+        }
+    }
+
+    /// <summary>
+    /// Fetches the file at <paramref name="phonePath"/> in the phone's shared storage and writes it
+    /// to <paramref name="destination"/>. The file appears there only when every byte has arrived.
+    /// </summary>
+    public async Task<FilePushOutcome> PullAsync(
+        string deviceId,
+        string phonePath,
+        string destination,
+        IProgress<double>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var name = Path.GetFileName(phonePath.TrimEnd('/'));
+        if (!sessions.HasSession(deviceId))
+        {
+            return new FilePushOutcome(false, "The phone is not connected.");
+        }
+
+        var transferId = Guid.NewGuid().ToString("N");
+        var streamId = NextStreamId();
+        var ticket = tickets.Issue(deviceId, transferId, streamId, StreamKind.File);
+        var streamReady = new TaskCompletionSource<StreamConnection>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var resultReady = new TaskCompletionSource<FilePullResultPayload>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _pendingStreams[streamId] = streamReady;
+        _pendingPulls[Key(deviceId, transferId)] = resultReady;
+
+        StreamConnection? connection = null;
+        var partial = destination + ".pairly-partial";
+        try
+        {
+            var asked = await sessions.SendAsync(
+                deviceId,
+                ProtocolEnvelope.Create(
+                    ProtocolMessageTypes.FilePullStart,
+                    "pc-host",
+                    DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                    new FilePullStartPayload(
+                        transferId, streamId, phonePath, string.Empty, StreamListener.Port,
+                        Convert.ToBase64String(ticket.Value), UseTls: true)),
+                cancellationToken);
+            if (!asked)
+            {
+                return new FilePushOutcome(false, "The phone is not connected.");
+            }
+
+            // The phone either dials back or says up front why it cannot (no access, file gone).
+            var first = await Task.WhenAny(streamReady.Task, resultReady.Task).WaitAsync(ConnectTimeout, cancellationToken);
+            if (first == resultReady.Task)
+            {
+                return new FilePushOutcome(false, resultReady.Task.Result.Error ?? $"The phone could not send {name}.");
+            }
+
+            connection = streamReady.Task.Result;
+            var buffer = new byte[CopyBufferBytes];
+            await ReadExactlyAsync(connection, buffer.AsMemory(0, sizeof(long)), cancellationToken);
+            var length = System.Buffers.Binary.BinaryPrimitives.ReadInt64BigEndian(buffer);
+            if (length < 0)
+            {
+                return new FilePushOutcome(false, $"The phone sent a bad length for {name}.");
+            }
+
+            var folder = Path.GetDirectoryName(destination);
+            if (!string.IsNullOrEmpty(folder))
+            {
+                Directory.CreateDirectory(folder);
+            }
+
+            await using (var target = new FileStream(
+                             partial, FileMode.Create, FileAccess.Write, FileShare.None, CopyBufferBytes, FileOptions.Asynchronous))
+            {
+                var remaining = length;
+                while (remaining > 0)
+                {
+                    var read = await connection.ReadAsync(buffer.AsMemory(0, (int)Math.Min(buffer.Length, remaining)), cancellationToken);
+                    if (read == 0)
+                    {
+                        return new FilePushOutcome(false, $"The phone stopped sending {name}.");
+                    }
+
+                    await target.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
+                    remaining -= read;
+                    progress?.Report(length == 0 ? 1 : (double)(length - remaining) / length);
+                }
+            }
+
+            // Tells the phone every byte is here. It waits for this before it closes, because a
+            // connection closed right after the last write can lose the end of the file.
+            await connection.WriteAsync(new byte[] { 1 }, cancellationToken);
+            await connection.FlushAsync(cancellationToken);
+            File.Move(partial, destination, overwrite: true);
+            diagnostics.Record(DiagnosticsCategory.Transport, "file.pull", $"{name} ({length} bytes) received", deviceId);
+            return new FilePushOutcome(true, $"Received {name}.");
+        }
+        catch (TimeoutException)
+        {
+            return new FilePushOutcome(false, $"The phone did not send {name} in time.");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return new FilePushOutcome(false, $"{name} could not be received: {ex.Message}");
+        }
+        finally
+        {
+            _pendingStreams.TryRemove(streamId, out _);
+            _pendingPulls.TryRemove(Key(deviceId, transferId), out _);
+            connection ??= streamReady.Task.IsCompletedSuccessfully ? streamReady.Task.Result : null;
+            if (connection is not null)
+            {
+                await connection.DisposeAsync();
+            }
+
+            try
+            {
+                File.Delete(partial);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                // Left behind at worst; it carries a name that says what it is.
+            }
+        }
+    }
+
+    private static async Task ReadExactlyAsync(StreamConnection connection, Memory<byte> buffer, CancellationToken cancellationToken)
+    {
+        var done = 0;
+        while (done < buffer.Length)
+        {
+            var read = await connection.ReadAsync(buffer[done..], cancellationToken);
+            if (read == 0)
+            {
+                throw new IOException("The phone closed the connection early.");
+            }
+
+            done += read;
         }
     }
 

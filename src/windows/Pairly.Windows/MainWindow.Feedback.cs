@@ -217,6 +217,10 @@ public partial class MainWindow
                 ClosePrompt(false);
                 e.Handled = true;
             }
+            else if (NotificationAppsOverlay.Visibility == Visibility.Visible)
+            {
+                CloseNotificationApps();
+            }
             else if (NewSmsOverlay.Visibility == Visibility.Visible)
             {
                 CloseNewSms();

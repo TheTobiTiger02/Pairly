@@ -271,6 +271,7 @@ public sealed class PairlyServer
         services.AddSingleton<ResponseBroker<AppsListResponsePayload>>();
         services.AddSingleton<ResponseBroker<AppsLaunchResultPayload>>();
         services.AddSingleton<ResponseBroker<CallLogResponsePayload>>();
+        services.AddSingleton<ResponseBroker<ContactsResponsePayload>>();
         services.AddSingleton<MediaSessionStore>();
         services.AddSingleton<Networking.EndpointEnumerator>();
         services.AddHostedService(provider => provider.GetRequiredService<Networking.EndpointEnumerator>());
@@ -1056,6 +1057,34 @@ public sealed class PairlyServer
             var response = await waitForResponse;
             return response is null
                 ? Results.Problem("The phone did not send its call history in time.", statusCode: StatusCodes.Status504GatewayTimeout)
+                : Results.Ok(response);
+        });
+
+        // The phone's contacts with a number, for choosing who a new message goes to.
+        app.MapGet("/v1/devices/{deviceId}/contacts", async (
+            string deviceId,
+            WebSocketSessionHub sessions,
+            ResponseBroker<ContactsResponsePayload> contacts,
+            CancellationToken cancellationToken) =>
+        {
+            var requestId = Guid.NewGuid().ToString("N");
+            var waitForResponse = contacts.WaitForAsync(requestId, TimeSpan.FromSeconds(10), cancellationToken);
+            var sent = await sessions.SendAsync(
+                deviceId,
+                ProtocolEnvelope.Create(
+                    ProtocolMessageTypes.ContactsRequest,
+                    "pc-host",
+                    DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                    new ContactsRequestPayload(requestId)),
+                cancellationToken);
+            if (!sent)
+            {
+                return Results.NotFound(new { message = "Target device is not connected." });
+            }
+
+            var response = await waitForResponse;
+            return response is null
+                ? Results.Problem("The phone did not send its contacts in time.", statusCode: StatusCodes.Status504GatewayTimeout)
                 : Results.Ok(response);
         });
 

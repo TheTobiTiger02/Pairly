@@ -77,6 +77,10 @@ public sealed class StreamConnection : IAsyncDisposable
         return new StreamRecord(header, payload);
     }
 
+    /// <summary>Reads raw bytes (a file the phone sends). Zero at end of stream.</summary>
+    public ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken) =>
+        _stream.ReadAsync(buffer, cancellationToken);
+
     /// <summary>Sends a control-stream message. Only meaningful on a control connection.</summary>
     public Task WriteAsync(ReadOnlyMemory<byte> bytes, CancellationToken cancellationToken) =>
         _stream.WriteAsync(bytes, cancellationToken).AsTask();

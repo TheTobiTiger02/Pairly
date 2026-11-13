@@ -19,6 +19,9 @@ internal sealed class DesktopPreferences
     /// Power mode on the phone gives the same prompt-free mirroring and real input without keeping Wireless debugging on.</summary>
     public bool MirrorUseAdb { get; set; }
 
+    /// <summary>The phone screen window leaves out its Back, Home and Recents bar.</summary>
+    public bool MirrorHideNavigationButtons { get; set; }
+
     /// <summary>"System", "Light" or "Dark".</summary>
     public string Theme { get; set; } = "System";
 

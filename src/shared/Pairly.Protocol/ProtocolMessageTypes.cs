@@ -45,6 +45,8 @@ public static class ProtocolMessageTypes
     public const string CallLogRequest = "call.log.request";
     public const string CallLogResponse = "call.log.response";
     public const string CallDial = "call.dial";
+    public const string ContactsRequest = "contacts.request";
+    public const string ContactsResponse = "contacts.response";
     public const string StorageListRequest = "storage.list.request";
     public const string StorageListResponse = "storage.list.response";
     public const string StorageFileRequest = "storage.file.request";
@@ -69,6 +71,8 @@ public static class ProtocolMessageTypes
     public const string MediaSessionCommand = "media.session.command";
     public const string FilePushStart = "file.push.start";
     public const string FilePushResult = "file.push.result";
+    public const string FilePullStart = "file.pull.start";
+    public const string FilePullResult = "file.pull.result";
     // Phone → PC file sharing (Android share sheet / Home): start → chunks → complete, with results back.
     public const string FileShareStart = "file.share.start";
     public const string FileShareChunk = "file.share.chunk";
@@ -129,6 +133,8 @@ public static class ProtocolMessageTypes
         CallAction,
         CallLogRequest,
         CallLogResponse,
+        ContactsRequest,
+        ContactsResponse,
         CallDial,
         StorageListRequest,
         StorageListResponse,
@@ -154,6 +160,8 @@ public static class ProtocolMessageTypes
         MediaSessionCommand,
         FilePushStart,
         FilePushResult,
+        FilePullStart,
+        FilePullResult,
         AppsListRequest,
         AppsListResponse,
         AppsLaunch,

@@ -100,6 +100,8 @@ public partial class MainWindow : Window
         {
             _mutedNotificationPackages.Add(packageName);
         }
+
+        UpdateNotificationAppsSummary();
         _initializingPreferences = true;
         MinimizeToTrayCheck.IsChecked = _preferences.MinimizeToTray;
         PhoneToastsCheck.IsChecked = _preferences.ShowPhoneNotifications;
@@ -1584,10 +1586,120 @@ public partial class MainWindow : Window
 
         NewSmsFromText.Text = L.F("new_message_from", device.DisplayName);
         NewSmsOverlay.Visibility = Visibility.Visible;
+        _ = LoadContactsAsync(device.DeviceId);
         Dispatcher.BeginInvoke(() => NewSmsNumber.Focus(), DispatcherPriority.Input);
     }
 
     private void CloseNewSms() => NewSmsOverlay.Visibility = Visibility.Collapsed;
+
+    // The phone's contacts, read once per phone and session; typing in the dialog searches them.
+    private ContactPayload[] _contacts = [];
+    private string? _contactsDeviceId;
+    private bool _pickingContact;
+
+    private async Task LoadContactsAsync(string deviceId)
+    {
+        NewSmsContactsNote.Visibility = Visibility.Collapsed;
+        if (_contactsDeviceId == deviceId)
+        {
+            ShowMatchingContacts();
+            return;
+        }
+
+        _contacts = [];
+        try
+        {
+            var response = await _host.GetFromJsonAsync<ContactsResponsePayload>(
+                $"v1/devices/{Uri.EscapeDataString(deviceId)}/contacts", JsonOptions);
+            _contacts = response?.Contacts.ToArray() ?? [];
+            if (response?.Error is { Length: > 0 } error)
+            {
+                NewSmsContactsNote.Text = L.T(error == "permission" ? "contacts_need_permission" : "contacts_not_loaded");
+                NewSmsContactsNote.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                _contactsDeviceId = deviceId;
+            }
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or System.Text.Json.JsonException)
+        {
+            // An older phone app does not answer; the number can still be typed.
+            NewSmsContactsNote.Text = L.T("contacts_not_loaded");
+            NewSmsContactsNote.Visibility = Visibility.Visible;
+        }
+
+        ShowMatchingContacts();
+    }
+
+    private static string DigitsOf(string text) => string.Concat(text.Where(char.IsDigit));
+
+    private void ShowMatchingContacts()
+    {
+        var typed = NewSmsNumber.Text.Trim();
+        var digits = DigitsOf(typed);
+        var matches = typed.Length == 0 || _pickingContact
+            ? []
+            : _contacts
+                .Where(contact => contact.Name.Contains(typed, StringComparison.CurrentCultureIgnoreCase)
+                    || (digits.Length >= 2 && DigitsOf(contact.Number).Contains(digits, StringComparison.Ordinal)))
+                // Names that start with what was typed come first.
+                .OrderBy(contact => contact.Name.StartsWith(typed, StringComparison.CurrentCultureIgnoreCase) ? 0 : 1)
+                .Take(30)
+                .ToArray();
+        // One exact number left: nothing more to choose.
+        if (matches.Length == 1 && SameNumber(matches[0].Number, typed))
+        {
+            matches = [];
+        }
+
+        NewSmsContacts.ItemsSource = matches;
+        NewSmsContacts.Visibility = matches.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void NewSmsNumber_TextChanged(object sender, TextChangedEventArgs e) => ShowMatchingContacts();
+
+    private void PickContact(ContactPayload contact)
+    {
+        _pickingContact = true;
+        NewSmsNumber.Text = contact.Number;
+        _pickingContact = false;
+        NewSmsContacts.Visibility = Visibility.Collapsed;
+        NewSmsFromText.Text = L.F("new_message_to", contact.Name);
+        NewSmsText.Focus();
+    }
+
+    private void NewSmsContacts_PreviewMouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if ((e.OriginalSource as FrameworkElement)?.DataContext is ContactPayload contact)
+        {
+            PickContact(contact);
+            e.Handled = true;
+        }
+    }
+
+    private void NewSmsNumber_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (NewSmsContacts.Visibility != Visibility.Visible || NewSmsContacts.Items.Count == 0)
+        {
+            return;
+        }
+
+        // Arrow keys walk the suggestions without leaving the text box; Enter or Tab takes one.
+        if (e.Key is System.Windows.Input.Key.Down or System.Windows.Input.Key.Up)
+        {
+            var step = e.Key == System.Windows.Input.Key.Down ? 1 : -1;
+            NewSmsContacts.SelectedIndex = Math.Clamp(NewSmsContacts.SelectedIndex + step, 0, NewSmsContacts.Items.Count - 1);
+            NewSmsContacts.ScrollIntoView(NewSmsContacts.SelectedItem);
+            e.Handled = true;
+        }
+        else if (e.Key is System.Windows.Input.Key.Enter or System.Windows.Input.Key.Tab
+                 && (NewSmsContacts.SelectedItem ?? (NewSmsContacts.Items.Count == 1 ? NewSmsContacts.Items[0] : null)) is ContactPayload contact)
+        {
+            PickContact(contact);
+            e.Handled = true;
+        }
+    }
 
     private void NewSmsCancel_Click(object sender, RoutedEventArgs e) => CloseNewSms();
 
@@ -1867,6 +1979,12 @@ public partial class MainWindow : Window
         // It ends with its own Stop or Close, or when the app exits (see Closed above).
         var mirrorWindow = new MirrorWindow(deviceName, deviceId, advancedSummary, _embeddedServer.Diagnostics);
 
+        mirrorWindow.HideNavigationButtons = _preferences.MirrorHideNavigationButtons;
+        mirrorWindow.HideNavigationButtonsChanged += hidden =>
+        {
+            _preferences.MirrorHideNavigationButtons = hidden;
+            _preferences.Save();
+        };
         mirrorWindow.NavigationRequested += key => _ = SendMirrorNavigationAsync(deviceId, key);
         mirrorWindow.LeaseRenewalDue += sessionId => _ = RenewMirrorLeaseAsync(deviceId, sessionId);
         mirrorWindow.FilesDropped += files => _ = SendFilesAsync(deviceId, deviceName, files);
@@ -2205,6 +2323,7 @@ public partial class MainWindow : Window
             _preferences.MutedNotificationPackages.Add(notification.PackageName);
             _preferences.Save();
             NotificationStatusText.Text = L.F("muted_locally_on_this_pc", notification.AppName);
+            UpdateNotificationAppsSummary();
             ApplyNotificationFilters(updateAppFilter: false);
         }
     }
@@ -2215,6 +2334,7 @@ public partial class MainWindow : Window
         _preferences.MutedNotificationPackages.Clear();
         _preferences.Save();
         NotificationStatusText.Text = L.T("restored_notifications_from_all_locally_mute");
+        UpdateNotificationAppsSummary();
         ApplyNotificationFilters(updateAppFilter: false);
     }
 
@@ -2945,43 +3065,41 @@ public partial class MainWindow : Window
             return;
         }
 
+        var saveDialog = new Microsoft.Win32.SaveFileDialog
+        {
+            FileName = item.Name,
+            Filter = $"{L.T("all_files")}|*.*"
+        };
+        if (saveDialog.ShowDialog() != true)
+        {
+            StorageStatusText.Text = L.T("download_cancelled");
+            return;
+        }
+
         StorageStatusText.Text = L.F("downloading_item", item.Name);
+        StorageDownloadButton.IsEnabled = false;
         try
         {
-            var response = await _host.PostAsJsonAsync($"v1/devices/{Uri.EscapeDataString(selectedDevice.DeviceId)}/storage/file", new StorageFileRequestPayload(Guid.NewGuid().ToString(), item.Payload.Path));
-            if (!response.IsSuccessStatusCode)
+            var problem = await DownloadStorageFileAsync(selectedDevice.DeviceId, item, saveDialog.FileName);
+            StorageStatusText.Text = problem is null
+                ? L.F("saved_to", Path.GetFileName(saveDialog.FileName))
+                : L.F("download_failed", problem);
+            if (problem is null)
             {
-                StorageStatusText.Text = L.F("download_failed", await response.Content.ReadAsStringAsync());
-                return;
-            }
-
-            var result = await response.Content.ReadFromJsonAsync<StorageFileResponsePayload>(JsonOptions);
-            if (result == null || !string.IsNullOrEmpty(result.Error) || result.Base64 == null)
-            {
-                StorageStatusText.Text = L.F("download_failed", result?.Error ?? L.T("empty_response"));
-                return;
-            }
-
-            var bytes = Convert.FromBase64String(result.Base64);
-            var saveDialog = new Microsoft.Win32.SaveFileDialog
-            {
-                FileName = item.Name,
-                Filter = $"{L.T("all_files")}|*.*"
-            };
-
-            if (saveDialog.ShowDialog() == true)
-            {
-                await File.WriteAllBytesAsync(saveDialog.FileName, bytes);
-                StorageStatusText.Text = L.F("saved_to", Path.GetFileName(saveDialog.FileName));
+                ShowToast(L.F("saved_to", Path.GetFileName(saveDialog.FileName)));
             }
             else
             {
-                StorageStatusText.Text = L.T("download_cancelled");
+                ShowToast(L.F("download_failed", problem), success: false);
             }
         }
         catch (Exception ex)
         {
             StorageStatusText.Text = UserFacingError(L.T("this_file_could_not_be_downloaded_try_again"), ex);
+        }
+        finally
+        {
+            StorageDownloadButton.IsEnabled = StorageItemsList.SelectedItem is StorageItemViewModel { IsFile: true };
         }
     }
 

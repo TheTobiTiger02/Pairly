@@ -281,7 +281,8 @@ static void ProtocolRoundTripsReleaseReadyPayloads()
     {
         ProtocolMessageTypes.DeviceRing, ProtocolMessageTypes.SmsThreadRequest, ProtocolMessageTypes.CallLogRequest,
         ProtocolMessageTypes.CallLogResponse, ProtocolMessageTypes.CallDial, ProtocolMessageTypes.StorageCreateFolderRequest,
-        ProtocolMessageTypes.StorageRenameRequest
+        ProtocolMessageTypes.StorageRenameRequest, ProtocolMessageTypes.FilePullStart, ProtocolMessageTypes.FilePullResult,
+        ProtocolMessageTypes.ContactsRequest, ProtocolMessageTypes.ContactsResponse
     })
     {
         AssertTrue(ProtocolMessageTypes.IsKnown(type), $"Expected {type} to be known.");
@@ -302,6 +303,12 @@ static void ProtocolRoundTripsReleaseReadyPayloads()
         "r4", [new CallLogEntryPayload("5551234", "Ada", "missed", DateTimeOffset.UnixEpoch, 0)]))).ReadPayload<CallLogResponsePayload>();
     AssertEqual("missed", callLog?.Entries[0].Kind);
     AssertEqual("Ada", callLog?.Entries[0].Name);
+    var pull = Wire(ProtocolMessageTypes.FilePullStart, new FilePullStartPayload("t2", 9, "/Download/a.bin", "", 7819, "dGlja2V0", true));
+    AssertTrue(pull.Contains("\"filePath\":\"/Download/a.bin\"") && pull.Contains("\"streamId\":9"), "Expected the pull request fields on the wire.");
+    var contacts = JsonProtocolSerializer.Deserialize(Wire(ProtocolMessageTypes.ContactsResponse, new ContactsResponsePayload(
+        "r5", [new ContactPayload("Ada", "+49 151 0000", "Mobile")]))).ReadPayload<ContactsResponsePayload>();
+    AssertEqual("+49 151 0000", contacts?.Contacts[0].Number);
+    AssertEqual("Mobile", contacts?.Contacts[0].Label);
 }
 
 static void PairingTicketCarriesActiveHostIdentity()
