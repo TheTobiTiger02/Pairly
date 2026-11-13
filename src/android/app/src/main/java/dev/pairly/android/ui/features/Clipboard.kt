@@ -43,6 +43,7 @@ import dev.pairly.android.ui.components.SecondaryButton
 import dev.pairly.android.ui.components.StatusPill
 import dev.pairly.android.ui.components.SwitchRow
 import dev.pairly.android.ui.theme.Pairly
+import dev.pairly.android.ui.theme.onSuccess
 import dev.pairly.android.ui.theme.Space
 
 /** Send text to every connected device right now (works without Shizuku while the app is open). */
@@ -180,7 +181,7 @@ private fun StepMarker(number: Int, done: Boolean, active: Boolean) {
     )
     Box(Modifier.size(32.dp).clip(CircleShape).background(background), contentAlignment = Alignment.Center) {
         if (done) {
-            Icon(Icons.Rounded.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+            Icon(Icons.Rounded.Check, contentDescription = null, tint = Pairly.style.onSuccess, modifier = Modifier.size(18.dp))
         } else {
             Text(
                 "$number",

@@ -138,11 +138,11 @@ class MainActivity : ComponentActivity(), FeatureActions {
             }
             Feature.Notifications -> openNotificationAccess()
             Feature.Messages -> {
-                val permissions = FeaturePermissionState.smsPermissions()
+                val permissions = FeaturePermissionState.smsRequestPermissions()
                 if (permissions.any(::deniedForGood)) openAppInfo() else smsPermissionLauncher.launch(permissions)
             }
             Feature.Calls -> {
-                val permissions = arrayOf(Manifest.permission.READ_PHONE_STATE, Manifest.permission.ANSWER_PHONE_CALLS, Manifest.permission.READ_CONTACTS)
+                val permissions = arrayOf(Manifest.permission.READ_PHONE_STATE, Manifest.permission.ANSWER_PHONE_CALLS, Manifest.permission.READ_CONTACTS, Manifest.permission.READ_CALL_LOG)
                 if (permissions.any(::deniedForGood)) openAppInfo() else callPermissionLauncher.launch(permissions)
             }
             Feature.Photos -> {
@@ -237,7 +237,9 @@ class MainActivity : ComponentActivity(), FeatureActions {
                 if (link != null) onLink(link) else onInvalid()
             }
             // The scanner module can still be downloading or the camera busy; code entry stays available.
-            .addOnFailureListener { }
+            .addOnFailureListener {
+                android.widget.Toast.makeText(this, LocaleText.of(this).getString(R.string.scan_failed), android.widget.Toast.LENGTH_LONG).show()
+            }
     }
 
     private fun openNotificationAccess() {

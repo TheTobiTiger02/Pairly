@@ -106,6 +106,7 @@
     <string name="pair_on_pc_step2">Choose Add phone. A QR code and a 6-digit code appear.</string>
     <string name="pair_on_pc_step3_scan">Tap Scan the QR code below and point your camera at it.</string>
     <string name="pair_on_pc_step3_code">Pick your PC below and enter the 6-digit code.</string>
+    <string name="scan_failed">The scanner could not open. Tap “Enter a code instead” and type the code from your PC.</string>
     <string name="scan_not_pairing_code">That isn’t a Pairly code. Scan the QR code Pairly shows on your PC.</string>
     <string name="onboarding_choose_pc">Choose your PC</string>
     <string name="onboarding_pair_code">Enter the 6-digit code from your PC</string>

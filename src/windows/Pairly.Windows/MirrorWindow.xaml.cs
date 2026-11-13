@@ -625,6 +625,24 @@ public partial class MirrorWindow : Window
         RestartIdleTimer();
     }
 
+    /// <summary>What the phone reports while the window is still waiting for the first frame.</summary>
+    internal void ShowPhoneState(string? state)
+    {
+        if (_isPlaying) return;
+        switch (state)
+        {
+            case "needs_user_action":
+                OverlayBodyText.Text = L.T("mirror_waiting_for_phone");
+                break;
+            case "denied":
+                ShowConnectionError(L.T("mirror_declined_on_phone"));
+                break;
+            case "failed":
+                ShowConnectionError(L.T("mirror_failed_on_phone"));
+                break;
+        }
+    }
+
     internal void ShowConnectionError(string message)
     {
         _isPlaying = false;

@@ -44,7 +44,7 @@ Photos, notifications, messages, files, and mirroring remain scoped to the selec
 
 One global mirror lease is active at a time. The Windows mirror window owns fit/fullscreen, mute, navigation, retry/permission overlays, quality state, placement, and advanced diagnostics. The receiver is the Media Foundation pipeline in `Pairly.Media` (docs/mirror-pipeline.md); input goes back on its own control socket.
 
-Auto mode preserves aspect ratio and rotation, prefers hardware H.264 with VP8 fallback, targets up to a 1080px short edge, 60 fps, and about 8 Mbps, and marks the source as a screencast. Sustained loss, RTT, bitrate, FPS, freeze, jitter-buffer, and encoder-limitation signals drive gradual adaptation. Signaling reconnect and ICE restart reuse an existing projection when possible; a genuinely new MediaProjection still requires Android confirmation. Audio is off by default and failure falls back to video-only.
+Mirroring sends hardware-encoded H.264 (HEVC optional) over a raw TLS stream to the PC; `mirror-pipeline.md` describes the pipeline, quality profiles and adaptation. A new MediaProjection requires Android confirmation unless Power mode is on. Phone audio is optional and its failure falls back to video only.
 
 ## User interface
 

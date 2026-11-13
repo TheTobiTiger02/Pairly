@@ -1028,6 +1028,18 @@ public partial class MainWindow : Window
                     _activeCallOverlay = null;
                 });
             }
+            else if (type == ProtocolMessageTypes.MirrorState)
+            {
+                var deviceId = root.GetProperty("deviceId").GetString();
+                var state = payload.TryGetProperty("state", out var stateProp) ? stateProp.GetString() : null;
+                _ = Dispatcher.InvokeAsync(() =>
+                {
+                    foreach (var mirror in System.Windows.Application.Current.Windows.OfType<MirrorWindow>())
+                    {
+                        if (mirror.DeviceId == deviceId) mirror.ShowPhoneState(state);
+                    }
+                });
+            }
             else if (type == ProtocolMessageTypes.FileShareReceived)
             {
                 var received = payload.Deserialize<FileShareReceivedPayload>(JsonOptions);
@@ -1962,7 +1974,11 @@ public partial class MainWindow : Window
 
             if (selectedDevice is not null)
             {
-                ReconcilePhotos(await FetchPhotosAsync(selectedDevice.DeviceId));
+                if (await FetchPhotosAsync(selectedDevice.DeviceId) is { } photos)
+                {
+                    ReconcilePhotos(photos);
+                }
+
                 MirrorStatusText.Text = selectedDevice.Connected
                     ? L.F("connected_mirror_permission", selectedDevice.DisplayName, PermissionText(selectedDevice, "mirroring"))
                     : L.F("is_paired_but_offline", selectedDevice.DisplayName);

@@ -34,7 +34,7 @@ with Wireless debugging on, so it is switched off even if no feature holds the h
 ## Status everywhere
 
 - Phone: the Power mode card on Home and in Settings, and the Power mode step in onboarding.
-- PC: the device state carries `permissions.powerMode` (`ready`, `notRunning`, `notAllowed`,
+- PC: the device state carries `permissions.powerMode` (`ready`, `helperFailed`, `notRunning`, `notAllowed`,
   `notInstalled`); the phone card shows a "Power mode" chip, or "paused" after a restart.
 
 ## Testing on an emulator

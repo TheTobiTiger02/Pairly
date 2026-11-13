@@ -809,7 +809,9 @@ public sealed class HostWebSocketHandler(
             mirrors.Touch(state.SessionId, state.State);
         }
 
-        await sessions.SendAsync(state.TargetDeviceId, envelope, cancellationToken);
+        // The mirror window lives in the PC app, which listens on its realtime socket. The payload's
+        // target is a mirror session name, not a socket, so sending to it reached nobody.
+        await RelayToPcAppsAsync(envelope, cancellationToken);
     }
 
     /// <summary>
