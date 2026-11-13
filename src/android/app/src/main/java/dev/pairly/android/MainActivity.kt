@@ -142,7 +142,7 @@ class MainActivity : ComponentActivity(), FeatureActions {
                 if (permissions.any(::deniedForGood)) openAppInfo() else smsPermissionLauncher.launch(permissions)
             }
             Feature.Calls -> {
-                val permissions = arrayOf(Manifest.permission.READ_PHONE_STATE, Manifest.permission.ANSWER_PHONE_CALLS, Manifest.permission.READ_CONTACTS, Manifest.permission.READ_CALL_LOG)
+                val permissions = arrayOf(Manifest.permission.READ_PHONE_STATE, Manifest.permission.ANSWER_PHONE_CALLS, Manifest.permission.READ_CONTACTS, Manifest.permission.READ_CALL_LOG, Manifest.permission.CALL_PHONE)
                 if (permissions.any(::deniedForGood)) openAppInfo() else callPermissionLauncher.launch(permissions)
             }
             Feature.Photos -> {

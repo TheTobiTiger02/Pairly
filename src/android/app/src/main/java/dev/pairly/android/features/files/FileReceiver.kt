@@ -61,7 +61,8 @@ class FileReceiver(
                 ticket = ticket,
                 streamId = payload.optLong("streamId"),
                 useTls = payload.optBoolean("useTls", true),
-                certificateFingerprint = certificateFingerprint
+                certificateFingerprint = certificateFingerprint,
+                targetPath = payload.optString("targetPath").takeIf { it.isNotBlank() && !payload.isNull("targetPath") }
             )
         }
         return "Receiving $fileName."
@@ -77,13 +78,14 @@ class FileReceiver(
         ticket: String,
         streamId: Long,
         useTls: Boolean,
-        certificateFingerprint: String
+        certificateFingerprint: String,
+        targetPath: String?
     ) {
         var target: Target? = null
         try {
             StreamSocketClient.connect(host, port, StreamProtocol.KIND_FILE, ticket, streamId, useTls, certificateFingerprint)
                 .use { socket ->
-                    target = createTarget(fileName, mimeType)
+                    target = if (targetPath != null) folderTarget(chosenFolder(targetPath), fileName) else createTarget(fileName, mimeType)
                     target!!.open().use { output -> copyExactly(socket.input, output, byteCount) }
                     target!!.publish()
                 }
@@ -148,8 +150,22 @@ class FileReceiver(
         }
     }
 
-    private fun appFolderTarget(fileName: String): Target {
-        val folder = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), FOLDER).apply { mkdirs() }
+    /** The folder the PC's file browser has open. Throws when Pairly may not write there. */
+    private fun chosenFolder(targetPath: String): File {
+        val allFiles = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) Environment.isExternalStorageManager()
+        else androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (!allFiles) throw IOException("Pairly needs access to all files to save into this folder.")
+        val folder = StoragePathPolicy.resolve(Environment.getExternalStorageDirectory(), targetPath)
+        if (folder == null || !folder.isDirectory) throw IOException("The folder no longer exists.")
+        return folder
+    }
+
+    private fun appFolderTarget(fileName: String): Target =
+        folderTarget(File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), FOLDER).apply { mkdirs() }, fileName)
+
+    /** Writes beside the final name and renames at the end, so a broken transfer leaves no half file. */
+    private fun folderTarget(folder: File, fileName: String): Target {
         val file = uniqueFile(folder, fileName)
         val partial = File(folder, ".${file.name}.part")
         return object : Target {
@@ -157,6 +173,8 @@ class FileReceiver(
             override fun open(): OutputStream = partial.outputStream()
             override fun publish() {
                 if (!partial.renameTo(file)) throw IOException("Could not finish writing ${file.name}.")
+                // Lets the gallery and the Files app see it without waiting for the next media scan.
+                android.media.MediaScannerConnection.scanFile(context, arrayOf(file.path), null, null)
             }
             override fun discard() {
                 partial.delete()

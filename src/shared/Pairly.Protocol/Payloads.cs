@@ -248,6 +248,9 @@ public sealed record SmsMessagePagePayload(
     string? NextPageToken,
     IReadOnlyList<SmsMessagePayload> Messages);
 
+/// <summary>PC to phone: send the newest messages of this conversation.</summary>
+public sealed record SmsThreadRequestPayload(string ThreadId);
+
 public sealed record SmsSendPayload(
     string Address,
     string Body,
@@ -343,6 +346,28 @@ public sealed record CallRingingPayload(
     string Number,
     string? CallerName);
 
+public sealed record CallLogRequestPayload(string RequestId);
+
+/// <summary>One call from the phone's history. Kind is "incoming", "outgoing" or "missed".</summary>
+public sealed record CallLogEntryPayload(
+    string Number,
+    string? Name,
+    string Kind,
+    DateTimeOffset StartedAt,
+    long DurationSeconds);
+
+/// <summary>Error is "permission" when the phone may not read its call log.</summary>
+public sealed record CallLogResponsePayload(
+    string RequestId,
+    IReadOnlyList<CallLogEntryPayload> Entries,
+    string? Error = null);
+
+/// <summary>PC to phone: place this call on the phone. Answered with a command result.</summary>
+public sealed record CallDialPayload(string Number, string? RequestId = null);
+
+/// <summary>PC to phone: start (or stop) ringing so the phone can be found.</summary>
+public sealed record DeviceRingPayload(bool Ring);
+
 public sealed record CallActionPayload(
     string SessionId,
     string Action);
@@ -377,6 +402,18 @@ public sealed record StorageFileResponsePayload(
 public sealed record StorageDeleteRequestPayload(
     string RequestId,
     string FilePath);
+
+/// <summary>A new folder called Name inside the folder at Path. Answered with a command result.</summary>
+public sealed record StorageCreateFolderRequestPayload(
+    string RequestId,
+    string Path,
+    string Name);
+
+/// <summary>Gives the file or folder at FilePath a new name in the same folder. Answered with a command result.</summary>
+public sealed record StorageRenameRequestPayload(
+    string RequestId,
+    string FilePath,
+    string NewName);
 
 public sealed record HeartbeatPayload(
     string SessionId,
@@ -429,7 +466,10 @@ public sealed record FilePushStartPayload(
     string Host,
     int Port,
     string Ticket,
-    bool UseTls);
+    bool UseTls,
+    // The folder in shared storage to save into; null or empty means Downloads/Pairly. Needs the
+    // phone's "All files access", which the storage browser needs anyway.
+    string? TargetPath = null);
 
 /// <summary>Status is saved, failed or rejected.</summary>
 public sealed record FilePushResultPayload(

@@ -21,12 +21,8 @@ public partial class MainWindow
         ReceivedFilesCard.Visibility = Visibility.Visible;
         _lastReceivedFolder = Path.GetDirectoryName(received.FilePath);
 
-        _balloonClick = () => { if (_lastReceivedFolder is not null) StartShell(_lastReceivedFolder); };
-        _notifyIcon?.ShowBalloonTip(
-            4000,
-            L.T("file_received"),
-            L.F("file_received_detail", received.FileName),
-            System.Windows.Forms.ToolTipIcon.Info);
+        string[] openFolder = ["folder", _lastReceivedFolder ?? string.Empty];
+        ShowPcNotification(L.T("file_received"), L.F("file_received_detail", received.FileName), openFolder, L.T("open_folder"), openFolder);
     }
 
     private void OpenReceivedFolder_Click(object sender, RoutedEventArgs e)

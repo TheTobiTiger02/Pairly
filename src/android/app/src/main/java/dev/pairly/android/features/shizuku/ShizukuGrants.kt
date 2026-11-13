@@ -34,7 +34,8 @@ object ShizukuGrants {
             Manifest.permission.READ_PHONE_STATE,
             Manifest.permission.ANSWER_PHONE_CALLS,
             Manifest.permission.READ_CONTACTS,
-            Manifest.permission.READ_CALL_LOG
+            Manifest.permission.READ_CALL_LOG,
+            Manifest.permission.CALL_PHONE
         ).map(Step::Permission)
         "photos" -> if (sdk >= 33) listOf(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO).map(Step::Permission)
         else listOf(Step.Permission(Manifest.permission.READ_EXTERNAL_STORAGE))

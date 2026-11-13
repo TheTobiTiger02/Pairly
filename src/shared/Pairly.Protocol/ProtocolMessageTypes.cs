@@ -11,6 +11,8 @@ public static class ProtocolMessageTypes
     public const string DeviceState = "device.state";
     public const string DeviceSyncRequest = "device.sync.request";
     public const string DeviceForget = "device.forget";
+    public const string DeviceRing = "device.ring";
+    public const string SmsThreadRequest = "sms.thread.request";
     public const string DeviceForgetConfirm = "device.forget.confirm";
     public const string ClipboardItem = "clipboard.item";
     public const string ClipboardAck = "clipboard.ack";
@@ -40,11 +42,16 @@ public static class ProtocolMessageTypes
     public const string CallIdle = "call.idle";
     public const string CallActive = "call.active";
     public const string CallAction = "call.action";
+    public const string CallLogRequest = "call.log.request";
+    public const string CallLogResponse = "call.log.response";
+    public const string CallDial = "call.dial";
     public const string StorageListRequest = "storage.list.request";
     public const string StorageListResponse = "storage.list.response";
     public const string StorageFileRequest = "storage.file.request";
     public const string StorageFileResponse = "storage.file.response";
     public const string StorageDeleteRequest = "storage.delete.request";
+    public const string StorageCreateFolderRequest = "storage.mkdir.request";
+    public const string StorageRenameRequest = "storage.rename.request";
     public const string HeartbeatPing = "heartbeat.ping";
     public const string HeartbeatPong = "heartbeat.pong";
     public const string CommandResult = "command.result";
@@ -84,6 +91,8 @@ public static class ProtocolMessageTypes
         DeviceState,
         DeviceSyncRequest,
         DeviceForget,
+        DeviceRing,
+        SmsThreadRequest,
         DeviceForgetConfirm,
         ClipboardItem,
         ClipboardAck,
@@ -118,11 +127,16 @@ public static class ProtocolMessageTypes
         CallIdle,
         CallActive,
         CallAction,
+        CallLogRequest,
+        CallLogResponse,
+        CallDial,
         StorageListRequest,
         StorageListResponse,
         StorageFileRequest,
         StorageFileResponse,
         StorageDeleteRequest,
+        StorageCreateFolderRequest,
+        StorageRenameRequest,
         HeartbeatPing,
         HeartbeatPong,
         CommandResult,

@@ -366,6 +366,16 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>Clicking the phone that is already selected changes nothing, but still closes the list.</summary>
+    private void DevicesList_ItemClicked(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if ((e.OriginalSource as DependencyObject) is { } source
+            && ItemsControl.ContainerFromElement(DevicesList, source) is not null)
+        {
+            DevicePickerToggle.IsChecked = false;
+        }
+    }
+
     private async void DevicesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_settingDeviceSelection || !IsLoaded)
@@ -455,11 +465,13 @@ public partial class MainWindow : Window
 
             var contextMenu = new System.Windows.Forms.ContextMenuStrip();
             contextMenu.Items.Add(L.T("open_dashboard"), null, (s, e) => ShowDashboard());
+            contextMenu.Items.Add(L.T("ring_phone"), null, (s, e) => RingPhone_Click(this, new RoutedEventArgs()));
             contextMenu.Items.Add(L.T("exit"), null, (s, e) => ExitFully());
 
             _notifyIcon.ContextMenuStrip = contextMenu;
             _notifyIcon.DoubleClick += (s, e) => ShowDashboard();
             _notifyIcon.BalloonTipClicked += (_, _) => _balloonClick?.Invoke();
+            _toasts.Activated += OnToastActivated;
         }
         catch (Exception ex)
         {
@@ -570,27 +582,40 @@ public partial class MainWindow : Window
         _preferences.Save();
     }
 
-    // Notifications already seen for the phone the toasts are tracking, so only new ones pop up.
-    private string? _toastDeviceId;
-    private readonly HashSet<string> _toastSeenNotifications = new(StringComparer.Ordinal);
+    // Notifications already seen per connected phone, with the text they had, so only new ones pop up.
+    private readonly Dictionary<string, Dictionary<string, string>> _toastSeenNotifications = new(StringComparer.Ordinal);
+    private readonly PhoneToasts _toasts = new();
     private Action? _balloonClick;
 
     /// <summary>
     /// A Windows notification for each phone notification that is new since the last look. What is
-    /// already on the phone when it connects or is chosen never pops up, and muted apps stay quiet.
+    /// already on the phone when it connects never pops up, and muted apps stay quiet.
     /// </summary>
-    private void ShowToastsForNewNotifications(string? deviceId, IReadOnlyList<NotificationPayload> notifications)
+    private void ShowToastsForNewNotifications(LinkedDevice device, IReadOnlyList<NotificationPayload> notifications, bool namePhone)
     {
-        var firstLook = !string.Equals(deviceId, _toastDeviceId, StringComparison.Ordinal);
-        if (firstLook)
+        var firstLook = !_toastSeenNotifications.TryGetValue(device.DeviceId, out var seen);
+        seen ??= _toastSeenNotifications[device.DeviceId] = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        // A chat app keeps one notification per conversation and changes its text for each message.
+        var fresh = notifications.Where(notification =>
         {
-            _toastDeviceId = deviceId;
-            _toastSeenNotifications.Clear();
+            var shownText = notification.Title + " | " + notification.Text;
+            var isNew = !seen.TryGetValue(notification.NotificationId, out var before) || before != shownText;
+            seen[notification.NotificationId] = shownText;
+            return isNew;
+        }).ToArray();
+        var current = notifications.Select(notification => notification.NotificationId).ToHashSet(StringComparer.Ordinal);
+        var group = PhoneToasts.Key(device.DeviceId);
+        foreach (var gone in seen.Keys.Where(id => !current.Contains(id)).ToArray())
+        {
+            // Read or cleared on the phone: it should not stay on the PC either.
+            _toasts.Remove(PhoneToasts.Key(gone), group);
+            seen.Remove(gone);
         }
 
-        var fresh = notifications.Where(notification => _toastSeenNotifications.Add(notification.NotificationId)).ToArray();
-        _toastSeenNotifications.IntersectWith(notifications.Select(notification => notification.NotificationId));
-        if (firstLook || !_preferences.ShowPhoneNotifications || (IsActive && MainTabs.SelectedIndex == 6))
+        var lookingAtThem = IsActive && MainTabs.SelectedIndex == 6
+            && string.Equals(GetSelectedDevice()?.DeviceId, device.DeviceId, StringComparison.Ordinal);
+        if (firstLook || !_preferences.ShowPhoneNotifications || lookingAtThem)
         {
             return;
         }
@@ -600,26 +625,141 @@ public partial class MainWindow : Window
                 && !_mutedNotificationPackages.Contains(notification.PackageName)
                 && DateTimeOffset.UtcNow - notification.PostedAt < TimeSpan.FromMinutes(2)
                 && (notification.Title.Length > 0 || notification.Text.Length > 0))
+            .OrderByDescending(notification => notification.PostedAt)
             .ToArray();
         if (toShow.Length == 0)
         {
             return;
         }
 
-        // Windows shows one at a time from the notification area, so a burst becomes one summary.
-        var latest = toShow.OrderByDescending(notification => notification.PostedAt).First();
+        if (_toasts.Available)
+        {
+            // The newest few pop up; the rest of a burst go straight to the notification center.
+            var shown = 0;
+            var allShown = true;
+            foreach (var notification in toShow)
+            {
+                allShown &= _toasts.Show(PhoneToast(device, notification, namePhone, quiet: shown++ >= 3));
+            }
+
+            if (allShown)
+            {
+                return;
+            }
+        }
+
+        // Windows shows one balloon at a time from the notification area, so a burst becomes one summary.
+        var latest = toShow[0];
         var title = toShow.Length == 1
             ? (latest.Title.Length > 0 ? $"{latest.AppName}: {latest.Title}" : latest.AppName)
             : L.F("n_new_phone_notifications", toShow.Length);
         var text = toShow.Length == 1
             ? (latest.Text.Length > 0 ? latest.Text : latest.Title)
             : string.Join(", ", toShow.Select(notification => notification.AppName).Distinct().Take(4));
-        _balloonClick = () =>
-        {
-            ShowDashboard();
-            NavNotifications.IsChecked = true;
-        };
+        _balloonClick = () => OpenNotificationsFor(device.DeviceId);
         _notifyIcon?.ShowBalloonTip(5000, Truncate(title, 60), Truncate(text, 200), System.Windows.Forms.ToolTipIcon.None);
+    }
+
+    private static ToastContent PhoneToast(LinkedDevice device, NotificationPayload notification, bool namePhone, bool quiet)
+    {
+        var deviceId = device.DeviceId;
+        var hasTitle = notification.Title.Length > 0;
+        return new ToastContent(
+            Tag: PhoneToasts.Key(notification.NotificationId),
+            Group: PhoneToasts.Key(deviceId),
+            Title: Truncate(hasTitle ? notification.Title : notification.AppName, 120),
+            Body: Truncate(hasTitle ? notification.Text : (notification.Text.Length > 0 ? notification.Text : string.Empty), 400),
+            LaunchArguments: ToastArguments("open", deviceId, notification.NotificationId),
+            Attribution: namePhone ? $"{notification.AppName} · {device.DisplayName}" : notification.AppName,
+            IconPath: PhoneToasts.PictureFile(notification.LargeIconBase64 ?? notification.AppIconBase64),
+            PicturePath: PhoneToasts.PictureFile(notification.PictureBase64),
+            ReplyPlaceholder: notification.CanReply ? L.T("reply") : null,
+            ReplyLabel: notification.CanReply ? L.T("send") : null,
+            ReplyArguments: notification.CanReply ? ToastArguments("reply", deviceId, notification.NotificationId) : null,
+            ButtonLabel: notification.Clearable ? L.T("dismiss") : null,
+            ButtonArguments: notification.Clearable ? ToastArguments("dismiss", deviceId, notification.NotificationId) : null,
+            Quiet: quiet);
+    }
+
+    private static string ToastArguments(params string[] parts) => string.Join('|', parts.Select(Uri.EscapeDataString));
+
+    /// <summary>A plain Windows notification from Pairly itself, or a balloon when Windows refuses.</summary>
+    private void ShowPcNotification(string title, string text, string[] launch, string? buttonLabel = null, string[]? button = null)
+    {
+        var shown = _toasts.Show(new ToastContent(
+            Tag: PhoneToasts.Key(title + text),
+            Group: "pairly",
+            Title: title,
+            Body: text,
+            LaunchArguments: ToastArguments(launch),
+            ButtonLabel: button is null ? null : buttonLabel,
+            ButtonArguments: button is null ? null : ToastArguments(button)));
+        if (!shown)
+        {
+            _balloonClick = () => OnToastActivated(ToastArguments(button ?? launch), null);
+            _notifyIcon?.ShowBalloonTip(5000, Truncate(title, 60), Truncate(text, 200), System.Windows.Forms.ToolTipIcon.None);
+        }
+    }
+
+    /// <summary>Windows calls this from its own thread when a notification, its button or its reply box is used.</summary>
+    private void OnToastActivated(string arguments, string? typed) => Dispatcher.BeginInvoke(async () =>
+    {
+        var parts = arguments.Split('|').Select(Uri.UnescapeDataString).ToArray();
+        switch (parts)
+        {
+            case ["open", var deviceId, ..]:
+                OpenNotificationsFor(deviceId);
+                break;
+            case ["reply", var deviceId, var notificationId] when !string.IsNullOrWhiteSpace(typed):
+                if (!await SendNotificationActionAsync(deviceId, notificationId, "reply", typed.Trim()))
+                {
+                    ShowPcNotification(L.T("reply_not_sent"), L.T("reply_not_sent_detail"), ["open", deviceId]);
+                }
+
+                break;
+            case ["dismiss", var deviceId, var notificationId]:
+                await SendNotificationActionAsync(deviceId, notificationId, "dismiss", null);
+                break;
+            case ["folder", var folder] when Directory.Exists(folder):
+                StartShell(folder);
+                break;
+            case ["dashboard", ..]:
+                ShowDashboard();
+                break;
+        }
+    });
+
+    private void OpenNotificationsFor(string deviceId)
+    {
+        ShowDashboard();
+        if (_devices.FirstOrDefault(device => string.Equals(device.DeviceId, deviceId, StringComparison.Ordinal)) is { } phone
+            && !ReferenceEquals(DevicesList.SelectedItem, phone))
+        {
+            DevicesList.SelectedItem = phone;
+        }
+
+        NavNotifications.IsChecked = true;
+    }
+
+    private async Task<bool> SendNotificationActionAsync(string deviceId, string notificationId, string action, string? text)
+    {
+        try
+        {
+            using var response = await _host.PostAsJsonAsync(
+                $"v1/notifications/{Uri.EscapeDataString(deviceId)}/action",
+                new NotificationActionPayload(notificationId, action, text),
+                JsonOptions);
+            if (response.IsSuccessStatusCode)
+            {
+                _ = RefreshFromHostAsync(showErrors: false);
+            }
+
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            return false;
+        }
     }
 
     private static string Truncate(string text, int length) =>
@@ -678,6 +818,11 @@ public partial class MainWindow : Window
             && SettingsTabs.SelectedIndex == DiagnosticsSettingsIndex)
         {
             RefreshDiagnostics();
+        }
+
+        if (ReferenceEquals(e.Source, MainTabs) && MainTabs.SelectedIndex == CallsTabIndex)
+        {
+            _ = LoadCallsAsync(force: false);
         }
 
         if (ReferenceEquals(e.Source, MainTabs) && MainTabs.SelectedIndex == AppsTabIndex)
@@ -1051,6 +1196,8 @@ public partial class MainWindow : Window
                 {
                     _activeCallOverlay?.Close();
                     _activeCallOverlay = null;
+                    // The phone writes a call to its history when the call ends.
+                    _ = RefreshCallsAfterCallAsync();
                 });
             }
             else if (type == ProtocolMessageTypes.MirrorState)
@@ -1148,6 +1295,51 @@ public partial class MainWindow : Window
                 ex);
             StatusText.Text = L.T("trust_storage_repair_failed_open_settings_tr");
         }
+    }
+
+    private string? _ringingDeviceId;
+    private DispatcherTimer? _ringTimer;
+
+    /// <summary>Find my phone: rings the selected phone, or stops it when it is already ringing.</summary>
+    private async void RingPhone_Click(object sender, RoutedEventArgs e)
+    {
+        var device = GetSelectedDevice();
+        if (device is null || !device.Connected)
+        {
+            ShowToast(device is null ? L.T("select_a_connected_phone_before_refreshing_p") : L.F("is_paired_but_offline", device.DisplayName), success: false);
+            return;
+        }
+
+        var stop = _ringingDeviceId == device.DeviceId;
+        try
+        {
+            using var response = await _host.PostAsync($"v1/devices/{Uri.EscapeDataString(device.DeviceId)}/ring?stop={(stop ? "true" : "false")}", null);
+            response.EnsureSuccessStatusCode();
+        }
+        catch (HttpRequestException)
+        {
+            ShowToast(L.F("is_paired_but_offline", device.DisplayName), success: false);
+            return;
+        }
+
+        SetRinging(stop ? null : device.DeviceId);
+        ShowToast(stop ? L.T("ring_stopped") : L.F("ring_started", device.DisplayName));
+    }
+
+    /// <summary>The button offers to stop for as long as the phone rings by itself (a minute).</summary>
+    private void SetRinging(string? deviceId)
+    {
+        _ringingDeviceId = deviceId;
+        RingPhoneText.Text = L.T(deviceId is null ? "ring_phone" : "ring_stop");
+        _ringTimer?.Stop();
+        if (deviceId is null)
+        {
+            return;
+        }
+
+        _ringTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(60) };
+        _ringTimer.Tick += (_, _) => SetRinging(null);
+        _ringTimer.Start();
     }
 
     private async void RefreshPhoneData_Click(object sender, RoutedEventArgs e)
@@ -1289,7 +1481,138 @@ public partial class MainWindow : Window
 
     private void SmsThreadsList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
-        _ = LoadSmsMessagesAsync(SmsThreadsList.SelectedItem as SmsThreadViewModel);
+        var thread = SmsThreadsList.SelectedItem as SmsThreadViewModel;
+        _ = LoadSmsMessagesAsync(thread);
+        if (thread is not null)
+        {
+            _ = LoadWholeConversationAsync(thread);
+        }
+    }
+
+    // Conversations the phone was already asked for, so opening one again costs nothing.
+    private readonly HashSet<string> _conversationsRequested = new(StringComparer.Ordinal);
+
+    /// <summary>
+    /// What is synced by itself is only the newest messages overall, so an older conversation
+    /// opens nearly empty. This asks the phone for the conversation's own messages and shows them.
+    /// </summary>
+    private async Task LoadWholeConversationAsync(SmsThreadViewModel thread)
+    {
+        if (App.DemoMode || !_conversationsRequested.Add(thread.ThreadKey))
+        {
+            return;
+        }
+
+        try
+        {
+            using var response = await _host.PostAsync(
+                $"v1/sms/{Uri.EscapeDataString(thread.DeviceId)}/threads/{Uri.EscapeDataString(thread.ThreadId)}/load", null);
+            if (!response.IsSuccessStatusCode)
+            {
+                _conversationsRequested.Remove(thread.ThreadKey);
+                return;
+            }
+
+            // The phone answers within a moment; the page is stored by the host before this reads it.
+            await Task.Delay(700);
+            if (ReferenceEquals(SmsThreadsList.SelectedItem, thread))
+            {
+                await LoadSmsMessagesAsync(thread);
+            }
+        }
+        catch (HttpRequestException)
+        {
+            _conversationsRequested.Remove(thread.ThreadKey);
+        }
+    }
+
+    // --- New message --------------------------------------------------------------------------
+
+    private void NewSms_Click(object sender, RoutedEventArgs e)
+    {
+        var device = GetSelectedDevice();
+        if (device is null || !device.Connected)
+        {
+            ShowToast(device is null ? L.T("select_the_phone_that_should_send_the_sms") : L.F("is_paired_but_offline", device.DisplayName), success: false);
+            return;
+        }
+
+        NewSmsFromText.Text = L.F("new_message_from", device.DisplayName);
+        NewSmsOverlay.Visibility = Visibility.Visible;
+        Dispatcher.BeginInvoke(() => NewSmsNumber.Focus(), DispatcherPriority.Input);
+    }
+
+    private void CloseNewSms() => NewSmsOverlay.Visibility = Visibility.Collapsed;
+
+    private void NewSmsCancel_Click(object sender, RoutedEventArgs e) => CloseNewSms();
+
+    private void NewSmsOverlay_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (ReferenceEquals(e.OriginalSource, NewSmsOverlay))
+        {
+            CloseNewSms();
+        }
+    }
+
+    private async void NewSmsSend_Click(object sender, RoutedEventArgs e)
+    {
+        var device = GetSelectedDevice();
+        var number = NewSmsNumber.Text.Trim();
+        var text = NewSmsText.Text.Trim();
+        if (device is null || number.Length == 0 || text.Length == 0)
+        {
+            (number.Length == 0 ? NewSmsNumber : NewSmsText).Focus();
+            return;
+        }
+
+        // Both boxes keep their text until the phone has taken the message.
+        NewSmsSendButton.IsEnabled = false;
+        try
+        {
+            using var response = await _host.PostAsJsonAsync(
+                $"v1/sms/{Uri.EscapeDataString(device.DeviceId)}/send", new SmsSendPayload(number, text, null), JsonOptions);
+            if (!response.IsSuccessStatusCode)
+            {
+                AppLog.Write($"SMS send failed: {(int)response.StatusCode} {await response.Content.ReadAsStringAsync()}");
+                ShowToast(L.T("the_message_could_not_be_sent_check_the_phon"), success: false);
+                return;
+            }
+
+            NewSmsNumber.Clear();
+            NewSmsText.Clear();
+            CloseNewSms();
+            ShowToast(L.F("sms_sent_by", device.DisplayName));
+            // The phone reports the new conversation a moment later; open it once it is listed.
+            await Task.Delay(1200);
+            await RefreshFromHostAsync(showErrors: false);
+            var created = _smsThreads.FirstOrDefault(thread => SameNumber(thread.Address, number));
+            if (created is not null)
+            {
+                SmsThreadsList.SelectedItem = created;
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            ShowToast(UserFacingError(L.T("the_message_could_not_be_sent_check_the_phon"), ex), success: false);
+        }
+        finally
+        {
+            NewSmsSendButton.IsEnabled = true;
+        }
+    }
+
+    /// <summary>Two ways of writing one number: compared by their digits, ignoring a country prefix.</summary>
+    private static bool SameNumber(string first, string second)
+    {
+        static string Digits(string value) => new(value.Where(char.IsDigit).ToArray());
+        var (a, b) = (Digits(first), Digits(second));
+        if (a.Length == 0 || b.Length == 0)
+        {
+            return false;
+        }
+
+        var tail = Math.Min(Math.Min(a.Length, b.Length), 8);
+        return a[^tail..] == b[^tail..];
     }
 
     private async Task LoadSmsMessagesAsync(SmsThreadViewModel? thread)
@@ -1975,11 +2298,10 @@ public partial class MainWindow : Window
                         if (!_notifiedLowBatteryDevices.Contains(device.DeviceId))
                         {
                             _notifiedLowBatteryDevices.Add(device.DeviceId);
-                            _notifyIcon?.ShowBalloonTip(
-                                5000,
+                            ShowPcNotification(
                                 L.T("low_battery_warning"),
                                 L.F("battery_is_at_please_plug_in_a_charger", device.DisplayName, device.BatteryLevel),
-                                System.Windows.Forms.ToolTipIcon.Warning);
+                                ["dashboard"]);
                         }
                     }
                     else if (device.IsCharging == true || device.BatteryLevel > 20)
@@ -2031,7 +2353,21 @@ public partial class MainWindow : Window
                 : await _host.GetFromJsonAsync<NotificationPayload[]>(
                     $"v1/notifications/{Uri.EscapeDataString(selectedDevice.DeviceId)}",
                     JsonOptions) ?? Array.Empty<NotificationPayload>();
-            ShowToastsForNewNotifications(selectedDevice?.DeviceId, notifications);
+            // Every connected phone gets Windows notifications, not only the one that is open.
+            foreach (var gone in _toastSeenNotifications.Keys.Where(id => !devicesData.Any(device => device.Connected && device.DeviceId == id)).ToArray())
+            {
+                _toastSeenNotifications.Remove(gone);
+            }
+
+            foreach (var device in devicesData.Where(device => device.Connected))
+            {
+                var theirs = ReferenceEquals(device, selectedDevice) || device.DeviceId == selectedDevice?.DeviceId
+                    ? notifications
+                    : await _host.GetFromJsonAsync<NotificationPayload[]>(
+                        $"v1/notifications/{Uri.EscapeDataString(device.DeviceId)}", JsonOptions) ?? Array.Empty<NotificationPayload>();
+                ShowToastsForNewNotifications(device, theirs, namePhone: devicesData.Length > 1);
+            }
+
             ReconcileNotifications(notifications);
             ApplyNotificationFilters(updateAppFilter: true);
             NotificationStatusText.Text = selectedDevice is null
@@ -2497,6 +2833,10 @@ public partial class MainWindow : Window
         {
             if (StorageDeleteButton.IsEnabled) DeleteStorageItem_Click(sender, e);
         }
+        else if (key == System.Windows.Input.Key.F2)
+        {
+            RenameStorageItem_Click(sender, e);
+        }
         else
         {
             return;
@@ -2664,6 +3004,79 @@ public partial class MainWindow : Window
     {
         DeleteStorageItem_Click(sender, e);
     }
+
+    /// <summary>A change to the phone's storage: sends it, says what went wrong, and reloads the folder.</summary>
+    private async Task ChangeStorageAsync(string route, object payload, string doneText)
+    {
+        var device = GetSelectedDevice();
+        if (device is null)
+        {
+            return;
+        }
+
+        try
+        {
+            using var response = await _host.PostAsJsonAsync($"v1/devices/{Uri.EscapeDataString(device.DeviceId)}/storage/{route}", payload, JsonOptions);
+            if (!response.IsSuccessStatusCode)
+            {
+                // The phone says why in plain words, e.g. that the name is taken.
+                var problem = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>(JsonOptions);
+                ShowToast(problem.TryGetProperty("message", out var message) && message.GetString() is { Length: > 0 } text
+                    ? text : L.T("storage_change_failed"), success: false);
+                return;
+            }
+
+            ShowToast(doneText);
+            await LoadStorageDirectoryAsync(device.DeviceId, _currentStoragePath);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or System.Text.Json.JsonException)
+        {
+            ShowToast(L.T("storage_change_failed"), success: false);
+        }
+    }
+
+    private async void NewStorageFolder_Click(object sender, RoutedEventArgs e)
+    {
+        if (await PromptAsync(L.T("new_folder"), L.T("new_folder_default_name"), L.T("create")) is { } name)
+        {
+            await ChangeStorageAsync("folder", new StorageCreateFolderRequestPayload(string.Empty, _currentStoragePath, name), L.F("folder_created", name));
+        }
+    }
+
+    private async void RenameStorageItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (StorageItemsList.SelectedItem is StorageItemViewModel item
+            && await PromptAsync(L.F("rename_item", item.Name), item.Name, L.T("rename")) is { } name
+            && name != item.Name)
+        {
+            await ChangeStorageAsync("rename", new StorageRenameRequestPayload(string.Empty, item.Payload.Path, name), L.F("renamed_to", name));
+        }
+    }
+
+    /// <summary>Picks files on the PC and puts them into the folder that is open.</summary>
+    private async void UploadToFolder_Click(object sender, RoutedEventArgs e)
+    {
+        var device = GetSelectedDevice();
+        if (device is null || !device.Connected)
+        {
+            return;
+        }
+
+        var dialog = new Microsoft.Win32.OpenFileDialog { Multiselect = true, Title = L.T("upload_here") };
+        if (dialog.ShowDialog(this) == true)
+        {
+            await UploadToOpenFolderAsync(device.DeviceId, device.DisplayName, dialog.FileNames);
+        }
+    }
+
+    private async Task UploadToOpenFolderAsync(string deviceId, string deviceName, IReadOnlyList<string> paths)
+    {
+        await SendFilesAsync(deviceId, deviceName, paths, _currentStoragePath);
+        await LoadStorageDirectoryAsync(deviceId, _currentStoragePath);
+    }
+
+    /// <summary>The Files page with a folder showing: dropped files go into that folder.</summary>
+    private bool DropsIntoOpenFolder => MainTabs.SelectedIndex == FilesTabIndex && _storageLoaded;
 
 
 
@@ -3152,6 +3565,9 @@ public sealed class StorageItemViewModel
         
     public bool IsDirectory => Payload.IsDirectory;
     public bool IsFile => !Payload.IsDirectory;
+
+    /// <summary>What a screen reader says for the row.</summary>
+    public override string ToString() => $"{Name}, {Details}";
 
     /// <summary>What the icon is chosen by. Not shown, so it is the same in every language.</summary>
     public string IconKind

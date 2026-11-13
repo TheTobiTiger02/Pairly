@@ -270,6 +270,7 @@ public sealed class PairlyServer
         services.AddSingleton<ResponseBroker<DiagnosticsSnapshotPayload>>();
         services.AddSingleton<ResponseBroker<AppsListResponsePayload>>();
         services.AddSingleton<ResponseBroker<AppsLaunchResultPayload>>();
+        services.AddSingleton<ResponseBroker<CallLogResponsePayload>>();
         services.AddSingleton<MediaSessionStore>();
         services.AddSingleton<Networking.EndpointEnumerator>();
         services.AddHostedService(provider => provider.GetRequiredService<Networking.EndpointEnumerator>());
@@ -747,6 +748,30 @@ public sealed class PairlyServer
             return Results.Ok(sms.GetMessages(deviceId, threadId));
         });
 
+        // The synced snapshot holds only the most recent messages overall. Opening a conversation asks
+        // the phone for that conversation's own newest messages; they arrive as a normal message page.
+        app.MapPost("/v1/sms/{deviceId}/threads/{threadId}/load", async (
+            string deviceId,
+            string threadId,
+            WebSocketSessionHub sessions,
+            CancellationToken cancellationToken) =>
+        {
+            if (!sessions.HasSession(deviceId))
+            {
+                return Results.NotFound(new { message = "Target device is not connected." });
+            }
+
+            await sessions.SendAsync(
+                deviceId,
+                ProtocolEnvelope.Create(
+                    ProtocolMessageTypes.SmsThreadRequest,
+                    "pc-host",
+                    DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                    new SmsThreadRequestPayload(threadId)),
+                cancellationToken);
+            return Results.Accepted();
+        });
+
         app.MapPost("/v1/sms/{deviceId}/send", async (
             string deviceId,
             SmsSendPayload payload,
@@ -928,6 +953,60 @@ public sealed class PairlyServer
             return ToCommandResult(await waitForResponse);
         });
 
+        // A new folder in the phone's shared storage.
+        app.MapPost("/v1/devices/{deviceId}/storage/folder", async (
+            string deviceId,
+            StorageCreateFolderRequestPayload payload,
+            WebSocketSessionHub sessions,
+            CommandResultBroker commandResults,
+            CancellationToken cancellationToken) =>
+        {
+            if (!sessions.HasSession(deviceId))
+            {
+                return Results.NotFound(new { message = "Target device is not connected." });
+            }
+
+            var requestId = string.IsNullOrWhiteSpace(payload.RequestId)
+                ? Guid.NewGuid().ToString("N")
+                : payload.RequestId;
+            var commandPayload = payload with { RequestId = requestId };
+            var waitForResponse = commandResults.WaitForAsync(requestId, TimeSpan.FromSeconds(10), cancellationToken);
+            var envelope = ProtocolEnvelope.Create(
+                ProtocolMessageTypes.StorageCreateFolderRequest,
+                "pc-host",
+                DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                commandPayload);
+            await sessions.SendAsync(deviceId, envelope, cancellationToken);
+            return ToCommandResult(await waitForResponse);
+        });
+
+        // A new name for a file or folder, in the folder it is in.
+        app.MapPost("/v1/devices/{deviceId}/storage/rename", async (
+            string deviceId,
+            StorageRenameRequestPayload payload,
+            WebSocketSessionHub sessions,
+            CommandResultBroker commandResults,
+            CancellationToken cancellationToken) =>
+        {
+            if (!sessions.HasSession(deviceId))
+            {
+                return Results.NotFound(new { message = "Target device is not connected." });
+            }
+
+            var requestId = string.IsNullOrWhiteSpace(payload.RequestId)
+                ? Guid.NewGuid().ToString("N")
+                : payload.RequestId;
+            var commandPayload = payload with { RequestId = requestId };
+            var waitForResponse = commandResults.WaitForAsync(requestId, TimeSpan.FromSeconds(10), cancellationToken);
+            var envelope = ProtocolEnvelope.Create(
+                ProtocolMessageTypes.StorageRenameRequest,
+                "pc-host",
+                DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                commandPayload);
+            await sessions.SendAsync(deviceId, envelope, cancellationToken);
+            return ToCommandResult(await waitForResponse);
+        });
+
         app.MapGet("/v1/devices/{deviceId}/media-sessions", (string deviceId, MediaSessionStore mediaSessions) =>
             Results.Ok(mediaSessions.Get(deviceId)));
 
@@ -951,6 +1030,82 @@ public sealed class PairlyServer
                     payload),
                 cancellationToken);
             return sent ? Results.Accepted() : Results.NotFound(new { message = "Target device is not connected." });
+        });
+
+        app.MapGet("/v1/devices/{deviceId}/calls", async (
+            string deviceId,
+            WebSocketSessionHub sessions,
+            ResponseBroker<CallLogResponsePayload> callLog,
+            CancellationToken cancellationToken) =>
+        {
+            var requestId = Guid.NewGuid().ToString("N");
+            var waitForResponse = callLog.WaitForAsync(requestId, TimeSpan.FromSeconds(10), cancellationToken);
+            var sent = await sessions.SendAsync(
+                deviceId,
+                ProtocolEnvelope.Create(
+                    ProtocolMessageTypes.CallLogRequest,
+                    "pc-host",
+                    DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                    new CallLogRequestPayload(requestId)),
+                cancellationToken);
+            if (!sent)
+            {
+                return Results.NotFound(new { message = "Target device is not connected." });
+            }
+
+            var response = await waitForResponse;
+            return response is null
+                ? Results.Problem("The phone did not send its call history in time.", statusCode: StatusCodes.Status504GatewayTimeout)
+                : Results.Ok(response);
+        });
+
+        // The phone places the call itself; the PC only asks. The sound stays on the phone.
+        app.MapPost("/v1/devices/{deviceId}/calls/dial", async (
+            string deviceId,
+            CallDialPayload payload,
+            WebSocketSessionHub sessions,
+            CommandResultBroker commandResults,
+            CancellationToken cancellationToken) =>
+        {
+            if (!sessions.HasSession(deviceId))
+            {
+                return Results.NotFound(new { message = "Target device is not connected." });
+            }
+
+            var requestId = Guid.NewGuid().ToString("N");
+            var waitForResult = commandResults.WaitForAsync(requestId, TimeSpan.FromSeconds(8), cancellationToken);
+            await sessions.SendAsync(
+                deviceId,
+                ProtocolEnvelope.Create(
+                    ProtocolMessageTypes.CallDial,
+                    "pc-host",
+                    DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                    payload with { RequestId = requestId }),
+                cancellationToken);
+            return ToCommandResult(await waitForResult);
+        });
+
+        // Find my phone: the phone plays its alarm sound until stopped there, from here, or after a minute.
+        app.MapPost("/v1/devices/{deviceId}/ring", async (
+            string deviceId,
+            bool? stop,
+            WebSocketSessionHub sessions,
+            CancellationToken cancellationToken) =>
+        {
+            if (!sessions.HasSession(deviceId))
+            {
+                return Results.NotFound(new { message = "Target device is not connected." });
+            }
+
+            await sessions.SendAsync(
+                deviceId,
+                ProtocolEnvelope.Create(
+                    ProtocolMessageTypes.DeviceRing,
+                    "pc-host",
+                    DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                    new DeviceRingPayload(stop != true)),
+                cancellationToken);
+            return Results.Accepted();
         });
 
         app.MapPost("/v1/devices/{deviceId}/call/action", async (

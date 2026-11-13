@@ -45,6 +45,7 @@ public partial class MainWindow
         if (accepts && DevicesList.SelectedItem is DeviceViewModel target)
         {
             DropOverlayText.Text = L.F("drop_to_send", target.DisplayName);
+            DropOverlayDetail.Text = DropsIntoOpenFolder ? L.F("drop_into_folder_detail", _currentStoragePath) : L.T("drop_to_send_detail");
         }
         e.Handled = true;
     }
@@ -57,11 +58,12 @@ public partial class MainWindow
         if (e.Data.GetData(DataFormats.FileDrop) is string[] { Length: > 0 } files
             && DevicesList.SelectedItem is DeviceViewModel device)
         {
-            _ = SendFilesAsync(device.DeviceId, device.DisplayName, files);
+            _ = DropsIntoOpenFolder ? UploadToOpenFolderAsync(device.DeviceId, device.DisplayName, files) : SendFilesAsync(device.DeviceId, device.DisplayName, files);
         }
     }
 
-    private async Task SendFilesAsync(string deviceId, string deviceName, IReadOnlyList<string> paths)
+    /// <param name="targetPath">A folder in the phone's storage; null sends to its Downloads.</param>
+    private async Task SendFilesAsync(string deviceId, string deviceName, IReadOnlyList<string> paths, string? targetPath = null)
     {
         var push = _embeddedServer.FilePush;
         if (push is null)
@@ -107,7 +109,7 @@ public partial class MainWindow
                 });
 
                 StatusText.Text = L.F("sending_to_2", prefix, name, deviceName);
-                var outcome = await Task.Run(() => push.PushAsync(deviceId, files[index], progress));
+                var outcome = await Task.Run(() => push.PushAsync(deviceId, files[index], progress, targetPath: targetPath));
                 if (outcome.Succeeded)
                 {
                     sent++;
@@ -119,7 +121,8 @@ public partial class MainWindow
 
                 if (files.Length == 1)
                 {
-                    StatusText.Text = outcome.Succeeded ? L.F("file_sent_to_downloads", name, deviceName) : outcome.Message;
+                    StatusText.Text = !outcome.Succeeded ? outcome.Message
+                        : targetPath is null ? L.F("file_sent_to_downloads", name, deviceName) : L.F("file_uploaded_to", name, targetPath);
                 }
             }
         }
@@ -131,7 +134,7 @@ public partial class MainWindow
         if (files.Length > 1)
         {
             StatusText.Text = failures.Count == 0
-                ? L.F("sent_files_to_s_downloads_folder", sent, deviceName)
+                ? (targetPath is null ? L.F("sent_files_to_s_downloads_folder", sent, deviceName) : L.F("files_uploaded_to", sent, targetPath))
                 : L.F("sent_of_files", sent, files.Length, failures[0]);
         }
 

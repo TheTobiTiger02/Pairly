@@ -247,6 +247,7 @@ class PairlyConnectionService : Service() {
 
         when (intent?.action) {
             ACTION_DISCONNECT -> disconnect()
+            ACTION_STOP_RING -> dev.pairly.android.features.find.PhoneRinger.stop(this)
             ACTION_FORGET -> forgetTrustedHost()
             ACTION_PAIR -> {
                 pendingPairingCode = intent.getStringExtra(EXTRA_PAIRING_CODE).orEmpty()
@@ -649,6 +650,38 @@ class PairlyConnectionService : Service() {
                     "Processed remote control input."
                 }
                 "call.action" -> handleCallAction(envelope)
+                "call.log.request" -> {
+                    val requestId = envelope.optJSONObject("payload")?.optString("requestId").orEmpty()
+                    serviceScope.launch(Dispatchers.IO) {
+                        val log = dev.pairly.android.features.calls.CallLogReader.response(this@PairlyConnectionService, requestId)
+                        PairlyConnection.send(ProtocolJson.envelope("call.log.response", settings.deviceId, log))
+                    }
+                    "Reading the call history."
+                }
+                "call.dial" -> {
+                    val payload = envelope.optJSONObject("payload")
+                    val problem = dev.pairly.android.features.calls.CallLogReader.dial(this, payload?.optString("number").orEmpty())
+                    sendCommandResult(
+                        payload?.optString("requestId").orEmpty(), "calls", problem == null,
+                        when (problem) {
+                            null -> "Calling."
+                            "permission" -> "Pairly may not place calls on this phone. Turn on Calls in the Pairly app."
+                            else -> problem
+                        }
+                    )
+                    if (problem == null) "Placed a call for the PC." else "Call not placed: $problem"
+                }
+                "sms.thread.request" -> {
+                    val threadId = envelope.optJSONObject("payload")?.optString("threadId").orEmpty()
+                    if (threadId.isNotBlank()) FeatureSyncController.sendSmsThread(this, threadId)
+                    "Sent the conversation."
+                }
+                "device.ring" -> {
+                    val ring = envelope.optJSONObject("payload")?.optBoolean("ring", true) ?: true
+                    if (ring) dev.pairly.android.features.find.PhoneRinger.start(this)
+                    else dev.pairly.android.features.find.PhoneRinger.stop(this)
+                    if (ring) "Ringing so the phone can be found." else "Stopped ringing."
+                }
                 "storage.list.request" -> {
                     handleStorageList(envelope)
                     "Processed storage list request."
@@ -660,6 +693,38 @@ class PairlyConnectionService : Service() {
                 "storage.delete.request" -> {
                     handleStorageDelete(envelope)
                     "Processed storage delete request."
+                }
+                "storage.mkdir.request" -> {
+                    handleStorageChange(envelope, "storage.mkdir") { payload ->
+                        val parent = resolveFile(payload.optString("path"))
+                        val name = payload.optString("name").trim()
+                        when {
+                            parent == null || !parent.isDirectory -> "The folder no longer exists."
+                            !validFileName(name) -> "That name cannot be used."
+                            java.io.File(parent, name).exists() -> "Something with this name already exists here."
+                            java.io.File(parent, name).mkdir() -> null
+                            else -> "The folder could not be created."
+                        }
+                    }
+                    "Processed new folder request."
+                }
+                "storage.rename.request" -> {
+                    handleStorageChange(envelope, "storage.rename") { payload ->
+                        val file = resolveFile(payload.optString("filePath"))
+                        val name = payload.optString("newName").trim()
+                        val target = file?.parentFile?.let { java.io.File(it, name) }
+                        when {
+                            file == null || !file.exists() || target == null -> "The file no longer exists."
+                            !validFileName(name) -> "That name cannot be used."
+                            target.exists() -> "Something with this name already exists here."
+                            file.renameTo(target) -> {
+                                android.media.MediaScannerConnection.scanFile(this, arrayOf(file.path, target.path), null, null)
+                                null
+                            }
+                            else -> "The name could not be changed."
+                        }
+                    }
+                    "Processed rename request."
                 }
                 "error" -> {
                     val payload = envelope.optJSONObject("payload")
@@ -2313,6 +2378,32 @@ class PairlyConnectionService : Service() {
         PairlyConnection.send(ProtocolJson.envelope("storage.file.response", settings.deviceId, payload))
     }
 
+    /** A single name inside a folder: nothing that could point somewhere else. */
+    private fun validFileName(name: String): Boolean =
+        name.isNotBlank() && name != "." && name != ".." && name.none { it == '/' || it == '\\' || it.code < 32 } && name.length <= 200
+
+    /**
+     * Runs a change to shared storage off the message thread and answers with a command result.
+     * [change] returns null when it worked, otherwise what to tell the user.
+     */
+    private fun handleStorageChange(envelope: JSONObject, feature: String, change: (JSONObject) -> String?) {
+        val payload = envelope.optJSONObject("payload") ?: return
+        val requestId = payload.optString("requestId")
+        if (!hasAllFilesAccess()) {
+            PairlyConnection.send(ProtocolJson.commandResult(settings.deviceId, requestId, feature, false, "Storage access has not been granted."))
+            return
+        }
+
+        serviceScope.launch(Dispatchers.IO) {
+            val problem = try {
+                change(payload)
+            } catch (e: Exception) {
+                e.message ?: "The change could not be made."
+            }
+            PairlyConnection.send(ProtocolJson.commandResult(settings.deviceId, requestId, feature, problem == null, problem ?: "Done."))
+        }
+    }
+
     private fun handleStorageDelete(envelope: JSONObject) {
         val payload = envelope.optJSONObject("payload") ?: return
         val requestId = payload.optString("requestId")
@@ -2429,6 +2520,7 @@ class PairlyConnectionService : Service() {
         private const val EXTRA_USER_RETRY = "dev.pairly.android.extra.USER_RETRY"
         const val ACTION_DISCONNECT = "dev.pairly.android.DISCONNECT"
         const val ACTION_FORGET = "dev.pairly.android.FORGET"
+        const val ACTION_STOP_RING = "dev.pairly.android.STOP_RING"
         const val ACTION_PAIR = "dev.pairly.android.PAIR"
         const val ACTION_SEND_CLIPBOARD = "dev.pairly.android.SEND_CLIPBOARD"
         const val ACTION_SEND_CLIPBOARD_IMAGE = "dev.pairly.android.SEND_CLIPBOARD_IMAGE"
