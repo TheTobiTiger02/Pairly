@@ -501,6 +501,7 @@ public partial class MainWindow : Window
         }
 
         ShowUpdateStatus(() => L.T("pairly_checks_github_for_updates_and_install"));
+        CheckForUpdatesButton.Visibility = Visibility.Visible;
         _updateTimer = new DispatcherTimer { Interval = TimeSpan.FromHours(6) };
         _updateTimer.Tick += async (_, _) => await CheckForDesktopUpdateAsync();
         _updateTimer.Start();
@@ -512,19 +513,60 @@ public partial class MainWindow : Window
         });
     }
 
-    private async Task CheckForDesktopUpdateAsync()
+    private bool _updateCheckRunning;
+    private string? _announcedUpdate;
+
+    /// <summary>Looks for a newer release and downloads it. Returns false when the check itself failed.</summary>
+    private async Task<bool> CheckForDesktopUpdateAsync()
     {
+        if (_updateCheckRunning)
+        {
+            return true;
+        }
+
+        _updateCheckRunning = true;
+        CheckForUpdatesButton.IsEnabled = false;
         try
         {
+            if (_updater.PendingVersion is null)
+            {
+                ShowUpdateStatus(() => L.T("checking_for_updates"));
+            }
+
             var ready = await _updater.CheckAndDownloadAsync();
             ShowUpdateStatus(() => ready
                 ? L.F("version_is_ready_it_installs_the_next_time_p", _updater.PendingVersion)
                 : L.T("pairly_is_up_to_date"));
             RestartToUpdateButton.Visibility = ready ? Visibility.Visible : Visibility.Collapsed;
+            CheckForUpdatesButton.Visibility = ready ? Visibility.Collapsed : Visibility.Visible;
+            if (ready && _announcedUpdate != _updater.PendingVersion)
+            {
+                // Pairly lives in the notification area and rarely restarts, so say it once.
+                _announcedUpdate = _updater.PendingVersion;
+                ShowPcNotification(
+                    L.F("update_ready_title", _updater.PendingVersion), L.T("update_ready_detail"),
+                    ["dashboard"], L.T("restart_to_update"), ["update"]);
+            }
+
+            return true;
         }
         catch (Exception ex)
         {
             ShowUpdateStatus(() => UserFacingError(L.T("could_not_check_for_updates_pairly_tries_aga"), ex));
+            return false;
+        }
+        finally
+        {
+            _updateCheckRunning = false;
+            CheckForUpdatesButton.IsEnabled = true;
+        }
+    }
+
+    private async void CheckForUpdates_Click(object sender, RoutedEventArgs e)
+    {
+        if (await CheckForDesktopUpdateAsync() && _updater.PendingVersion is null)
+        {
+            ShowToast(L.T("pairly_is_up_to_date"));
         }
     }
 
@@ -725,6 +767,9 @@ public partial class MainWindow : Window
                 break;
             case ["dashboard", ..]:
                 ShowDashboard();
+                break;
+            case ["update"]:
+                RestartToUpdate_Click(this, new RoutedEventArgs());
                 break;
         }
     });

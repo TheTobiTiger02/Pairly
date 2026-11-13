@@ -1128,6 +1128,9 @@
                                                 <Button x:Name="RestartToUpdateButton" Content="{l:Loc restart_to_update}" Style="{StaticResource AccentButton}"
                                                         DockPanel.Dock="Right" VerticalAlignment="Center" Margin="16,0,0,0"
                                                         Visibility="Collapsed" Click="RestartToUpdate_Click" />
+                                                <Button x:Name="CheckForUpdatesButton" Content="{l:Loc check_for_updates}" Style="{StaticResource SecondaryButton}"
+                                                        DockPanel.Dock="Right" VerticalAlignment="Center" Margin="16,0,0,0"
+                                                        Visibility="Collapsed" Click="CheckForUpdates_Click" />
                                                 <StackPanel VerticalAlignment="Center">
                                                     <TextBlock x:Name="AppVersionText" Text="Pairly" Style="{StaticResource SettingsCardTitle}" />
                                                     <TextBlock x:Name="UpdateStatusText" Text="{l:Loc updates_are_installed_by_the_microsoft_store}"

@@ -101,6 +101,10 @@
   <data name="files_uploaded_to" xml:space="preserve"><value>{0} Dateien nach {1} hochgeladen.</value></data>
   <data name="reply_not_sent" xml:space="preserve"><value>Antwort nicht gesendet</value></data>
   <data name="reply_not_sent_detail" xml:space="preserve"><value>Das Handy hat die Antwort nicht angenommen. Öffne Pairly, um es noch einmal zu versuchen.</value></data>
+  <data name="check_for_updates" xml:space="preserve"><value>Nach Updates suchen</value></data>
+  <data name="checking_for_updates" xml:space="preserve"><value>Suche nach Updates …</value></data>
+  <data name="update_ready_title" xml:space="preserve"><value>Pairly {0} ist bereit</value></data>
+  <data name="update_ready_detail" xml:space="preserve"><value>Starte Pairly neu, um das Update zu installieren. Das dauert ein paar Sekunden.</value></data>
   <data name="clear_all" xml:space="preserve"><value>Alle löschen</value></data>
   <data name="clear_failed" xml:space="preserve"><value>Löschen fehlgeschlagen: {0}.</value></data>
   <data name="clear_notifications_from_this_pc" xml:space="preserve"><value>Benachrichtigungen von diesem PC löschen</value></data>
