@@ -107,6 +107,9 @@ class PairlyConnectionService : Service() {
     private lateinit var settings: ConnectionSettings
     private lateinit var endpointStore: EndpointStore
     private lateinit var fileReceiver: FileReceiver
+    private val fileSender = dev.pairly.android.features.files.FileSender { result ->
+        PairlyConnection.send(ProtocolJson.envelope("file.pull.result", settings.deviceId, result))
+    }
     private lateinit var appCatalog: AppCatalog
     @Volatile private var ringerMutedForCall = false
     private lateinit var clipboard: ClipboardRelay
@@ -622,6 +625,13 @@ class PairlyConnectionService : Service() {
                     settings.host,
                     settings.certificateFingerprint
                 )
+                "file.pull.start" -> {
+                    val payload = envelope.optJSONObject("payload") ?: JSONObject()
+                    fileSender.send(
+                        payload, resolveFile(payload.optString("filePath")), hasAllFilesAccess(),
+                        settings.host, settings.certificateFingerprint
+                    )
+                }
                 "media.session.command" -> MediaSessionRelay.handleCommand(
                     envelope.optJSONObject("payload") ?: JSONObject()
                 )
@@ -650,6 +660,14 @@ class PairlyConnectionService : Service() {
                     "Processed remote control input."
                 }
                 "call.action" -> handleCallAction(envelope)
+                "contacts.request" -> {
+                    val requestId = envelope.optJSONObject("payload")?.optString("requestId").orEmpty()
+                    serviceScope.launch(Dispatchers.IO) {
+                        val contacts = dev.pairly.android.features.sms.ContactsReader.response(this@PairlyConnectionService, requestId)
+                        PairlyConnection.send(ProtocolJson.envelope("contacts.response", settings.deviceId, contacts))
+                    }
+                    "Reading the contacts."
+                }
                 "call.log.request" -> {
                     val requestId = envelope.optJSONObject("payload")?.optString("requestId").orEmpty()
                     serviceScope.launch(Dispatchers.IO) {

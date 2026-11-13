@@ -44,6 +44,8 @@
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                 <ToggleButton x:Name="InfoToggle" Style="{StaticResource BarToggle}" Content="&#xE946;"
                               ToolTip="{l:Loc stream_details}" AutomationProperties.Name="{l:Loc stream_details}" />
+                <ToggleButton x:Name="NavToggle" Style="{StaticResource BarToggle}" Content="&#xE8A0;"
+                              ToolTip="{l:Loc mirror_hide_buttons}" AutomationProperties.Name="{l:Loc mirror_hide_buttons}" />
                 <ToggleButton x:Name="PinToggle" Style="{StaticResource BarToggle}" Content="&#xE718;"
                               ToolTip="{l:Loc keep_on_top}" AutomationProperties.Name="{l:Loc keep_on_top}" />
                 <Button x:Name="FitButton" Style="{StaticResource BarButton}" Content="&#xE9A6;"

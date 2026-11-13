@@ -35,6 +35,7 @@ public sealed class HostWebSocketHandler(
     ResponseBroker<AppsListResponsePayload> appsList,
     ResponseBroker<AppsLaunchResultPayload> appsLaunch,
     ResponseBroker<CallLogResponsePayload> callLog,
+    ResponseBroker<ContactsResponsePayload> contacts,
     ILogger<HostWebSocketHandler> logger)
 {
     private static readonly TimeSpan ChallengeLifetime = TimeSpan.FromMinutes(2);
@@ -304,6 +305,14 @@ public sealed class HostWebSocketHandler(
                     }
 
                     break;
+                case ProtocolMessageTypes.ContactsResponse:
+                    {
+                        var payload = envelope.ReadPayload<ContactsResponsePayload>()
+                            ?? throw new InvalidOperationException("Missing contacts payload.");
+                        contacts.Complete(payload.RequestId, payload);
+                    }
+
+                    break;
                 case ProtocolMessageTypes.AppsListResponse:
                     {
                         var payload = envelope.ReadPayload<AppsListResponsePayload>()
@@ -327,6 +336,16 @@ public sealed class HostWebSocketHandler(
                             envelope.DeviceId,
                             envelope.ReadPayload<FilePushResultPayload>()
                                 ?? throw new InvalidOperationException("Missing file push result payload."));
+                    }
+
+                    break;
+                case ProtocolMessageTypes.FilePullResult:
+                    if (connection.IsPhysicalDevice)
+                    {
+                        filePush.CompletePull(
+                            envelope.DeviceId,
+                            envelope.ReadPayload<FilePullResultPayload>()
+                                ?? throw new InvalidOperationException("Missing file pull result payload."));
                     }
 
                     break;

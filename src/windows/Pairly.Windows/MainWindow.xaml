@@ -687,10 +687,29 @@
                                        TextWrapping="Wrap" TextAlignment="Center" Margin="0,4,0,0" />
                         </StackPanel>
                         <ListView x:Name="PhotosList" Grid.Row="2" Margin="-3,0,-12,0" SelectionMode="Extended"
-                                  MouseDoubleClick="PhotosList_MouseDoubleClick" SelectionChanged="PhotosList_SelectionChanged"
-                                  KeyDown="PhotosList_KeyDown"
+                                  SelectionChanged="PhotosList_SelectionChanged" KeyDown="PhotosList_KeyDown"
+                                  PreviewMouseLeftButtonDown="PhotosList_PreviewMouseLeftButtonDown"
+                                  PreviewMouseLeftButtonUp="PhotosList_PreviewMouseLeftButtonUp"
+                                  PreviewMouseMove="PhotosList_PreviewMouseMove"
                                   VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Standard"
                                   ScrollViewer.CanContentScroll="True" AutomationProperties.Name="{l:Loc photos}">
+                            <ListView.Resources>
+                                <!-- One menu for every tile: a menu per tile made each new row of tiles slower to build. -->
+                                    <ContextMenu x:Key="PhotoTileMenu">
+                                        <MenuItem Header="{l:Loc open}" Click="OpenPhotoInline_Click">
+                                            <MenuItem.Icon><TextBlock Text="&#xE8A7;" /></MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Header="{l:Loc open_in_default_app}" Click="OpenPhotoExternallyInline_Click">
+                                            <MenuItem.Icon><TextBlock Text="&#xE8AD;" /></MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Header="{l:Loc copy}" InputGestureText="Ctrl+C" Click="CopyPhotoInline_Click">
+                                            <MenuItem.Icon><TextBlock Text="&#xE8C8;" /></MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Header="{l:Loc save_to_pc}" Click="SavePhotoInline_Click">
+                                            <MenuItem.Icon><TextBlock Text="&#xE74E;" /></MenuItem.Icon>
+                                        </MenuItem>
+                                    </ContextMenu>
+                            </ListView.Resources>
                             <ListView.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <controls:VirtualizingWrapPanel ItemSize="176" Loaded="PhotoGridPanel_Loaded" Margin="0,0,12,0" />
@@ -714,23 +733,7 @@
                                         <TextBlock x:Name="Heading" Text="{Binding FileName}" FontSize="15" FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Bottom" Margin="4,0,0,6"
                                                    Visibility="Collapsed" />
-                                        <Grid x:Name="Tile" ToolTip="{Binding FileName}">
-                                            <Grid.ContextMenu>
-                                                <ContextMenu>
-                                                    <MenuItem Header="{l:Loc open}" Click="OpenPhotoInline_Click">
-                                                        <MenuItem.Icon><TextBlock Text="&#xE8A7;" /></MenuItem.Icon>
-                                                    </MenuItem>
-                                                    <MenuItem Header="{l:Loc open_in_default_app}" Click="OpenPhotoExternallyInline_Click">
-                                                        <MenuItem.Icon><TextBlock Text="&#xE8AD;" /></MenuItem.Icon>
-                                                    </MenuItem>
-                                                    <MenuItem Header="{l:Loc copy}" InputGestureText="Ctrl+C" Click="CopyPhotoInline_Click">
-                                                        <MenuItem.Icon><TextBlock Text="&#xE8C8;" /></MenuItem.Icon>
-                                                    </MenuItem>
-                                                    <MenuItem Header="{l:Loc save_to_pc}" Click="SavePhotoInline_Click">
-                                                        <MenuItem.Icon><TextBlock Text="&#xE74E;" /></MenuItem.Icon>
-                                                    </MenuItem>
-                                                </ContextMenu>
-                                            </Grid.ContextMenu>
+                                        <Grid x:Name="Tile" ToolTip="{Binding FileName}" ContextMenu="{StaticResource PhotoTileMenu}">
                                             <!-- Shown while the thumbnail loads; pulses so it reads as loading, not as empty. -->
                                             <Border x:Name="Placeholder" CornerRadius="6" Background="{DynamicResource ControlFillBrush}" Margin="2">
                                                 <TextBlock x:Name="PlaceholderGlyph" Text="&#xEB9F;" Style="{StaticResource IconGlyph}" FontSize="22"
@@ -884,6 +887,7 @@
                                    VerticalAlignment="Center" Panel.ZIndex="1" IsHitTestVisible="False" Visibility="Collapsed" />
                         <Border Grid.Row="3" Style="{StaticResource PageCard}" Padding="4">
                             <ListBox x:Name="StorageItemsList" MouseDoubleClick="StorageItemsList_MouseDoubleClick" SelectionChanged="StorageItemsList_SelectionChanged"
+                                     PreviewMouseLeftButtonDown="StorageItemsList_PreviewMouseLeftButtonDown" PreviewMouseMove="StorageItemsList_PreviewMouseMove"
                                      KeyDown="StorageItemsList_KeyDown" AutomationProperties.Name="{l:Loc files}">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
@@ -1152,11 +1156,11 @@
                                         <Border Style="{StaticResource SettingsCard}">
                                             <DockPanel>
                                                 <TextBlock Text="&#xE7ED;" Style="{StaticResource SettingsCardGlyph}" />
-                                                <Button Content="{l:Loc restore}" Style="{StaticResource SecondaryButton}" DockPanel.Dock="Right"
-                                                        VerticalAlignment="Center" Margin="16,0,0,0" MinWidth="96" Click="ClearMutedNotificationApps_Click" />
+                                                <Button Content="{l:Loc choose_apps}" Style="{StaticResource SecondaryButton}" DockPanel.Dock="Right"
+                                                        VerticalAlignment="Center" Margin="16,0,0,0" MinWidth="96" Click="ChooseNotificationApps_Click" />
                                                 <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="{l:Loc muted_notification_apps}" Style="{StaticResource SettingsCardTitle}" />
-                                                    <TextBlock Text="{l:Loc show_notifications_again_from_every_app_you}" Style="{StaticResource SettingsCardDescription}" />
+                                                    <TextBlock Text="{l:Loc notification_apps_title}" Style="{StaticResource SettingsCardTitle}" />
+                                                    <TextBlock x:Name="NotificationAppsCardText" Text="{l:Loc notification_apps_all_on}" Style="{StaticResource SettingsCardDescription}" />
                                                 </StackPanel>
                                             </DockPanel>
                                         </Border>
@@ -2496,6 +2500,47 @@
             </Border>
         </Grid>
 
+        <!-- Which phone apps may show notifications on this PC. -->
+        <Grid x:Name="NotificationAppsOverlay" Grid.RowSpan="2" Grid.ColumnSpan="3" Panel.ZIndex="35" Background="{DynamicResource SmokeBrush}"
+              Visibility="Collapsed" MouseDown="NotificationAppsOverlay_MouseDown">
+            <Border Width="460" MaxHeight="620" Margin="0,40" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="20"
+                    Background="{DynamicResource SurfaceElevatedBrush}" BorderBrush="{DynamicResource CardStrokeBrush}" BorderThickness="1"
+                    CornerRadius="{DynamicResource OverlayRadius}" Effect="{StaticResource DialogShadow}" AutomationProperties.Name="{l:Loc notification_apps_title}">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="{l:Loc notification_apps_title}" Style="{StaticResource PageTitle}" />
+                    <TextBlock DockPanel.Dock="Top" Text="{l:Loc notification_apps_detail}" Style="{StaticResource CaptionText}" TextWrapping="Wrap" Margin="0,4,0,12" />
+                    <TextBox x:Name="NotificationAppsSearch" DockPanel.Dock="Top" controls:Fluent.Placeholder="{l:Loc search_apps}" controls:Fluent.Icon="&#xE721;"
+                             AutomationProperties.Name="{l:Loc search_apps}" TextChanged="NotificationAppsSearch_TextChanged" />
+                    <DockPanel DockPanel.Dock="Bottom" Margin="0,14,0,0">
+                        <Button DockPanel.Dock="Right" Content="{l:Loc done}" Style="{StaticResource MainActionButton}" MinWidth="88" Margin="8,0,0,0" Click="NotificationAppsDone_Click" />
+                        <Button x:Name="NotificationAppsAllOn" DockPanel.Dock="Right" Content="{l:Loc notification_apps_turn_all_on}" Style="{StaticResource SecondaryButton}"
+                                Click="NotificationAppsAllOn_Click" />
+                        <TextBlock x:Name="NotificationAppsSummary" Style="{StaticResource CaptionText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                    </DockPanel>
+                    <ListBox x:Name="NotificationAppsList" Margin="-4,10,-4,0" ItemContainerStyle="{StaticResource PlainListItem}"
+                             VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="{l:Loc notification_apps_title}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel Margin="8,5">
+                                    <CheckBox DockPanel.Dock="Right" Style="{StaticResource ToggleSwitch}" IsChecked="{Binding Allowed, Mode=TwoWay}"
+                                              VerticalAlignment="Center" Margin="12,0,0,0" AutomationProperties.Name="{Binding Label}" />
+                                    <Grid DockPanel.Dock="Left" Width="28" Height="28" Margin="0,0,12,0">
+                                        <Border CornerRadius="7" Background="{DynamicResource ControlFillBrush}">
+                                            <TextBlock Text="{Binding Initial}" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        </Border>
+                                        <Image Source="{Binding Icon}" RenderOptions.BitmapScalingMode="HighQuality" />
+                                    </Grid>
+                                    <TextBlock Text="{Binding Label}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                </DockPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </Border>
+        </Grid>
+
         <!-- A text message to a number that has no conversation yet. -->
         <Grid x:Name="NewSmsOverlay" Grid.RowSpan="2" Grid.ColumnSpan="3" Panel.ZIndex="35" Background="{DynamicResource SmokeBrush}"
               Visibility="Collapsed" MouseDown="NewSmsOverlay_MouseDown">
@@ -2505,7 +2550,24 @@
                 <StackPanel>
                     <TextBlock Text="{l:Loc new_message}" Style="{StaticResource PageTitle}" />
                     <TextBlock x:Name="NewSmsFromText" Style="{StaticResource CaptionText}" Margin="0,4,0,14" />
-                    <TextBox x:Name="NewSmsNumber" controls:Fluent.Placeholder="{l:Loc phone_number}" AutomationProperties.Name="{l:Loc phone_number}" />
+                    <TextBox x:Name="NewSmsNumber" controls:Fluent.Placeholder="{l:Loc name_or_number}" AutomationProperties.Name="{l:Loc name_or_number}"
+                             TextChanged="NewSmsNumber_TextChanged" PreviewKeyDown="NewSmsNumber_PreviewKeyDown" />
+                    <!-- Contacts from the phone that match what is typed. -->
+                    <ListBox x:Name="NewSmsContacts" MaxHeight="196" Margin="0,4,0,0" Visibility="Collapsed" ItemContainerStyle="{StaticResource PlainListItem}"
+                             AutomationProperties.Name="{l:Loc contacts}" PreviewMouseLeftButtonUp="NewSmsContacts_PreviewMouseLeftButtonUp">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel Margin="8,6">
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Label}" Style="{StaticResource CaptionText}" VerticalAlignment="Center" Margin="12,0,0,0" />
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding Number}" Style="{StaticResource CaptionText}" />
+                                    </StackPanel>
+                                </DockPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <TextBlock x:Name="NewSmsContactsNote" Style="{StaticResource CaptionText}" TextWrapping="Wrap" Margin="2,6,0,0" Visibility="Collapsed" />
                     <TextBox x:Name="NewSmsText" Margin="0,8,0,0" MinHeight="84" MaxHeight="180" TextWrapping="Wrap" AcceptsReturn="True"
                              VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto"
                              controls:Fluent.Placeholder="{l:Loc enter_a_message}" AutomationProperties.Name="{l:Loc message_text}" />

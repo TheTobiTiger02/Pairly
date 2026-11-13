@@ -365,6 +365,17 @@ public sealed record CallLogResponsePayload(
 /// <summary>PC to phone: place this call on the phone. Answered with a command result.</summary>
 public sealed record CallDialPayload(string Number, string? RequestId = null);
 
+public sealed record ContactsRequestPayload(string RequestId);
+
+/// <summary>One phone number of a contact. Label is "Mobile", "Work" and so on, as the phone names it.</summary>
+public sealed record ContactPayload(string Name, string Number, string? Label = null);
+
+/// <summary>The phone's contacts that have a number. Error is "permission" when Pairly may not read them.</summary>
+public sealed record ContactsResponsePayload(
+    string RequestId,
+    IReadOnlyList<ContactPayload> Contacts,
+    string? Error = null);
+
 /// <summary>PC to phone: start (or stop) ringing so the phone can be found.</summary>
 public sealed record DeviceRingPayload(bool Ring);
 
@@ -476,6 +487,26 @@ public sealed record FilePushResultPayload(
     string TransferId,
     string Status,
     string? SavedName = null,
+    string? Error = null);
+
+/// <summary>
+/// PC to phone: send the file at FilePath (in shared storage) over the stream port. The phone dials
+/// with the ticket, writes the length as 8 bytes (big-endian) and then the file, and keeps the
+/// connection open until the PC answers with one byte (1) that it has everything. Any size.
+/// </summary>
+public sealed record FilePullStartPayload(
+    string TransferId,
+    ulong StreamId,
+    string FilePath,
+    string Host,
+    int Port,
+    string Ticket,
+    bool UseTls);
+
+/// <summary>Phone to PC: Status is "sent", or "failed" with Error when the file could not be read or sent.</summary>
+public sealed record FilePullResultPayload(
+    string TransferId,
+    string Status,
     string? Error = null);
 
 public sealed record AppsListRequestPayload(string RequestId);

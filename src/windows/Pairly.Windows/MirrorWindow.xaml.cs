@@ -125,6 +125,11 @@ public partial class MirrorWindow : Window
         _topBar.MinimizeButton.Click += (_, _) => WindowState = WindowState.Minimized;
         _topBar.CloseButton.Click += (_, _) => Close();
         _topBar.PinToggle.Click += (_, _) => SetTopmost(_topBar.PinToggle.IsChecked == true);
+        _topBar.NavToggle.Click += (_, _) =>
+        {
+            HideNavigationButtons = _topBar.NavToggle.IsChecked == true;
+            HideNavigationButtonsChanged?.Invoke(HideNavigationButtons);
+        };
         _topBar.BarBorder.MouseLeftButtonDown += TopBar_MouseLeftButtonDown;
         _topBar.SizeChanged += (_, _) => PositionControls();
 
@@ -515,6 +520,34 @@ public partial class MirrorWindow : Window
 
     // ---- Controls: show on movement, hide when still -------------------------------------------
 
+    private bool _hideNavigationButtons;
+
+    /// <summary>The user changed the choice with the button in the top bar.</summary>
+    public event Action<bool>? HideNavigationButtonsChanged;
+
+    /// <summary>
+    /// Keeps the Back, Home and Recents bar off the picture, for phones that show their own
+    /// navigation or for a clean view. The bar still appears on the status cards, which need Stop.
+    /// </summary>
+    public bool HideNavigationButtons
+    {
+        get => _hideNavigationButtons;
+        set
+        {
+            _hideNavigationButtons = value;
+            _topBar.NavToggle.IsChecked = value;
+            _topBar.NavToggle.ToolTip = L.T(value ? "mirror_show_buttons" : "mirror_hide_buttons");
+            if (value && _isPlaying)
+            {
+                _controlBar.FadeTo(false);
+            }
+            else if (_topBar.IsVisible && _topBar.Opacity > 0)
+            {
+                _controlBar.FadeTo(true);
+            }
+        }
+    }
+
     private void ShowControls()
     {
         if (!IsLoaded || WindowState == WindowState.Minimized)
@@ -523,7 +556,7 @@ public partial class MirrorWindow : Window
         }
 
         _topBar.FadeTo(true);
-        _controlBar.FadeTo(true);
+        _controlBar.FadeTo(!_hideNavigationButtons || !_isPlaying);
         RestartIdleTimer();
     }
 
@@ -617,6 +650,11 @@ public partial class MirrorWindow : Window
     private void ShowPlaying()
     {
         _isPlaying = true;
+        if (_hideNavigationButtons)
+        {
+            _controlBar.FadeTo(false);
+        }
+
         ((Storyboard)Resources["SpinnerSpin"]).Stop(this);
         StatusOverlay.Visibility = Visibility.Collapsed;
         Surface.Visibility = Visibility.Visible;
