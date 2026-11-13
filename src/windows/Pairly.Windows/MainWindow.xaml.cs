@@ -1238,10 +1238,7 @@ public partial class MainWindow : Window
     private Task<bool> PublishClipboardTextAsync(string text) => App.ClipboardSync.PublishTextAsync(text);
 
 
-    private void SmsSearchBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        FilterSmsThreads();
-    }
+    private void SmsSearchBox_TextChanged(object sender, TextChangedEventArgs e) => FilterSoon("sms", FilterSmsThreads);
 
     private void FilterSmsThreads()
     {
@@ -1896,7 +1893,7 @@ public partial class MainWindow : Window
     }
 
     private void NotificationSearchBox_TextChanged(object sender, TextChangedEventArgs e) =>
-        ApplyNotificationFilters(updateAppFilter: false);
+        FilterSoon("notifications", () => ApplyNotificationFilters(updateAppFilter: false));
 
     private void NotificationAppFilter_SelectionChanged(object sender, SelectionChangedEventArgs e) =>
         ApplyNotificationFilters(updateAppFilter: false);
@@ -1999,9 +1996,13 @@ public partial class MainWindow : Window
 
             if (selectedDevice is not null)
             {
-                if (await FetchPhotosAsync(selectedDevice.DeviceId) is { } photos)
+                // The library is read again only when the phone sent something new for it. Reading it
+                // on every refresh meant every photo on every notification.
+                var libraryVersion = (selectedDevice.DeviceId, await FetchPhotoVersionAsync(selectedDevice.DeviceId));
+                if (libraryVersion != _shownLibraryVersion && await FetchPhotosAsync(selectedDevice.DeviceId) is { } photos)
                 {
                     ReconcilePhotos(photos);
+                    _shownLibraryVersion = libraryVersion;
                 }
 
                 MirrorStatusText.Text = selectedDevice.Connected
@@ -2021,6 +2022,7 @@ public partial class MainWindow : Window
             else
             {
                 ReconcilePhotos(Array.Empty<MediaItemViewModel>());
+                _shownLibraryVersion = default;
                 MirrorStatusText.Text = L.T("no_active_mirror_session");
             }
 
@@ -2345,10 +2347,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void StorageSearchBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        FilterStorageItems();
-    }
+    private void StorageSearchBox_TextChanged(object sender, TextChangedEventArgs e) => FilterSoon("files", FilterStorageItems);
 
     private void FilterStorageItems()
     {

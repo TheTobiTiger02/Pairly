@@ -155,10 +155,19 @@ class PairlyConnectionService : Service() {
     }
 
     private val batteryReceiver = object : android.content.BroadcastReceiver() {
+        // Android repeats this broadcast for temperature and voltage too. The PC shows the
+        // percentage and whether the phone charges, so only a change in those is worth sending.
+        private var lastSent: Pair<Int, Int>? = null
+
         override fun onReceive(context: Context, intent: Intent) {
-            if (intent.action == Intent.ACTION_BATTERY_CHANGED && PairlyConnection.isConnected) {
-                FeatureSyncController.sendDeviceState(this@PairlyConnectionService)
-            }
+            if (intent.action != Intent.ACTION_BATTERY_CHANGED || !PairlyConnection.isConnected) return
+            val level = intent.getIntExtra(android.os.BatteryManager.EXTRA_LEVEL, -1)
+            val scale = intent.getIntExtra(android.os.BatteryManager.EXTRA_SCALE, -1)
+            val percent = if (level >= 0 && scale > 0) level * 100 / scale else -1
+            val shown = percent to intent.getIntExtra(android.os.BatteryManager.EXTRA_STATUS, -1)
+            if (shown == lastSent) return
+            lastSent = shown
+            FeatureSyncController.sendDeviceState(this@PairlyConnectionService)
         }
     }
 

@@ -36,6 +36,14 @@ public partial class MainWindow
 
     private bool PhotoSortIsByDate => _photoSort is "newest" or "oldest";
 
+    /// <summary>The phone and library version the photo grid shows; see MediaCatalog.GetVersion.</summary>
+    private (string DeviceId, long Version) _shownLibraryVersion;
+
+    private sealed record LibraryVersion(long Version);
+
+    private async Task<long> FetchPhotoVersionAsync(string deviceId) =>
+        (await _host.GetFromJsonAsync<LibraryVersion>($"v1/media/{Uri.EscapeDataString(deviceId)}/version", JsonOptions))?.Version ?? 0;
+
     /// <summary>Every photo the PC knows about for this phone, read page by page from the local host.</summary>
     /// <remarks>
     /// Returns null when the phone re-indexed its library between two pages: the host then refuses
@@ -319,7 +327,7 @@ public partial class MainWindow
     private MediaItemViewModel[] SelectedPhotos() =>
         PhotosList.SelectedItems.Cast<MediaItemViewModel>().Where(photo => !photo.IsSectionHeader).ToArray();
 
-    private void PhotoSearchBox_TextChanged(object sender, TextChangedEventArgs e) => ApplyPhotoFilters();
+    private void PhotoSearchBox_TextChanged(object sender, TextChangedEventArgs e) => FilterSoon("photos", ApplyPhotoFilters);
 
     private void PhotoSortCombo_SelectionChanged(object sender, SelectionChangedEventArgs e) => ApplyPhotoFilters();
 

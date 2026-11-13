@@ -498,6 +498,10 @@ public sealed class PairlyServer
                 : Results.BadRequest(new { message = error });
         });
 
+        // Lets the desktop skip reading the library when nothing arrived since it last did.
+        app.MapGet("/v1/media/{deviceId}/version", (string deviceId, MediaCatalog catalog) =>
+            Results.Ok(new { version = catalog.GetVersion(deviceId) }));
+
         app.MapGet("/v1/clipboard", (int? count, ClipboardHub clipboard) =>
         {
             return Results.Ok(clipboard.GetRecent(count ?? 20));

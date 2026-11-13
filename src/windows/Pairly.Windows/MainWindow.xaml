@@ -936,10 +936,12 @@
                         <TextBox x:Name="AppsSearchBox" Grid.Row="1" Margin="0,16,0,12" MaxWidth="360" HorizontalAlignment="Left" Width="360"
                                  controls:Fluent.Placeholder="{l:Loc search_apps}" controls:Fluent.Icon="&#xE721;"
                                  TextChanged="AppsSearchBox_TextChanged" AutomationProperties.Name="{l:Loc search_apps}" />
+                        <!-- Only the tiles on screen exist: a phone can have several hundred apps. -->
                         <ListBox x:Name="AppsList" Grid.Row="2" Margin="-3,0,-12,0" ItemContainerStyle="{StaticResource TileListItem}"
+                                 VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Standard" ScrollViewer.CanContentScroll="True"
                                  MouseDoubleClick="AppsList_MouseDoubleClick" KeyDown="AppsList_KeyDown" AutomationProperties.Name="{l:Loc phone_apps}">
                             <ListBox.ItemsPanel>
-                                <ItemsPanelTemplate><WrapPanel Margin="0,0,12,16" /></ItemsPanelTemplate>
+                                <ItemsPanelTemplate><controls:VirtualizingWrapPanel ItemSize="118" Margin="0,0,12,16" /></ItemsPanelTemplate>
                             </ListBox.ItemsPanel>
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
